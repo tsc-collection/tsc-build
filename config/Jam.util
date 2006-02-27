@@ -1,0 +1,247 @@
+#
+#            Tone Software Corporation BSD License ("License")
+# 
+#                        Software Build Environment
+#                        
+# Please read this License carefully before downloading this software. By
+# downloading or using this software, you are agreeing to be bound by the
+# terms of this License. If you do not or cannot agree to the terms of
+# this License, please do not download or use the software.
+# 
+# A set of Jam configuration files and a Jam front-end for advanced
+# software building with automatic dependency checking for the whole
+# project. Provides a hierarchical project description while performing
+# build procedures without changing directories. The resulting domain
+# language changes emphasis from how to build to what to build. Provides
+# separation of compilation artifacts (object files, binaries,
+# intermediate files) from the original sources. Comes standard with
+# ability to build programs, test suites, static and shared libraries,
+# shared modules, code generation, and many others. Provides the bridge to
+# ANT for building Java, with abilities to build JNI libraries.
+# 
+# Copyright (c) 2003, 2005, Tone Software Corporation
+# 
+# All rights reserved.
+# 
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are
+# met:
+#   * Redistributions of source code must retain the above copyright
+#     notice, this list of conditions and the following disclaimer. 
+#   * Redistributions in binary form must reproduce the above copyright
+#     notice, this list of conditions and the following disclaimer in the
+#     documentation and/or other materials provided with the distribution. 
+#   * Neither the name of the Tone Software Corporation nor the names of
+#     its contributors may be used to endorse or promote products derived
+#     from this software without specific prior written permission. 
+# 
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS
+# IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+# TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
+# PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER
+# OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+# EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+# PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+# PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+# LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+# NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+# 
+
+
+rule util.replace
+{
+  local _result _component ;
+  for _component in $(3) {
+    if $(_component) = $(<) {
+      _result += $(>) ;
+    }
+    else _result += $(_component) ;
+  }
+  return $(_result) ;
+}
+
+rule util.delete
+{
+  local _result _item ;
+  for _item in $(1) {
+    if ! ( $(_item) in $(2) ) {
+      _result += $(_item) ;
+    }
+  }
+  return $(_result) ;
+}
+
+rule util.make-path
+{
+  return $(<:J=/) ;
+}
+
+rule util.join
+{
+  return $(<:J=$(>:E="")) ;
+}
+
+rule util.reverse 
+{
+  if $(<) { 
+    return [ util.reverse $(<[2-]) ] $(<[1]) ; 
+  }
+}
+
+rule util.trim
+{
+  local _item = $(<[1]) ;
+  if $(>) {
+    return "$(_item)" [ util.trim $(<[2-]) : $(>[2-]) ] ;
+  }
+}
+
+rule util.repeat
+{
+  local _item _result ;
+  for _item in $(>) {
+    _result += $(<) ;
+  }
+  return $(_result) ;
+}
+
+rule util.foreach
+{
+  local _item ;
+  for _item in $(1) {
+    $(2) $(_item) : $(3) : $(4) : $(5) : $(6) : $(7) : $(8) : $(9) ;
+  }
+}
+
+rule util.foreach-kind
+{
+  local _item ;
+  for _item in $(1) {
+    [ util.join $(2) $(_item:S) ] $(_item) : $(3) : $(4) : $(5) : $(6) : $(7) : $(8) : $(9) ;
+  }
+}
+
+rule util.reverse-split
+{
+  local _result = [ Match "^(.*)[$(>)](.*)$" : $(<) ] ;
+  if ! $(_result) {
+    return $(<) ;
+  }
+  if ! $(_result[1]) {
+    return $(_result[2]) $(>) ;
+  }
+  return $(_result[2]) [ util.reverse-split $(_result[1]) : $(>) ] ;
+}
+
+rule util.split
+{
+  return [ util.reverse [ util.reverse-split $(<) : $(>) ] ] ;
+}
+
+rule util.reverse-split-path
+{
+  local _component = $(<:D=) ;
+  local _directory = $(<:D) ;
+
+  if x$(_directory) != x {
+    if $(_directory) = / {
+      return $(_component) $(_directory) ;
+    }
+    return $(_component) [ util.reverse-split-path $(_directory) ] ;
+  }
+}
+
+rule util.split-path
+{
+  return [ util.reverse [ util.reverse-split-path $(<) ] ] ;
+}
+
+rule util.is-absolute-path
+{
+  switch $(<[1]) {
+    case /* : return true ;
+  }
+}
+
+rule util.prepend-if-relative-path
+{
+  local _result ;
+  local _path ;
+  for _path in $(<) {
+    if ! [ util.is-absolute-path $(_path) ] {
+      _result += [ util.make-path $(>) $(_path) ] ;
+    }
+    else _result += $(_path) ;
+  }
+  return $(_result) ;
+}
+
+rule util.consume
+{
+  if ( ! $(<) ) || ( ! $(>) || $(<[1]) != $(>[1]) ) {
+    return $(<) ;
+  }
+  return [ util.consume $(<[2-]) : $(>[2-]) ] ;
+}
+
+
+rule util.combinations
+{
+  if $(1) {
+    return $(1:J=) [ util.combinations $(1[2-]) ] ;
+  }
+}
+
+rule util.set-target-variable
+{
+  local _target ;
+  for _target in $(1) {
+    local _variable ;
+    for _variable in $(2) {
+      $(_variable) on $(_target) = ;
+      util.add-single-target-single-variable $(_target) : $(_variable) : $(3) ;
+    }
+  }
+}
+
+rule util.add-target-variable
+{
+  local _target ;
+  for _target in $(1) {
+    local _variable ;
+    for _variable in $(2) {
+      util.add-single-target-single-variable $(_target) : $(_variable) : $(3) ;
+    }
+  }
+}
+
+rule util.add-single-target-single-variable
+{
+  $(2) on $(1) = [ util.delete [ util.get-target-variable $(1) : $(2) ] : $(3) ] $(3) ;
+}
+
+rule util.get-target-variable
+{
+  on $(<[1]) return $($(>)) ;
+}
+
+rule util.clone-target-variable
+{
+  local _item ;
+  for _item in $(3) {
+    on $(1[1]) $(_item) on $(2[1]) = $($(_item)) ;
+  }
+}
+
+rule util.ensure-target-mark
+{
+  local _target = $(1[1]) ;
+  local _mark = $(2[1]) ;
+
+  if [ util.get-target-variable $(_target) : $(_mark) ] = true {
+    return true ;
+  }
+  $(_mark) on $(_target) = true ;
+  return ;
+}

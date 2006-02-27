@@ -1,0 +1,169 @@
+#!/bin/ksh
+#
+#            Tone Software Corporation BSD License ("License")
+# 
+#                        Software Build Environment
+#                        
+# Please read this License carefully before downloading this software. By
+# downloading or using this software, you are agreeing to be bound by the
+# terms of this License. If you do not or cannot agree to the terms of
+# this License, please do not download or use the software.
+# 
+# A set of Jam configuration files and a Jam front-end for advanced
+# software building with automatic dependency checking for the whole
+# project. Provides a hierarchical project description while performing
+# build procedures without changing directories. The resulting domain
+# language changes emphasis from how to build to what to build. Provides
+# separation of compilation artifacts (object files, binaries,
+# intermediate files) from the original sources. Comes standard with
+# ability to build programs, test suites, static and shared libraries,
+# shared modules, code generation, and many others. Provides the bridge to
+# ANT for building Java, with abilities to build JNI libraries.
+# 
+# Copyright (c) 2003, 2005, Tone Software Corporation
+# 
+# All rights reserved.
+# 
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are
+# met:
+#   * Redistributions of source code must retain the above copyright
+#     notice, this list of conditions and the following disclaimer. 
+#   * Redistributions in binary form must reproduce the above copyright
+#     notice, this list of conditions and the following disclaimer in the
+#     documentation and/or other materials provided with the distribution. 
+#   * Neither the name of the Tone Software Corporation nor the names of
+#     its contributors may be used to endorse or promote products derived
+#     from this software without specific prior written permission. 
+# 
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS
+# IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+# TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
+# PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER
+# OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+# EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+# PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+# PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+# LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+# NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+# 
+
+:<<::
+  This script "applies" commands specified in <file> to every data line in 
+  this file, depending on <action>. <file> may contain:
+
+  - blank lines
+      Such line are ignored.
+
+  - '#' as the first non-blank character of the line
+      Such lines are treated as comment lines.
+
+  - '%' as a first non-blank character of the line
+      Such lines specify commands. The following formats are allowed:
+      % <label> % <command>
+	Specifies a command to be executed if <action> matches <label>. If 
+	several lines with the same label are present, all commands will be
+	executed one after another. If any command failes (non-0 return), all
+	other commands for the same <action> are not executed.
+	Empty <command> "clears" all commands remembered for the same label
+	so far.
+	Commands can contain $1 through $9, witch will be substituted by a 
+	corresponding field value of the current data line. Quotes may be 
+	used as in Korn shell.
+      % FS=<separator>
+	Sets a field separator for the following data lines. Default separator
+	is ':'. If "FS=<separator>" is not present (a single '%' in the line),
+	a filed seperator is reset to a default value.
+
+  - All other lines are data lines. Every data line is split to fields 
+    according to a field separator and all applicable commands are executed.
+    Applicable commands are those whose label equals to an action specified 
+    on a command line of this script.
+::
+
+DEFAULT_SEPARATOR=":"
+
+main ()
+{
+  [ ${#} -eq 2 ] || {
+    echo "USAGE: ${ScriptName} <file> <action>"
+    exit 2
+  }
+  file=${1}
+  action=${2}
+
+  exec 5<&0 0<"${file}"
+
+  unset CMD
+  SEPARATOR=${DEFAULT_SEPARATOR}
+  ifs=${IFS}
+
+  while read line; do
+    case "${line}" in
+      '#'*)
+      ;;
+      '%'*)
+	IFS="%"
+	set entry ${line}
+	shift
+	IFS=${ifs}
+	label=`echo ${2}`
+	command=`
+	  echo "${line}" | {
+	    sed 's/^%[^%]*%[ 	]*\(.*\)[ 	]*$/\1/'
+	  }
+	`
+	[ "${label:+set}" = set ] || {
+	  if [ "${command:+set}" = set ]; then
+	    fs=`
+	      echo "${command}" | {
+		sed -n 's/^[ 	]*FS=\(.*\)[ 	]*$/\1/p'
+	      }
+	    `
+	    [ "${fs:+set}" = set ] || {
+	      echo "${ScriptName}: Bad separator specification."
+	      exit 3
+	    }
+	    eval SEPARATOR=${fs}
+	    : ${SEPARATOR:=${DEFAULT_SEPARATOR}}
+	  else
+	    SEPARATOR=${DEFAULT_SEPARATOR}
+	  fi
+	}
+	[ "${label}" = "${action}" ] && {
+	  if [ "${command:+set}" = set ]; then
+	    [ "${CMD:+set}" = set ] && {
+	      CMD="${CMD} &&"
+	    }
+	    CMD="${CMD} runEcho ${command}"
+	  else
+	    unset CMD
+	  fi
+	}
+      ;;
+      *)
+	IFS=${SEPARATOR}
+	set entry ${line}
+	shift
+	IFS=${ifs}
+
+	[ ${#} -eq 0 ] || {
+	  [ "${CMD:+set}" = set ] && {
+	    0<&5 (eval ${CMD}) || break
+	  }
+	}
+      ;;
+    esac
+  done
+}
+
+runEcho () 
+{
+  echo "${*}" 1>&2
+  "${@}"
+}
+
+ScriptName=`basename ${0}`
+main "${@}"
+exit ${?}

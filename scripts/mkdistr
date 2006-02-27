@@ -1,0 +1,2263 @@
+#!/bin/ksh
+#
+#            Tone Software Corporation BSD License ("License")
+# 
+#                        Software Build Environment
+#                        
+# Please read this License carefully before downloading this software. By
+# downloading or using this software, you are agreeing to be bound by the
+# terms of this License. If you do not or cannot agree to the terms of
+# this License, please do not download or use the software.
+# 
+# A set of Jam configuration files and a Jam front-end for advanced
+# software building with automatic dependency checking for the whole
+# project. Provides a hierarchical project description while performing
+# build procedures without changing directories. The resulting domain
+# language changes emphasis from how to build to what to build. Provides
+# separation of compilation artifacts (object files, binaries,
+# intermediate files) from the original sources. Comes standard with
+# ability to build programs, test suites, static and shared libraries,
+# shared modules, code generation, and many others. Provides the bridge to
+# ANT for building Java, with abilities to build JNI libraries.
+# 
+# Copyright (c) 2003, 2005, Tone Software Corporation
+# 
+# All rights reserved.
+# 
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are
+# met:
+#   * Redistributions of source code must retain the above copyright
+#     notice, this list of conditions and the following disclaimer. 
+#   * Redistributions in binary form must reproduce the above copyright
+#     notice, this list of conditions and the following disclaimer in the
+#     documentation and/or other materials provided with the distribution. 
+#   * Neither the name of the Tone Software Corporation nor the names of
+#     its contributors may be used to endorse or promote products derived
+#     from this software without specific prior written permission. 
+# 
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS
+# IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+# TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
+# PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER
+# OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+# EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+# PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+# PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+# LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+# NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+# 
+
+#@(#)Title:     Package preparation utility
+#@(#)Author:    Gennady F. Bystritsky (gfb@tonesoft.com)
+#@(#)Version:   2.0
+#@(#)Copyright: Tone Software Corporation, Inc. (1999)
+
+PRODSTAMP='
+############################################################################
+# Package preparation utility. Copyright(c) 1999 Tone Software Corporation #
+############################################################################
+'
+DESCRIPTION="
+  This utility implements packages with incremental patches. All patches are
+  stored and may be rolled back. With many patches it may consume considerable
+  amount of disk space (to save modified modules). A patch number corresponds
+  to the patch package instance number with the first patch package having 
+  empty instance number. A patch package name is built by prepending 'P' to 
+  the base package name. The total of 99 patches per package is allowed. 
+  Note:
+  | The major part of the installation/removal script for packages 
+  | created with this utility is kept here in the utility itself.
+"
+ARGUMENTS="
+  [-x<debug_level>][-h][-v<version>][-l<patch_level>]
+  [-t<type_prefix>][-a<platform>][-r<restriction>]
+  [-p<prodstamp>][-b<topdir>][-s<pkgdir>][-c<permdir>]
+  [-wj] <package_name>
+"
+    RedirectErrors=YES
+ShowCleanupMessage=YES
+     ShowProdStamp=NO
+           SigList="1 2 3 8 15"
+
+PKGDESCFILE=pkgdesc
+PKGACTIONFILE=actions.sh
+PKGEXTRAFILES="depend copyright"
+
+PKGCONTENTSFILE=pkgcontents
+PKGINFOFILE=pkginfo
+PKGPROTOTYPEFILE=Prototype
+
+unset CDPATH
+
+main () 
+{
+  eval `EntryPoint 1 main`
+
+  unset VERSION PATCHLEVEL ARCH PKGNAME PKGDEST
+  unset PRODLINE RESTRICT PSTAMP PREVIEW JUMBO
+  unset TOPDIR PKGDIR PRMDIR DSTDIR PKGTEMPDIR PKGTRANSDIR
+
+  ParseCommandParameters "v:l:t:a:r:p:b:s:c:d:wj" "${@}" || {
+    PrintUsage
+    return 2
+  }
+  eval `EntryPoint 2 main`
+
+  : ${VERSION:=1.1} ${PATCHLEVEL:=0} ${ARCH:=`GetArchitecture`}
+
+  [ "${ARCH}" = "unknown" ] && {
+    ErrMsg "Cannot prepare the package for unknown architecture."
+    return 2
+  }
+  TOPDIR=`GenDirPath "${TOPDIR:-.}"`
+  PKGDIR=`GenDirPath "${PKGDIR:-.}"`
+  DSTDIR=`GenDirPath "${DSTDIR:-.}"`
+
+  CheckVars TOPDIR PKGDIR DSTDIR || {
+    return 3
+  }
+  [ "${PRMDIR:+set}" = set ] && {
+    PRMDIR=`GenDirPath "${PRMDIR}"`
+  }
+  [ "{PSTAMP:+set}" = set ] || {
+    user=`id|sed -n 's/^.*(\(.*\)).*(\(.*\)).*$/\1/p'`
+    node=`uname -n`
+    PSTAMP="${user}@${node} `date`"
+  }
+  PKGTEMPDIR="${DSTDIR}/pkginfo"
+  [ "${DebugLevel}" -eq 0 ] && {
+    UpdateCleanupList ${PKGTEMPDIR}
+  }
+  mkdir -p "${PKGTEMPDIR}"
+  cd "${PKGTEMPDIR}" || {
+    ErrMsg "Cannot create temporary directory."
+    return 4
+  }
+  rm -f "${PKGINFOFILE}" "${PKGCONTENTSFILE}" "${PKGPROTOTYPEFILE}"
+  parseDesc || {
+    message="Unknown parse error"
+    [ -s "${PKGCONTENTSFILE}" ] && {
+      message=`cat "${PKGCONTENTSFILE}"`
+    }
+    ErrMsg "${message}"
+    return 5
+  }
+  [ -s "${PKGCONTENTSFILE}" ] || {
+    ErrMsg "No files in the package."
+    return 6
+  }
+  ExtractValues "${PKGINFOFILE}" PKG NAME
+  ShowMsg "[${PKG}] ${NAME}"
+  {
+    createPackageFiles && buildPrototype 
+  } <"${PKGCONTENTSFILE}" >"${PKGTEMPDIR}/${PKGPROTOTYPEFILE}"
+  [ -s "${PKGTEMPDIR}/${PKGPROTOTYPEFILE}" ] && {
+    makePackage
+  }
+  return ${?}
+}
+
+OnOption ()
+{
+  eval `EntryPoint 6 OnOption`
+
+  case "${1}" in
+    v)
+      VERSION=${2}
+    ;;
+    l)
+      PATCHLEVEL=${2}
+    ;;
+    t)
+      PRODLINE=${2}
+    ;;
+    a)
+      ARCH=${2}
+    ;;
+    r)
+      RESTRICT=${2}
+    ;;
+    p)
+      PSTAMP=${2}
+    ;;
+    b)
+      TOPDIR=${2}
+    ;;
+    s)
+      PKGDIR=${2}
+    ;;
+    c)
+      PRMDIR=${2}
+    ;;
+    d)
+      DSTDIR=${2}
+    ;;
+    w)
+      PREVIEW=YES
+    ;;
+    j)
+      JUMBO=YES
+    ;;
+    *) 
+      return 1
+    ;;
+  esac
+  return 0
+}
+
+OnArguments ()
+{
+  eval `EntryPoint 6 OnArguments`
+  [ ${#} -eq 1 -o ${#} -eq 2 ] && {
+    PKGNAME=${1}
+    PKGDEST=${2}
+  }
+  [ "${PKGNAME:+set}" = set ] || {
+    return 1
+  }
+  return 0
+}
+
+makePackage ()
+{
+  eval `EntryPoint 3 makePackage`
+
+  cd "${PKGTEMPDIR}" && {
+    ShowMsg "  Making distribution tree"
+    PKGTRANSDIR="${DSTDIR}/${PKG}"
+    rm -rf "${PKGTRANSDIR}"
+    UpdateCleanupList "${PKGTRANSDIR}"
+    {
+      pkgmk -o -b "${TOPDIR}" -d "${DSTDIR}" || {
+        rm -rf "${PKGTRANSDIR}"
+      }
+    } 2>&1 | SplitOutput 5>&2 | ShowProgress "   "
+    [ -d "${DSTDIR}/${PKG}" ] || {
+      ErrMsg "Action failed."
+      return 7
+    }
+    [ "${PKGDEST:+set}" = set ] || {
+      unset v_suffix
+      unset p_suffix
+      [ "${PREVIEW}" = YES ] && {
+        v_suffix=w
+      }
+      [ "${JUMBO}" = YES ] && {
+        p_suffix=j
+      }
+      if [ "${PATCHLEVEL}" -le 1 ]; then
+        PKGDEST="${PKG}-${VERSION}${v_suffix}.${ARCH}.pkg"
+      else
+        PKGDEST="${PKG}${PATCHLEVEL}{p_suffix}-${VERSION}${v_suffix}.${ARCH}.pkg"
+      fi
+    }
+    ShowMsg "  Building \"${PKGDEST}\", please wait"
+    case "${PKGDEST}" in
+      /*)
+      ;;
+      *)
+        PKGDEST="${DSTDIR}/${PKGDEST}"
+      ;;
+    esac
+    UpdateCleanupList '${PKGDEST}'
+    rm -f "${PKGDEST}"
+    pkgtrans -s -o "${DSTDIR}" "${PKGDEST}" "${PKG}" || {
+      ErrMsg "Action failed."
+      return 7
+    }
+    unset PKGDEST
+  }
+}
+
+createPackageFiles ()
+{
+  eval `EntryPoint 3 createPackageFiles`
+
+  ShowMsg "  Creating action scripts"
+  [ -f "${ScriptDir}/${ScriptName}" ] || {
+    ErrMsg "Cannot access \"${ScriptDir}/${ScriptName}\"."
+    return 5
+  }
+  rm -rf "${PKGTEMPDIR}/request"
+  {
+    sed -n '/^#\[PART3\]/,${
+      /^#\[PART.\]/d
+      p
+    }' "${ScriptDir}/${ScriptName}" 
+    [ -f "${PKGDIR}/${PKGACTIONFILE}" ] && {
+      cat "${PKGDIR}/${PKGACTIONFILE}"
+    }
+    sed -n '/^#\[PART2\]/,/^#\[PART3\]/{
+      /^#\[PART.\]/d
+      p
+    }' "${ScriptDir}/${ScriptName}"
+  } > "${PKGTEMPDIR}/request"
+
+  echo "i pkginfo"
+  echo "i request"
+  for file in preinstall postinstall preremove postremove; do
+    ln -f "${PKGTEMPDIR}/request" "${PKGTEMPDIR}/${file}"
+    echo "i ${file}"
+  done
+  for file in i.generate r.generate; do
+    ln -f "${PKGTEMPDIR}/request" "${PKGTEMPDIR}/${file}"
+    echo "i ${file}"
+  done
+  [ "${PATCHLEVEL}" -ne 0 ] && {
+    for file in i.install r.install; do
+      ln -f "${PKGTEMPDIR}/request" "${PKGTEMPDIR}/${file}"
+      echo "i ${file}"
+    done
+  }
+  for file in ${PKGEXTRAFILES}; do
+    [ -f "${PKGDIR}/${file}" ] && {
+      cp "${PKGDIR}/${file}" "${PKGTEMPDIR}/${file}"
+      echo "i ${file}"
+    }
+  done
+  return 0
+}
+
+buildPrototype ()
+{
+  eval `EntryPoint 3 buildPrototype`
+
+  cd "${TOPDIR}" && {
+    ShowMsg "  Generating prototypes"
+    while read line
+    do
+      eval `SetInputFields line "#"`
+      [ ${#} -ge 9 ] && {
+        class="${1}" 
+        source="${2}" 
+        target="${3}"
+        file_owner="${4}" 
+        file_group="${5}" 
+        file_perms="${6}"
+        dir_owner="${7}"
+        dir_group="${8}" 
+        dir_perms="${9}"
+        shift 9
+        pkg_tops="${1}"
+        [ "${source:+set}" = set ] || {
+          ShowMsg "    [No source directory, ignoring \"${class}\"]"
+          continue
+        }
+        : ${target:='${PKGINSTDIR}'}
+        pkgproto -c "${class}" "${source}=${target}"|changePrototype|{
+          SplitOutput|ShowProgress "   "
+        } 5>&1
+      }
+    done
+  }
+  return 0
+}
+
+changePrototype ()
+{
+  eval `EntryPoint 3 changePrototype`
+
+  while read line
+  do
+    eval `SetInputFields line`
+    if [ ${#} -eq 6 ]; then
+      type="${1}"
+      class="${2}"
+      target="${3}"
+      perms="${4}"
+      owner="${5}"
+      group="${6}"
+      if [ "${type}" = "f" ]; then
+        [ "${file_owner:+set}" = set ] && owner=${file_owner}
+        [ "${file_group:+set}" = set ] && group=${file_group}
+        [ "${file_perms:+set}" = set ] && perms=${file_perms}
+        [ "${PRMDIR:+set}" = set ] && {
+	  eval `SetInputFields target "="`
+          [ ${#} -eq 2 ] && {
+            source=${2}
+            [ -f "${PRMDIR}/${source}" ] && {
+              ExtractValues "${PRMDIR}/${source}" OWNER GROUP PERMS
+              [ "${OWNER:+set}" = set ] && owner=${OWNER}
+              [ "${GROUP:+set}" = set ] && group=${GROUP}
+              [ "${PERMS:+set}" = set ] && perms=${PERMS}
+            }
+          }
+        }
+      elif [ "${type}" = "d" ]; then
+	eval `SetInputFields pkg_tops ":"`
+        while [ ${#} -ne 0 ]; do
+          [ "${1:+set}" = set ] && {
+            case "${target}" in
+              ${1}*)
+                break;
+              ;;
+            esac
+          }
+          shift
+        done
+        if [ ${#} -ne 0 ]; then
+          [ "${dir_owner:+set}" = set ] && owner=${dir_owner}
+          [ "${dir_group:+set}" = set ] && group=${dir_group}
+          [ "${dir_perms:+set}" = set ] && perms=${dir_perms}
+        else
+          # owner="?"
+          # group="?"
+          # perms="?"
+          continue
+        fi
+      fi
+      echo "${type} ${class} ${target} ${perms} ${owner} ${group}"
+    else
+      echo "${line}"
+    fi
+  done
+  return 0
+}
+
+parseDesc ()
+{
+  eval `EntryPoint 3 parseDesc`
+
+  [ -f "${PKGDIR}/${PKGDESCFILE}" ] || {
+    ErrMsg "No package description (${PKGDIR}/${PKGDESCFILE})."
+    return 5
+  }
+  ShowMsg "Parsing package description"
+  ${awk} '
+    BEGIN {
+      version = "'"${VERSION}"'"
+      patchlevel = "'"${PATCHLEVEL}"'"
+      if(!match(version,"^[0-9]+\.[0-9]+$")){
+        err_message = sprintf("Bad version specification (%s)",version)
+        exit
+      }
+      if(!match(patchlevel,"^[0-9][0-9]*$")){
+        err_message = sprintf("Bad patch level specification (%s)",patchlevel)
+        exit
+      }
+      block_name = "info"
+      info["CATEGORY"] = "application"
+    }
+    $0 ~ /^[ \t]*$/ || $0 ~ /^[ \t]*#/ {
+      next
+    }
+    $0 ~ /^[ \t]*\[[ \t]*Info[ \t]*\][ \t]*$/ {
+      handleBlockEnd()
+      block_name = "info"
+      next
+    }
+    $0 ~ /^[ \t]*\[[ \t]*Install[ \t]*\][ \t]*$/ {
+      handleBlockEnd()
+      block_name = "install"
+      next
+    }
+    $0 ~ /^[ \t]*\[[ \t]*Build[ \t]*\][ \t]*$/ {
+      handleBlockEnd()
+      block_name = "build"
+      next
+    }
+    $0 ~ /^[ \t]*\[[ \t]*Generate[ \t]*\][ \t]*$/ {
+      handleBlockEnd()
+      block_name = "generate"
+      next
+    }
+    $0 ~ /^[ \t]*[A-Z][a-zA-Z0-9_]*[ \t]*=/ {
+      line = $0
+      n = match(line,"[A-Z][a-zA-Z0-9_]*")
+      name = substr(line,n,RLENGTH)
+      sub("^[ \t]*[A-Z][a-zA-Z0-9_]*[ \t]*=[ \t]*","",line)
+      sub("[ \t]*$","",line);
+      if(name=="DEPEND"){
+        section[name] = section[name] " " line
+      }
+      else{
+       section[name] = line
+      }
+      next
+    }
+    {
+      err_message = "Wrong format in line " NR " of " FILENAME 
+      exit
+    }
+    END {
+      if(err_message){
+        close "'"${PKGCONTENTSFILE}"'"
+        print err_message > "'"${PKGCONTENTSFILE}"'"
+        exit(10)
+      }
+      handleBlockEnd()
+      dumpInfo()
+    }
+    function handleBlockEnd () {
+      if(block_name == "info"){
+        for(entry in section){
+          info[entry] = section[entry]
+          delete section[entry]
+        }
+      }
+      else{
+        fu = section["F_OWNER"]; du = section["D_OWNER"]
+        fg = section["F_GROUP"]; dg = section["D_GROUP"]
+        fp = section["F_PERMS"]; dp = section["D_PERMS"]
+
+        if(fu~/^[ \t]*$/ && info["F_OWNER"]!~/^[ \t]*$/) fu="$F_OWNER"
+        if(fg~/^[ \t]*$/ && info["F_GROUP"]!~/^[ \t]*$/) fg="$F_GROUP"
+        if(fp~/^[ \t]*$/ && info["F_PERMS"]!~/^[ \t]*$/) fp="$F_PERMS"
+
+        if(du~/^[ \t]*$/ && info["D_OWNER"]!~/^[ \t]*$/) du="$D_OWNER"
+        if(dg~/^[ \t]*$/ && info["D_GROUP"]!~/^[ \t]*$/) dg="$D_GROUP"
+        if(dp~/^[ \t]*$/ && info["D_PERMS"]!~/^[ \t]*$/) dp="$D_PERMS"
+
+        printf "%s#%s#%s#%s#%s#%s#%s#%s#%s#%s\n", \
+          block_name, section["SOURCE"], section["TARGET"], \
+          fu, fg, fp, du, dg, dp, \
+          section["TOPS"] \
+        > "'"${PKGCONTENTSFILE}"'"
+ 
+        for(entry in section){
+          delete section[entry]
+        }
+      }
+    }
+    function dumpInfo () {
+      info["BASEDIR"] = "/"
+      info["PRODVER"] = version
+      info["VERSION"] = version "." patchlevel
+      info["PATCHLEVEL"] = patchlevel
+      info["CLASSES"] = "install build generate"
+      info["ARCH"] = "'"${ARCH}"'"
+      info["RESTRICT"] = "'"${RESTRICT}"'"
+      info["PSTAMP"] = "'"${PSTAMP}"'"
+      info["PRODUCT"] = tolower("'"${PKGNAME}"'")
+      info["PREVIEW"] = "'"${PREVIEW:-NO}"'"
+      info["JUMBO"] = "'"${JUMBO:-NO}"'"
+
+      prodline = "'"${PRODLINE}"'"
+      if(prodline ~ /^[ \t]*$/){
+        prodline = info["PRODLINE"]
+      }
+      info["PRODLINE"] = toupper(prodline)
+  
+      if(info["DESC"] ~ /^[ \t]*$/){
+        info["DESC"] = info["NAME"]
+      }
+      info["NAME"] = info["NAME"] " v" version
+
+      info["MAXINST"] = 3
+      info["PKG"] = info["PRODLINE"] info["PRODUCT"]
+      if(patchlevel!=0){
+        info["NAME"] = info["NAME"] "/p" patchlevel
+	if(info["JUMBO"]=="YES"){
+	  info["NAME"] = info["NAME"] "j"
+	}
+        info["PKG"] = info["PKG"] "P"
+        info["MAXINST"] = 99
+        delete info["DEPEND"];
+      }
+      if(info["PREVIEW"]=="YES"){
+        info["NAME"] = info["NAME"] " (Preview release)"
+      }
+      for(entry in info){
+        if(info[entry] !~ /^[ \t]*$/){
+          printf "%s=%s\n",entry,info[entry] > "'"${PKGINFOFILE}"'"
+        }
+      }
+    }
+  ' "${PKGDIR}/${PKGDESCFILE}"
+  return ${?}
+}
+
+#[PART2] Do not remove this line in any circumstances
+
+##################
+# Script Library #
+##################
+
+AskStr ()
+{
+  eval `EntryPoint 9 AskStr`
+
+  message=${1}
+  default=${2}
+  ShowMsg ${first_question:+"\n"}"${message} [${default}] \c"
+  read answer
+  echo ${answer:-${default}}
+}
+
+AskYesNo ()
+{
+  eval `EntryPoint 9 AskYesNo`
+
+  message=${1}
+  default=${2}
+  case `AskStr "${message}" "${default}"` in
+    [yY]|[yY][eE][sS])
+      return 0
+    ;;
+  esac
+  return 1
+}
+
+SetArrayEntry ()
+{
+  eval `EntryPoint 9 SetArrayEntry`
+
+  [ "${#}" -eq 3 ] && {
+    array="${1}"
+    index="${2}"
+    entry="${3}"
+
+    eval array_size='$'${array}_N
+    [ "${index}" -ge "${array_size}" ] && {
+      array_size=`expr "${index}" + 1`
+      eval ${array}_N=${array_size}
+    }
+    eval ${array}_${index}='"'"${entry}"'"'
+  }
+}
+
+GetArrayEntry ()
+{
+  eval `EntryPoint 9 GetArrayEntry`
+
+  [ "${#}" -eq 2 ] && {
+    array=${1}
+    index=${2}
+    eval echo '"''$'${array}_${index}'"'
+  }
+}
+
+PrintArray ()
+{
+  eval `EntryPoint 9 PrintArray`
+
+  [ ${#} -eq 1 ] && {
+    array=${1}
+    eval array_size='$'${array}_N
+    array_size=`expr "${array_size}" + 0 2>/dev/null`
+    [ "${array_size:+set}" = set ] && {
+      ShowMsg "Array \"${array}\" (${array_size} elements)"
+      cnt=0
+      while [ "${cnt}" -lt "${array_size}" ]; do
+	ShowMsg `GetArrayEntry "${array}" "${cnt}"`
+	cnt=`expr "${cnt}" + 1`
+      done
+      return 0
+    }
+  }
+  return 1
+}
+
+SetInputFields ()
+{
+  eval `EntryPoint 9 SetInputFields`
+
+  [ ${#} -eq 2 -o ${#} -eq 1 ] && {
+    variable="${1}"
+    if [ ${#} -eq 2 ]; then
+      echo 'separator="'"${2}"'";'
+    else
+      echo 'separator="${IFS}";'
+    fi
+    echo '
+      ifs="${IFS}";
+      IFS="${separator}";
+      set entry ${'"${variable}"'};
+      shift;
+      IFS="${ifs}"
+    '
+  }
+}
+
+tolower () 
+{
+  eval `EntryPoint 9 tolower`
+
+  ${awk} '
+    BEGIN {
+      print tolower("'"${*}"'")
+    }
+  '
+}
+
+toupper () 
+{
+  eval `EntryPoint 9 toupper`
+
+  ${awk} '
+    BEGIN {
+      print toupper("'"${*}"'")
+    }
+  '
+}
+
+ParseCommandParameters ()
+{
+  eval `EntryPoint 9 ParseCommandParameters`
+
+  [ ${#} -eq 0 ] && {
+    return 1
+  }
+  options="${1}"
+  shift
+  [ ${#} -eq 0 ] || {
+    while getopts "hx:${options}" opt 2>/dev/null; do
+      case "${opt}" in
+        h)
+	  trap CleanUp 0
+          PrintUsage
+          PrintDescription
+          exit 0
+        ;;
+        x)
+          DebugLevel=${OPTARG}
+          [ "${DebugLevel}" -ge 1 ] && {
+            exec 1>&3 2>&4
+          }
+        ;;
+        *)
+	  CheckFunction OnOption && {
+	    OnOption "${opt}" "${OPTARG}" && {
+	      continue
+	    }
+	  }
+          return 2
+        ;;
+      esac
+    done
+    shift `expr "${OPTIND}" - 1`
+  }
+  CheckFunction OnArguments && {
+    OnArguments "${@}"
+    return "${?}"
+  }
+  return 0
+}
+
+ErrMsg () 
+{
+  eval `EntryPoint 9 ErrMsg`
+
+  echo "${ScriptName}: ${*}" 1>&4 2>&1
+}
+
+ShowMsg () 
+{
+  eval `EntryPoint 9 ShowMsg`
+
+  if [ ${#} -ne 0 ]; then
+    echo "${*}" 1>&3 2>&4
+  else
+    sed 's/^[ 	][ 	]*//g' 1>&3 2>&4
+  fi
+}
+
+WrapUp ()
+{
+  eval `EntryPoint 9 WrapUp`
+
+  ${awk} -v margin="${1}" '
+    BEGIN{
+      if(margin !~ /^[0-9]+$/){
+        margin = 70
+      }
+    }
+    {
+      total = 0
+      string = ""
+      for(field=1; field<=NF ;field++){
+        string = string $field " "
+        total += length($field)+1
+        if(total>=margin){
+          print string
+          string = ""
+          total = 0
+        }
+      }
+      if(total>0){
+        print string
+      }
+    }
+  '
+}
+
+ShowBox ()
+{
+  eval `EntryPoint 9 ShowBox`
+
+  ${awk} -v header="${1}" -v prefix="${2}" '
+    BEGIN {
+      if(prefix ~ /^[0-9]+$/){
+        prefix = sprintf("%" prefix "." prefix "s"," ")
+      }
+      header_len = length(header)
+      maxlen = header_len
+      if(maxlen){
+        maxlen += 2
+      }
+      line = 0
+    }
+    $0 !~ /^[ \t]*$/ {
+      s = $0
+      if(sub("^[ \t]*:","",s)!=1){
+        sub("^[ \t]*","",s)
+        sub("[ \t]*$","",s)
+      }
+      len = length(s)
+      if(len>maxlen){
+        maxlen = len
+      }
+      array[line++] = s
+    }
+    END {
+      w = maxlen + 4
+      empty = sprintf("|%" w "." w "s|"," ")
+      bottom = sprintf("+%" w "." w "s+"," ")
+      gsub(" ","-",bottom)
+
+      if(header_len>0){
+        len = (maxlen/2)-(header_len/2+1)+3
+        top = sprintf("%s %s ",substr(bottom,1,len),header)
+        top = top substr(bottom,len+header_len+3)
+      }
+      else{
+        top = bottom
+      }
+      printf("%s%s\n%s%s\n",prefix,top,prefix,empty)
+      w = maxlen
+      for(count=0; count<line ;count++){
+        printf("%s|  %-" w "." w "s  |\n",prefix,array[count])
+      }
+      printf("%s%s\n%s%s\n",prefix,empty,prefix,bottom)
+    }
+  ' 1>&3 2>&4
+}
+
+runEcho ()
+{
+  eval `EntryPoint 9 runEcho`
+
+  ShowMsg "${*}"
+  "${@}" 1>&3 2>&4
+  return ${?}
+}
+
+GenDirPath () 
+{
+  eval `EntryPoint 9 GenDirPath`
+
+  [ ${#} -eq 1 ] && {
+    (cd "${1}">/dev/null 2>&1  && pwd)
+  }
+  return ${?}
+}
+
+SplitOutput ()
+{
+  eval `EntryPoint 9 SplitOutput`
+
+  while read line; do
+    echo "${line}"
+    echo "${line}" 1>&5
+  done
+}
+
+ShowProgress () 
+{
+  eval `EntryPoint 9 ShowProgress`
+
+  cnt=0
+  max=${2:-70}
+
+  while read line;do
+    [ "${cnt}" -eq 0 ] && ShowMsg "${1:- } \c"
+    cnt=`expr "${cnt}" + 1`
+    ShowMsg ".\c"
+    [ ${cnt} -gt "${max}" ] && {
+      ShowMsg ""
+      cnt=0
+    }
+  done
+  [ ${cnt} -eq 0 ] || {
+    ShowMsg ""
+  }
+}
+
+CheckGroupExistence ()
+{
+  eval `EntryPoint 9 CheckGroupExistence`
+
+  [ ${#} -eq 1 ] && {
+    ${awk} -F: -v group=${1} -v status=1 "${awkLibrary}"'
+      $0~/^[ \t]*#/ || $0~/^[ \t]*$/ {
+        next
+      }
+      NF>1 {
+        field = trim($1)
+        if(field==group){
+          status = 0
+          exit
+        }
+      }
+      END{
+        exit(status)
+      }
+    ' /etc/group
+  }
+  return ${?}
+}
+
+GetCurUserGroup ()
+{
+  eval `EntryPoint 9 GetCurUserGroup`
+
+  id|sed -n 's/^.*(\(.*\)).*(\(.*\)).*$/\1 \2/p'
+}
+
+GetCurUser ()
+{
+  eval `EntryPoint 9 GetCurUser`
+
+  set entry `GetCurUserGroup`
+  shift
+
+  [ ${#} -eq 2 ] && {
+    echo ${1}
+  }
+}
+
+GetCurGroup ()
+{
+  eval `EntryPoint 9 GetCurGroup`
+
+  set entry `GetUserGroup`
+  shift
+
+  [ ${#} -eq 2 ] && {
+    echo ${2}
+  }
+}
+
+CheckFunction ()
+{
+  eval `EntryPoint 9 CheckFunction`
+
+  [ ${#} -eq 1 ] && {
+    name=${1}
+    set entry `type "${name}" 2>/dev/null`
+    shift
+    case "${*}" in
+      "${name} is a function"*)
+	return 0
+      ;;
+    esac
+  }
+  return 1
+}
+
+CheckProgram ()
+{
+  eval `EntryPoint 9 CheckProgram`
+
+  [ ${#} -eq 1 ] && {
+    name=${1}
+    set entry `type "${name}" 2>/dev/null`
+    shift
+    [ ${#} -eq 3 -a "${1}" = ${name} -a "${2}" = "is" ] && {
+      [ `basename "${3}"` = "${name}" ] && {
+	echo "${3}"
+	return 0
+      }
+    }
+  }
+  return 1
+}
+
+CheckVars () 
+{
+  eval `EntryPoint 9 CheckVars`
+
+  for v in "${@}"; do
+    eval var=\$${v}
+    [ "${var:+set}" = set ] || {
+      ErrMsg "${v} is not set or bad."
+      return 1
+    }
+  done
+  return 0
+}
+
+PrintVars () 
+{
+  eval `EntryPoint 9 PrintVars`
+
+  for v in "$@"; do
+    eval echo ${v}=\$${v}
+  done
+}
+
+VerifyDir () 
+{
+  eval `EntryPoint 9 VerifyDir`
+
+  eval test -d "${1}" -a -r "${1}"
+  return ${?}
+}
+
+VerifyFile () 
+{
+  eval `EntryPoint 9 VerifyFile`
+
+  eval test -f "${1}" -a -r "${1}"
+  return ${?}
+}
+
+VerifyProg () 
+{
+  eval `EntryPoint 9 VerifyProg`
+
+  eval test -f "${1}" -a -x "${1}"
+  return ${?}
+}
+
+ExtractValues () 
+{
+  eval `EntryPoint 9 ExtractValues`
+
+  [ ${#} -gt 1 ] && {
+    file=${1}
+    unset pattern
+    shift
+
+    for arg in "${@}"; do
+      arg=`echo ${arg}|sed -n '/^[a-zA-Z][a-zA-Z1-9_]*$/p'`
+      [ "${arg:+set}" = set ] && {
+        [ "${pattern:+set}" = set ] && {
+          pattern="${pattern};"
+        }
+        search='^[ 	]*'"${arg}"'=\([^`;]*\)[ 	]*$'
+        replace="${arg}="\''\1'\'
+        pattern="${pattern}s/${search}/${replace}/gp"
+      }
+    done
+    [ "${pattern:+set}" = set ] && VerifyFile "${file}" && {
+      eval `sed -n "${pattern}"<"${file}"`
+    }
+  }
+}
+
+EntryPoint () 
+{
+  echo '
+    trap CleanUp ${SigList};
+  '
+  [ "${DebugLevel:-0}" -ge "${1:-1}" ] && {
+    echo '
+      echo "[Function: '"${2:-?}"']" 1>&2; 
+      set -xv;
+    '
+  }
+}
+
+CLEANUP_LIST=
+CleanUp () 
+{
+  eval `EntryPoint 5 CleanUp`
+  trap '' ${SigList}
+
+  cd /
+  [ "${ShowCleanupMessage}" = YES ] && {
+    ErrMsg "Cleaning up, please wait"
+  }
+  CheckFunction OnCleanUp && {
+    OnCleanUp
+  }
+  set entry ${CLEANUP_LIST}; shift
+  for entry in "${@}"; do
+    eval value=\"${entry}\"
+    [ "${value:+set}" = set ] && {
+      rm -rf "${value}"
+    }
+  done
+  unset CLEANUP_LIST
+}
+
+UpdateCleanupList ()
+{
+  eval `EntryPoint 5 UpdateCleanupList`
+
+  for arg in "${@}"; do
+    CLEANUP_LIST="${CLEANUP_LIST} ${arg}"
+  done
+}
+
+PrintUsage () 
+{
+  eval `EntryPoint 9 PrintUsage`
+
+  echo "${ARGUMENTS:-[-h][-x<debug level>]}"|${awk} "$awkLibrary"'
+    BEGIN {
+      prefix = "USAGE: '"${ScriptName}"'"
+      len = length(prefix)
+      printf("\n")
+    }
+    $0 !~ /^[ \t]*$/ {
+      printf("%" len "." len "s %s\n",prefix,trim($0));
+      prefix = ""
+    }
+    END {
+      printf("\n")
+    }
+  ' 1>&4
+}
+
+PrintDescription ()
+{
+  eval `EntryPoint 9 PrintDescription`
+  {
+    echo "DESCIPTION:" 
+    echo "${DESCRIPTION}"|sed '/^[ 	]*$/d;s/^[ 	]*/  /'
+  } 1>&4
+}
+
+awkLibrary='
+  function trim(str){
+    sub("^[ \t]*","",str)
+    sub("[ \t]*$","",str)
+    return str
+  }
+'
+
+########
+# MAIN #
+########
+
+GetArchitecture ()
+{
+  name=`uname -a|${awk} '
+    $5=="i86pc"{
+      print "x86"; exit
+    }
+    $5 ~ /^sun4/ {
+      print "sparc"; exit
+    }
+    {
+      print "unknown"
+    }
+  '`
+  echo $name
+  exit 0
+}
+
+exec 3>&1 4>&2 5>/dev/null
+
+awk=`(CheckProgram nawk)` || {
+  awk=awk
+}
+ScriptRundir=`pwd`
+ScriptIssue=`(CheckProgram "${0}")` || {
+  ScriptIssue="${0}"
+}
+ScriptName=`basename ${ScriptIssue}`
+ScriptDir=`dirname "${ScriptIssue}"`
+
+umask 02
+
+UpdateCleanupList '${ERRLOG}'
+trap CleanUp 0 ${SigList}
+
+ERRLOG="/tmp/${ScriptName}.${$}"
+> "${ERRLOG}"
+
+[ "${RedirectErrors}" = YES ] && exec 2>"${ERRLOG}" 1>&2
+[ "${ShowProdStamp}" = YES ] &&  ShowMsg "${PRODSTAMP}"
+
+CheckFunction main || {
+  ErrMsg "No main()"
+  exit 2
+}
+main "${@}"
+exit "${?}"
+
+#[PART3] Do not remove this line in any circumstances
+:
+#@(#)Title:     Package installation and removal utility
+#@(#)Author:    Gennady F. Bystritsky (gfb@tonesoft.com)
+#@(#)Version:   2.0
+#@(#)Copyright: Tone Software Corporation, Inc. (1999)
+
+PRODSTAMP='
+#############################################################################
+# Package installation/removal. Copyright(c) 1999 Tone Software Corporation #
+#############################################################################
+'
+    RedirectErrors=NO
+ShowCleanupMessage=NO
+     ShowProdStamp=NO
+           SigList="1 2 3 8 15"
+
+main ()
+{
+  eval `EntryPoint 2 main`
+
+  case "${ScriptName}" in
+    request)
+      PerformRequestActions "${@}"
+    ;;
+    preinstall)
+      PerformPreinstallActions "${@}"
+    ;;
+    postinstall)
+      PerformPostinstallActions "${@}"
+    ;;
+    preremove)
+      PerformPreremoveActions "${@}"
+    ;;
+    postremove)
+      PerformPostremoveActions "${@}"
+    ;;
+    i.install)
+      installClassInstall "${@}"
+    ;;
+    r.install)
+      installClassRemove "${@}"
+    ;;
+    i.generate)
+      generateClassInstall "${@}"
+    ;;
+    r.generate)
+      generateClassRemove "${@}"
+    ;;
+  esac
+  status=${?}
+  return ${status}
+}
+
+CheckEnvironment ()
+{
+  eval `EntryPoint 4 CheckEnvironment`
+
+  PATCHLEVEL=`echo ${PATCHLEVEL}|sed -n '/^[0-9][0-9]*$/p'`
+  PRODVER=`echo ${PRODVER}|sed -n '/^[0-9][0-9]*\.[0-9][0-9]*$/p'`
+
+  CheckVars PRODUCT PRODVER PATCHLEVEL PRODLINE PKG PKGINST PKGSAV || {
+    echo "
+      Wrong environment, cannot continue
+    "|ShowBox ERROR
+    return 2
+  }
+  return 0
+}
+
+GetPackageInstance ()
+{
+  eval `EntryPoint 4 GetPackageInstance`
+
+  pkg=${1}
+  pkginfo | ${awk} '{
+    product = $2; sub("[.].*$","",product)
+    if(product == "'"${pkg}"'"){
+      print $2
+    }
+  }'
+}
+
+NormalizeVersion ()
+{
+  eval `EntryPoint 4 NormalizeVersion`
+
+  ${awk} -v version="${1}" '
+    BEGIN{
+      split(version,array,".")
+      major = 0
+      minor = 0
+      if(array[1] ~ /^[0-9]+$/) major = array[1]
+      if(array[2] ~ /^[0-9]+$/) minor = array[2]
+      print major "." minor
+      exit
+    }
+  '
+}
+
+GetPkgVersion ()
+{
+  eval `EntryPoint 4 GetPkgVersion`
+
+  unset version
+  [ ${#} -eq 1 ] && {
+    version=`pkgparam "${1}" PRODVER|sed -n '/^[0-9][0-9]*[.][0-9][0-9]*$/p'`
+  }
+  echo ${version:-0.0}
+}
+
+GetPkgPatchLevel ()
+{
+  eval `EntryPoint 4 GetPkgPatchLevel`
+
+  unset level
+  [ ${#} -eq 1 ] && {
+    version=`pkgparam "${1}" PATCHLEVEL|sed -n '/^[0-9][0-9]*$/p'`
+  }
+  echo ${version:-0}
+}
+
+CheckHigherVersion ()
+{
+  eval `EntryPoint 5 CheckHigherVersion`
+
+  [ ${#} -eq 2 ] && {
+    ver1=${1} ver2=${2}
+    eval `SetInputFields ver1 "."`
+    maj1=${1}
+    min1=${2}
+    eval `SetInputFields ver2 "."`
+    maj2=${1}
+    min2=${2}
+
+    [ ${maj1} -eq 0 -a ${maj2} -ne 0 ] && return 1
+    [ ${maj2} -eq 0 -a ${maj1} -ne 0 ] && return 2
+
+    [ ${maj1} -gt ${maj2} ] && return 1
+    [ ${maj2} -gt ${maj1} ] && return 2
+    
+    [ ${min1} -gt ${min2} ] && return 1
+    [ ${min2} -gt ${min1} ] && return 2
+  }
+  return 0
+}
+
+ReportExtraInstance ()
+{
+  eval `EntryPoint 3 ReportExtraInstance`
+
+  [ ${#} -eq 2 ] && {
+    p1=${1} 
+    p2=${2}
+    pkg=${p1}
+    CheckHigherVersion `GetPkgVersion "${p1}"` `GetPkgVersion "${p2}"`
+    [ ${?} -eq 1 ] && {
+      pkg=${p2}
+    }
+    echo "
+      Too many instances. Remove \"${pkg}\" then try again
+    "|ShowBox ERROR
+  }
+}
+
+FORCED_REMOVE_FILE=/tmp/force_pkgrm
+
+CheckForcedRemove ()
+{
+  eval `EntryPoint 3 CheckForcedRemove`
+
+  [ ${#} -eq 1 ] && {
+    pkg=${1}
+    ls -ld "${FORCED_REMOVE_FILE}" 2>/dev/null |${awk} -v status=1 '{
+      if($0 ~ /^l.* -> Remove '"${pkg}"'$/){
+        status = 0
+      }
+      exit
+    }
+    END{
+      exit(status)
+    }'
+  }
+  return ${?}
+}
+
+ClearForcedRemove ()
+{
+  eval `EntryPoint 3 ClearForcedRemove`
+
+  rm -f "${FORCED_REMOVE_FILE}"
+}
+
+ParseProdSpec ()
+{
+  eval `EntryPoint 3 ParseProdSpec`
+
+  echo "${1}"|${awk} -F/ "${awkLibrary}"' {
+    if(NF>0) {
+      product = trim($1)
+      if(NF>1){
+        version = trim($2)
+        if(version ~ /^[0-9.]+$/){
+          split(version,array,"[.]")
+          major = 0
+          minor = 0
+          if(array[1]) major = array[1]
+          if(array[2]) minor = array[2]
+          ver_num = major "." minor
+        }
+        else{
+          ver_str = version
+        }
+      }
+    }
+    printf("product=\"%s\";\n",product);
+    printf("ver_num=\"%s\";\n",ver_num);
+    printf("ver_str=\"%s\";\n",ver_str);
+    exit
+  }'
+}
+
+CheckDirectDependencies ()
+{
+  eval `EntryPoint 3 CheckDirectDependencies`
+
+  for entry in "${@}"; do
+    eval `ParseProdSpec "${entry}"` # sets product, ver_num, ver_str
+    [ "${product:+set}" = set ] && {
+      list=`GetPackageInstance "${product}"`
+      eval `SetInputFields list`
+      while [ ${#} -ne 0 ]; do
+        instance=${1}
+        version=`pkgparam "${instance}" VERSION 2>/dev/null`
+        [ ${?} -eq 0 ] && {
+          if [ "${ver_num:+set}" = set ]; then
+            version=`NormalizeVersion "${version}"`
+            CheckHigherVersion "${version}" "${ver_num}"
+            [ ${?} -le 1 ] && break
+          elif [ "${ver_str:+set}" = set ]; then
+            v=`echo "${version}"|sed -n "/${ver_str}/p"`
+            [ "${version}" = "${v}" ] && break
+          else
+            break
+          fi
+        }
+        shift
+      done
+      [ ${#} -eq 0 ] && echo "${entry}"
+    }
+  done
+  return 0
+}
+
+CheckReverseDependencies ()
+{
+  eval `EntryPoint 3 CheckReverseDependencies`
+
+  package=${1}
+  pkginfo|while read line; do
+    eval `SetInputFields line`
+    [ ${#} -ge 2 ] || continue
+    instance=${2}
+    list=`pkgparam "${instance}" DEPEND 2>/dev/null`
+    eval `SetInputFields list`
+    for entry in "${@}"; do
+      eval `ParseProdSpec "${entry}"` # sets pruduct, ver_num, ver_str
+      [ "${product}" = "${package}" ] && {
+        echo "${instance}"
+        break
+      }
+    done
+  done
+  return 0
+}
+
+ShowStep ()
+{
+  eval `EntryPoint 9 ShowStep`
+  ShowMsg "** ${*}"
+}
+
+PerformRequestActions ()
+{
+  eval `EntryPoint 2 PerformRequestActions`
+
+  responce_file=${1}
+  >"${responce_file}"
+
+  unset REF_PACKAGE
+
+  CheckEnvironment || {
+    return 1
+  }
+  [ "${ARCH:+set}" = set -a "${ARCH}" != "any" ] && {
+    arch="`GetArchitecture`"
+    [ "${ARCH}" = "${arch}" ] || {
+      echo "
+	Architecture mismach (Package for \"${ARCH}\", actual \"${arch}\")
+      " | ShowBox ERROR
+      return 1
+    }
+  }
+  CheckFunction check_install && {
+    check_install || {
+      ErrMsg "Installation requirements are not met."
+      return 1
+    }
+  }
+  if [ ${PATCHLEVEL} -eq 0 ]; then
+    entry=`GetPackageInstance "${PKG}"`
+    eval `SetInputFields entry`
+    case "${#}" in
+      0)
+        ShowStep "Original installation of <${PKG}>"
+      ;;
+      1)
+        OLDPKGINST=${1}
+        REF_PACKAGE="${OLDPKGINST}"
+        version=`GetPkgVersion "${OLDPKGINST}"`
+        CheckHigherVersion "${version}" "${PRODVER}"
+        case "${?}" in
+          0)
+	    arch=`pkgparam "${REF_PACKAGE}" ARCH`
+	    [ "${ARCH}" = "${arch}" ] || {
+	      echo "
+		Refresh is not possible for different architectures
+		Installed package: '${arch}'
+		Current package:   '${ARCH}'
+	      " | ShowBox ERROR
+	      return 1
+	    }
+            entry=`GetPackageInstance "${PKG}P"`
+	    eval `SetInputFields entry`
+            [ ${#} -ne 0 ] && {
+              {
+                echo "
+                  Refresh is not possible with patches installed
+                  Remove the following packages, then try again:
+                  :
+                "
+                echo ${*}|WrapUp 45
+              }|ShowBox ERROR
+              return 1
+            }
+            ShowStep "Refresh installation of <${PKG}>"
+          ;;
+          1)
+            echo "
+             Downgrade is not allowed (${PRODVER} vs. ${version})
+            "|ShowBox ERROR
+            return 1
+          ;;
+          2)
+            entry=`GetPackageInstance "${PKG}P"`
+	    eval `SetInputFields entry`
+            [ ${#} -ne 0 ] && {
+              {
+                echo "
+                  Upgrade is not possible with patches installed
+                  Remove the following packages, then try again:
+                  :
+                "
+                echo ${*}|WrapUp 45
+              }|ShowBox ERROR
+              return 1
+            }
+            echo "OLDPKGINST=${OLDPKGINST}" >> "${responce_file}"
+            ShowStep "Upgrade installation of <${PKG}>"
+          ;;
+          *)
+            echo "Internal error"|ShowBox ERROR
+            return 1
+          ;;
+        esac
+      ;;
+      *)
+        ReportExtraInstance "${1}" "${2}"
+        return 1
+      ;;
+    esac
+    ShowStep "Checking direct dependencies"
+    list=`CheckDirectDependencies ${DEPEND}`
+    [ "${list:+set}" = set ] && {
+      {
+        echo "
+          The following packages must be installed prior to
+          installation of <${PKG}>:
+          :
+        "
+        echo ${list}|WrapUp 45
+      }|ShowBox WANTED
+      return 1
+    }
+  else
+    main_pkg="${PRODLINE}${PRODUCT}"
+    entry=`GetPackageInstance "${main_pkg}"`
+    eval `SetInputFields entry`
+    case "${#}" in
+      0)
+        echo "
+          No main package <${main_pkg}> installed
+        "|ShowBox ERROR
+        return 1
+      ;;
+      1)
+        MAINPKGINST=${1}
+        REF_PACKAGE="${MAINPKGINST}"
+        version=`GetPkgVersion "${MAINPKGINST}"`
+        CheckHigherVersion "${version}" "${PRODVER}" 
+        [ "${?}" -ne 0 ] && {
+          echo "
+            Main package instance <${MAINPKGINST}> version mismatch
+            ${MAINPKGINST} v.${version}, ${PKGINST} v.${PRODVER}
+          "|ShowBox ERROR
+          return 1
+        }
+        patchlevel=0
+	last_instance="${MAINPKGINST}"
+        entry=`GetPackageInstance "${PKG}"`
+	eval `SetInputFields entry`
+        for instance in "${@}"; do
+          level=`GetPkgPatchLevel "${instance}"`
+          [ "${level}" -gt "${patchlevel}" ] && {
+            patchlevel=${level}
+	    last_instance=${instance}
+          }
+        done
+        if [ "${patchlevel}" -ne "${PATCHLEVEL}" ]; then
+	  if [ "${JUMBO}" = "YES" ]; then
+	    [ "${patchlevel}" -gt "${PATCHLEVEL}" ] && {
+	      echo "
+		Jumbo patch of level ${PATCHLEVEL} cannot be installed
+		because higher patch ${patchlevel} is already present
+	      "|ShowBox ERROR
+	      return 1
+	    }
+	    [ "`pkgparam ${MAINPKGINST} PREVIEW`" = "YES" ] && {
+	      eval `pkgparam -v "${MAINPKGINST}" PRODLINE PRODUCT VERSION`
+	      package="${PRODLINE}${PRODUCT} ${VERSION}"
+	      echo "
+		Preview release of ${package} cannot be patched.
+		Install official release first, please.
+	      "|ShowBox ERROR
+	      return 1
+	    }
+	  else
+	    level=`expr ${patchlevel} + 1`
+	    [ "${level}" -ne "${PATCHLEVEL}" ] && {
+	      echo "
+		Patch level mismatch (${PATCHLEVEL} vs. ${patchlevel})
+	      "|ShowBox ERROR
+	      return 1
+	    }
+	    [ "`pkgparam ${last_instance} PREVIEW`" = "YES" ] && {
+	      eval `pkgparam -v "${last_instance}" PRODLINE PRODUCT VERSION`
+	      package="${PRODLINE}${PRODUCT} ${VERSION}"
+	      echo "
+		Preview release of ${package} cannot be patched.  
+		Install official release first.
+	      "|ShowBox ERROR
+	      return 1
+	    }
+	  fi
+          ShowStep "Applying patch ${PATCHLEVEL} for <${main_pkg}>"
+          echo "MAINPKGINST=${MAINPKGINST}" >> "${responce_file}"
+        else
+	  arch=`pkgparam "${last_instance}" ARCH`
+	  [ "${ARCH}" = "${arch}" ] || {
+	    echo "
+	      Patch refresh is not possible for different architectures
+	      Installed package: '${arch}'
+	      Current package:   '${ARCH}'
+	    " | ShowBox ERROR
+	    return 1
+	  }
+          ShowStep "Refreshing patch ${PATCHLEVEL} for <${main_pkg}>"
+        fi
+      ;;
+      *)
+        ReportExtraInstance "${1}" "${2}"
+        return 1
+      ;;
+    esac
+  fi
+  first_question=true
+  if [ "${REF_PACKAGE:+set}" = set ]; then 
+    #
+    # Extract all required credentials from REF_PACKAGE and save 
+    # them as the package's.
+    #
+    PKGINSTDIR=`pkgparam "${REF_PACKAGE}" PKGINSTDIR`
+    PKGINSTUSR=`pkgparam "${REF_PACKAGE}" PKGINSTUSR`
+    PKGINSTGRP=`pkgparam "${REF_PACKAGE}" PKGINSTGRP`
+  else
+    #
+    # Here we should request installation directory and/or user name.
+    # If the user name does not exist, ask to create and if so request
+    # group name. Creation is performed in preinstall script.
+    #
+    CheckFunction install_directory && {
+      entry=`install_directory` || return 1
+      eval `SetInputFields entry`
+      [ ${#} -eq 2 ] || {
+        echo "
+          Bad responce from install_directory()
+        "|ShowBox "INTERNAL ERROR"
+        return 1
+      }
+      case "${1}" in
+        suggest)
+          PKGINSTDIR=`AskStr "Installation directory?" "${2}"`
+          PKGINSTDIR=`echo /"${PKGINSTDIR}"|sed "s%//*%/%g"`
+          unset first_question
+          CheckFunction check_directory && {
+            check_directory "${PKGINSTDIR}" || {
+              ErrMsg "Unsuitable directory (${PKGINSTDIR})."
+              return 1
+            }
+          }
+        ;;
+        force)
+          PKGINSTDIR=${2}
+        ;;
+        *)
+          echo "
+            Unknown request \"${1}\" from install_directory()
+          "|ShowBox "INTERNAL ERROR"
+          return 1
+        ;;
+      esac
+    }
+    CheckFunction install_user && {
+      entry=`install_user` || return 1
+      eval `SetInputFields entry`
+      [ ${#} -ne 2 -a ${#} -ne 3 ] && {
+        echo "
+          Bad responce from install_user()
+        "|ShowBox "INTERNAL ERROR"
+        return 1
+      }
+      PKGINSTGRP=${3}
+      case "${1}" in
+        suggest)
+          PKGINSTUSR=`AskStr "Installation owner?" "${2}"`
+          unset first_question
+        ;;
+        force)
+          PKGINSTUSR=${2}
+        ;;
+        *)
+          echo "
+            Unknown request \"${1}\" from install_user()
+          "|ShowBox "INTERNAL ERROR"
+          return 1
+        ;;
+      esac
+    }
+    [ "${PKGINSTUSR:+set}" = set ] && {
+      unset NEW_USER NEW_GROUP
+      entry=`
+        id "${PKGINSTUSR}" 2>/dev/null | {
+          sed -n "s/^.*(\(.*\)).*(\(.*\)).*$/\1 \2/p"
+        }
+      `
+      eval `SetInputFields entry`
+      if [ ${#} -eq 2 ]; then
+        PKGINSTUSR=${1}
+        PKGINSTGRP=${2}
+      else
+        AskYesNo "User \"${PKGINSTUSR}\" does not exist. Create?" "yes" || {
+          echo "
+            Cannot continue without user \"${PKGINSTUSR}\" in the system
+          "|ShowBox ERROR
+          return 1
+        }
+        user=${PKGINSTUSR}
+        group=${PKGINSTGRP}
+        PKGINSTGRP=`AskStr "Primary group for user \"${user}\"?" "${group}"`
+        [ "${PKGINSTGRP:+set}" = set ] || {
+          echo "
+            Cannot continue without primary group for user \"${PKGINSTUSR}\"
+          "|ShowBox ERROR
+          return 1
+        }
+        NEW_USER=YES
+        CheckGroupExistence "${PKGINSTGROUP}" || {
+          NEW_GROUP=YES
+        }
+      fi
+    }
+  fi
+  CheckFunction request && {
+    (request) >> "${responce_file}" || return 1
+  }
+  ShowMsg "\nUsing <${PKGINSTDIR}> as package installation directory."
+  {
+    echo "PKGINSTDIR=${PKGINSTDIR}"
+    [ "${PKGINSTUSR:+set}" = set ] && {
+      ShowMsg "Using <${PKGINSTUSR}> as package owner."
+      echo "PKGINSTUSR=${PKGINSTUSR}"
+    }
+    [ "${NEW_USER:+set}" = set ] && {
+      echo "NEW_USER=${NEW_USER}"
+    }
+    [ "${NEW_GROUP:+set}" = set ] && {
+      echo "NEW_GROUP=${NEW_GROUP}"
+    }
+    [ "${PKGINSTGRP:+set}" = set ] && {
+      echo "PKGINSTGRP=${PKGINSTGRP}"
+    }
+    [ "${MAINPKGINST:+set}" = set ] && {
+      echo "MAINPKGINST=${MAINPKGINST}"
+    }
+    [ "${OLDPKGINST:+set}" = set ] && {
+      echo "OLDPKGINST=${OLDPKGINST}"
+    }
+  } >> "${responce_file}"
+  return 0
+}
+
+PerformPreinstallActions ()
+{
+  eval `EntryPoint 2 PerformPreinstallActions`
+
+  CheckEnvironment || {
+    return 1
+  }
+  CheckFunction preinstall && {
+    (preinstall) || return 1
+  }
+  [ "${PATCHLEVEL}" -eq 0 -a "${UPDATE}" != yes ] && {
+    [ "${NEW_GROUP}" = YES ] && {
+      CheckGroupExistence "${PKGINSTGRP}" || {
+        groupadd "${PKGINSTGRP}" || {
+          echo "
+            Creation of group \"${PKGINSTGRP}\" failed
+          "|ShowBox ERROR
+          return 1
+        }
+        ShowStep "Group name \"${PKGINSTGRP}\" created."
+      }
+    }
+    [ "${NEW_USER}" = YES ] && {
+      CheckVars PKGINSTDIR PKGINSTUSR PKGINSTGRP || return 1
+      id "${PKGINSTUSR}" >/dev/null 2>&1 || {
+        dir=`echo ${BASEDIR}/${PKGINSTDIR}|sed "s%//*%/%g"`
+        useradd -g "${PKGINSTGRP}" -d "${dir}" "${PKGINSTUSR}" || {
+          echo "
+            Creation of user \"${PKGINSTUSR}\" failed
+          "|ShowBox ERROR
+          return 1
+        }
+        ShowStep "User name \"${PKGINSTUSR}\" created."
+      }
+    } 
+  }
+  return 0
+}
+
+PerformPostinstallActions ()
+{
+  eval `EntryPoint 2 PerformPostinstallActions`
+
+  CheckEnvironment || {
+    return 0
+  }
+  CheckFunction postinstall && {
+    (postinstall)
+  }
+  [ "${OLDPKGINST:+set}" = set ] && {
+    echo "
+      Please remove \"${OLDPKGINST}\" to complete upgrade
+    "|ShowBox REMINDER
+  }
+  CheckForcedRemove "${PKGINST}" && ClearForcedRemove
+  return 0
+}
+
+PerformPreremoveActions ()
+{
+  eval `EntryPoint 2 PerformPreremoveActions`
+
+  CheckEnvironment || {
+    return 0
+  }
+  FORCED=NO export FORCED
+  if CheckForcedRemove "${PKGINST}"; then
+    ClearForcedRemove
+    [ "${PATCHLEVEL}" -eq 0 ] && {
+      entry=`GetPackageInstance "${PKG}"`
+      eval `SetInputFields entry`
+      [ ${#} -eq 2 ] && {
+        [ "${1}" = "${PKGINST}" ] && {
+	  shift
+	}
+        version=`GetPkgVersion "${1}"`
+        CheckHigherVersion "${version}" "${PRODVER}"
+        [ ${?} -eq 1 ] && {
+          ShowStep "Performing clean-up removal"
+          return 0
+        }
+      }
+    }
+    ShowStep "Performing forced removal"
+    FORCED=YES
+  else
+    if [ "${PATCHLEVEL}" -eq 0 ]; then
+      entry=`GetPackageInstance "${PKG}"`
+      eval `SetInputFields entry`
+      case "${#}" in
+        1)
+          entry=`GetPackageInstance "${PKG}P"`
+	  eval `SetInputFields entry`
+          [ ${#} -ne 0 ] && {
+            {
+              echo "
+                The main package cannot be removed with patches present.
+                Remove the following packages, then try again:
+                :
+              "
+              echo ${*}|WrapUp 45
+            }|ShowBox ERROR
+            return 1
+          }
+          ShowStep "Checking reverse dependencies"
+          list=`CheckReverseDependencies "${PKG}"`
+          [ "${list:+set}" = set ] && {
+            {
+              echo "
+                Package <${PKGINST}> may not be removed because
+                the following packages depend on it:
+                :
+              "
+              echo ${list}|WrapUp 45
+            }|ShowBox DEPENDENTS
+            return 1
+          }
+        ;;
+        2)
+          [ "${1}" = "${PKGINST}" ] && {
+	    shift
+	  }
+          OLDPKGINST=${1}
+          version=`GetPkgVersion "${OLDPKGINST}"`
+          CheckHigherVersion "${version}" "${PRODVER}"
+          [ ${?} -eq 1 ] && {
+            #
+            # Here we bypass custom preremove script because this is
+            # just a clean-up after upgrade.
+            # 
+            ShowStep "Performing clean-up removal"
+            return 0
+          }
+          echo "
+            An older version of the package present.
+            Remove <${OLDPKGINST}> first.
+          "|ShowBox ERROR
+          return 1
+        ;;
+        *)
+          echo "Internal error"|ShowBox ERROR
+          return 1
+        ;;
+      esac
+    else
+      patchlevel=0
+      entry=`GetPackageInstance "${PKG}"`
+      eval `SetInputFields entry`
+      for instance in "${@}"; do
+        level=`GetPkgPatchLevel "${instance}"`
+        [ "${level}" -gt "${patchlevel}" ] && {
+          PATCHINST=${instance}
+          patchlevel=${level}
+        }
+      done
+      [ "${patchlevel}" -ne "${PATCHLEVEL}" ] && {
+        echo "
+          Only the latest patch may be removed.
+          Please remove <${PATCHINST}> first.
+        "|ShowBox ERROR
+        return 1
+      }
+    fi
+  fi
+  CheckFunction preremove && {
+    (preremove)
+    status=${?}
+    [ "${FORCED}" = NO ] && {
+      return ${status}
+    }
+  }
+  return 0
+}
+
+PerformPostremoveActions ()
+{
+  eval `EntryPoint 2 PerformPostremoveActions`
+
+  CheckEnvironment || {
+    return 0
+  }
+  [ "${PATCHLEVEL}" -eq 0 ] && {
+    entry=`GetPackageInstance "${PKG}"`
+    eval `SetInputFields entry`
+    [ ${#} -ne 1 ] && {
+      #
+      # Here we bypass a custom postinstall script because this is just
+      # a clean-up after upgrade or forsed removal.
+      #
+      return 0
+    }
+  }
+  CheckFunction postremove && {
+    (postremove)
+  }
+  [ "${NEW_USER}" = YES ] && {
+    if userdel "${PKGINSTUSR}"; then
+      ShowStep "User name \"${PKGINSTUSR}\" deleted."
+    else
+      echo "
+        Cannot delete user name \"${PKGINSTUSR}\" from the system.
+        Use \`userdel' to remove it manually.
+      "|ShowBox "REMINDER"
+    fi
+  }
+  [ "${NEW_GROUP}" = YES ] && {
+    if groupdel "${PKGINSTGRP}"; then
+      ShowStep "Group name \"${PKGINSTGRP}\" deleted."
+    else
+      echo "
+        Cannot delete group name \"${PKGINSTGRP}\" from the system.
+        Use \`groupdel' to remove it manually.
+      "|ShowBox "REMINDER"
+    fi
+  }
+  return 0
+}
+
+installClassInstall ()
+{
+  eval `EntryPoint 2 installClassInstall`
+
+  CheckEnvironment || {
+    return 0
+  }
+  INSTALL_LIST="${PKGSAV}/install-list"
+  PKGSAV="${PKGSAV}/pkg" export PKGSAV
+  while read line; do
+    eval `SetInputFields line`
+    [ ${#} -eq 2 ] && {
+      source=${1}
+      target=${2}
+      [ -f "${source}" ] && {
+	[ "${PATCHLEVEL}" = 0 ] || {
+	  if [ -f "${target}" ]; then
+	    save_target="${PKGSAV}/${target}"
+	    if [ ! -f "${save_target}" ]; then
+	      ShowMsg "... Replacing \"${target}\""
+	      mkdir -p `dirname "${save_target}"`
+	      compress -c "${target}" > "${save_target}"
+	      echo "${target}" 1>&9
+	    else
+	      ShowMsg "... Refreshing \"${target}\""
+	    fi
+	  else
+	    ShowMsg "... Installing \"${target}\""
+	  fi
+	}
+        cp "${source}" "${target}"
+      }
+    }
+  done 9>> "${INSTALL_LIST}"
+  return 0
+}
+
+installClassRemove ()
+{
+  eval `EntryPoint 2 installClassRemove`
+
+  CheckEnvironment || {
+    return 0
+  }
+  INSTALL_LIST="${PKGSAV}/install-list"
+  PKGSAV="${PKGSAV}/pkg" export PKGSAV
+  while read line; do
+    eval `SetInputFields line`
+    [ ${#} -eq 1 ] && {
+      target=${1}
+      if [ -f "${target}" ]; then
+	save_target="${PKGSAV}/${target}"
+	[ -f "${save_target}" ] && {
+	  [ -f "${target}" ] && {
+	    ShowMsg "... Restoring \"${target}\""
+	    uncompress -c < "${save_target}" > "${target}"
+	  }
+	  rm -f "${save_target}"
+	  continue
+	}
+        ShowMsg "... Removing \"${target}\""
+        rm -f "${target}"
+      elif [ -d "${target}" ]; then
+        ShowMsg "... Removing \"${target}\""
+        rmdir "${target}"
+      fi
+    }
+  done
+  [ -f "${INSTALL_LIST}" ] && {
+    sort -u "${INSTALL_LIST}" | while read target; do
+      [ "${target:+set}" = set ] && {
+	save_target="${PKGSAV}/${target}"
+	if [ -f "${save_target}" ]; then
+	  [ -f "${target}" ] && {
+	    ShowMsg "... Restoring \"${target}\""
+	    uncompress -c < "${save_target}" > "${target}"
+	  }
+	  rm "${save_target}"
+	elif [ -d "${save_target}" ]; then
+	  rmdir "${save_target}"
+	fi
+      }
+    done
+    rm -f "${INSTALL_LIST}"
+  }
+  return 0
+}
+
+generateClassInstall ()
+{
+  eval `EntryPoint 2 generateClassInstall`
+
+  CheckEnvironment || {
+    return 0
+  }
+  GENERATE_LIST="${PKGSAV}/generate-list"
+  TEMPFILE="${PKGSAV}/generate.temp.${$}"
+  UpdateCleanupList "${TEMPFILE}"
+  PKGSAV="${PKGSAV}/pkg" export PKGSAV
+  while read line; do
+    eval `SetInputFields line`
+    [ ${#} -eq 2 ] && {
+      source=${1}
+      target=${2}
+      [ -f "${source}" ] && {
+	if [ -f "${target}" ]; then
+	  ShowMsg "... Modifying \"${target}\""
+	else
+	  ShowMsg "... Building \"${target}\""
+	  touch "${target}"
+	fi 
+	sh "${source}" install "${target}" <"${target}" >"${TEMPFILE}" && {
+	  [ -s "${TEMPFILE}" ] && {
+	    mv "${TEMPFILE}" "${target}"
+	    echo "${target}" 1>&9
+	  }
+	}
+      }
+    }
+  done 9>> "${GENERATE_LIST}"
+  return 0
+}
+
+generateClassRemove ()
+{
+  eval `EntryPoint 2 generateClassRemove`
+
+  CheckEnvironment || {
+    return 0
+  }
+  GENERATE_LIST="${PKGSAV}/generate-list"
+  TEMPFILE="${PKGSAV}/generate.temp.${$}"
+  UpdateCleanupList "${TEMPFILE}"
+  PKGSAV="${PKGSAV}/pkg" export PKGSAV
+  while read line; do
+    eval `SetInputFields line`
+    [ ${#} -eq 1 ] && {
+      target=${1}
+      if [ -f "${target}" ]; then
+        ShowMsg "... Removing \"${target}\""
+        rm -f "${target}"
+      elif [ -d "${target}" ]; then
+        ShowMsg "... Removing \"${target}\""
+        rmdir "${target}"
+      fi
+    }
+  done
+  [ -f "${GENERATE_LIST}" ] && {
+    sort -u "${GENERATE_LIST}" | while read target; do
+      [ -f "${target}" ] && {
+	sh "${source}" remove "${target}" <"${target}" >"${TEMPFILE}" && {
+	  [ -s "${TEMPFILE}" ] && {
+	    ShowMsg "... Restoring \"${target}\""
+	    mv "${TEMPFILE}" "${target}"
+	    echo "${target}"
+	  }
+	}
+      }
+    done
+    rm -f "${GENERATE_LIST}"
+  }
+  return 0
+}
+
+:<<::
+  INSTALLATION CHECK (performed in "request" action)
+    Main package
+    ------------
+      o No package installed
+        - Check dependencies
+        + Proceed with installation
+      o Package present
+        o The same version is being installed
+          o No patches
+            - Check dependencies
+            - Set notification of update or rely on pkgadd
+            + Proceed with installation
+          o Patches present
+            - FAIL: Remove patches and try again
+        o A lower version is being installed
+          - FAIL: Downgrade is not allowed
+        o A higher version is being installed
+          o Patches to the current package are present
+            - FAIL: Remove patches and try again
+          o No patches
+            o Third instance
+              - FAIL: Remove the very first instance of the package
+            o Second instance
+              - Check dependencies
+              - Save upgraded package instance name in OLDPKGINST
+              + Proceed with installation
+              - Remind to delete upgraded package with saved name
+    Patch
+    -----
+      o No main package
+        - FAIL: Main package required
+      o Main package of different version
+        - FAIL: Version mismatch
+      o Main package of the same version. Consider the case when there 
+        are two instances of the main package (when the older one is not 
+        removed yet). Take the latest one.
+        o The new patch level is the same as the current one
+          - Set notification of update or rely on pkgadd
+          - Save main package instance name in MAINPKGINST
+          + Proceed with installation
+        o The new patch level is 1 greater than the current one
+          - Save main package instance name in MAINPKGINST
+          + Proceed with installation
+        o The new patch level is not 1 greater than the current one
+          - FAIL: Patch level mismatch
+  
+  REMOVAL CHECK (performed in "preremove" action)
+    Main package
+    ------------
+      o A newer version of the package present (check both in "preremove"
+        and "postremove" actions)
+        - Do not call a custom action
+        + Proceed with removal
+      o An older version of the package present 
+        - FAIL: Remove the older instance first 
+      o No newer or older versions
+        o Patches present
+          - FAIL: Remove patches first
+        o No patches
+          o Check reverse dependencies failed
+            - FAIL: There are packages that depend on this one (show list)
+          o Check reverse dependencies succeeded
+            + Proceed with removal
+    Patch
+    -----
+      o Patch level is not the latest one
+        - FAIL: Only the latest patch may be removed (show name)
+      o Patch level is the latest one
+        + Proceed with removal
+  
+  FORCED REMOVAL
+    If "/tmp/force_pkgrm" exists and is a symbolic link to the string
+    "Remove <package instance name>", then do not check anything, proceed 
+    with removal, and always return success. Remove such file in "postremove"
+    and "postinstall".
+::

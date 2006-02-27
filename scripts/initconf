@@ -1,0 +1,399 @@
+#!/bin/ksh
+#
+#            Tone Software Corporation BSD License ("License")
+# 
+#                        Software Build Environment
+#                        
+# Please read this License carefully before downloading this software. By
+# downloading or using this software, you are agreeing to be bound by the
+# terms of this License. If you do not or cannot agree to the terms of
+# this License, please do not download or use the software.
+# 
+# A set of Jam configuration files and a Jam front-end for advanced
+# software building with automatic dependency checking for the whole
+# project. Provides a hierarchical project description while performing
+# build procedures without changing directories. The resulting domain
+# language changes emphasis from how to build to what to build. Provides
+# separation of compilation artifacts (object files, binaries,
+# intermediate files) from the original sources. Comes standard with
+# ability to build programs, test suites, static and shared libraries,
+# shared modules, code generation, and many others. Provides the bridge to
+# ANT for building Java, with abilities to build JNI libraries.
+# 
+# Copyright (c) 2003, 2005, Tone Software Corporation
+# 
+# All rights reserved.
+# 
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are
+# met:
+#   * Redistributions of source code must retain the above copyright
+#     notice, this list of conditions and the following disclaimer. 
+#   * Redistributions in binary form must reproduce the above copyright
+#     notice, this list of conditions and the following disclaimer in the
+#     documentation and/or other materials provided with the distribution. 
+#   * Neither the name of the Tone Software Corporation nor the names of
+#     its contributors may be used to endorse or promote products derived
+#     from this software without specific prior written permission. 
+# 
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS
+# IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+# TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
+# PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER
+# OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+# EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+# PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+# PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+# LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+# NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+# 
+
+    IDENT="@(#)Title:     Inittab configuration"
+   AUTHOR="@(#)Author:    Gennady F. Bystritsky (gfb@tonesoft.com)"
+  VERSION="@(#)Version:   1.0"
+COPYRIGHT="@(#)Copyright: Tone Software Corporation, Inc. (1998)"
+PRODSTAMP="
+######################################################################
+# Inittab configuration. Copyright(c) 1998 Tone Software Corporation #
+######################################################################
+"
+unset ERRLOG
+
+RedirectErrors=YES
+ ShowProdStamp=NO
+       SigList="1 2 3 8 15"
+
+PrintUsage () 
+{
+  echo "USAGE: $ScriptName [-x<debug level>][-l<labels>][-pn] {stop|start}" 1>&4
+}
+
+CleanUp () 
+{
+  eval `EntryPoint 3`
+  [ "${ERRLOG:+set}" = set ] && rm -f "$ERRLOG"
+}
+
+INITTAB=/etc/inittab
+
+main () 
+{
+  unset LABEL_LIST PRINT_LABELS TOPDIR DONOTHING
+  [ $# -eq 0 ] || {
+    while getopts "x:l:pnt:" opt; do
+      case "$opt" in
+        x)
+          DebugLevel=$OPTARG
+          [ "$DebugLevel" -ge 1 ] && {
+            exec 1>&3 2>&4
+          }
+        ;;
+        l)
+          LABEL_LIST=$OPTARG
+        ;;
+        p)
+          PRINT_LABELS=YES
+        ;;
+        n)
+          DONOTHING=YES
+        ;;
+        t)
+          TOPDIR=$OPTARG
+        ;;
+        *) 
+          PrintUsage
+          return 2
+        ;;
+      esac
+    done
+    shift `expr $OPTIND - 1`
+  }
+  eval `EntryPoint 1`
+  [ $# -ge 1 ] || {
+    PrintUsage
+    return 2
+  }
+  action=$1
+  shift
+  case "$action" in
+    start)
+      startProduct "$@"
+    ;;
+    stop)
+      stopProduct "$@"
+    ;;
+    *)
+      PrintUsage
+      return 2
+    ;;
+  esac
+  return $?
+}
+
+sp0="[ 	]*"
+sp_="[ 	][ 	]*"
+nsp="[^ 	:][^ 	:]*"
+
+findLabels ()
+{
+  eval `EntryPoint 3`
+  [ $# -eq 0 ] || {
+    action="${sp0}${1}${sp0}"
+    shift
+    exec < "$INITTAB"
+    if [ $# -ne 0 ]; then
+      for p in "$@"; do
+        pattern=`echo "$p"|sed "s/^${sp_}//"`
+        case "$pattern" in
+          /*)
+            pattern="${sp0}${pattern} .*"
+          ;;
+          *)
+            pattern="${sp0}${TOPDIR:-.*}/${pattern} .*"
+          ;;
+        esac
+        pattern=`echo "$pattern"|sed "s%//*%/%"`
+        sed -n "s%^${sp0}\(${nsp}\)${sp0}:[^:]*:${action}:${pattern}$%\1%p"
+      done
+    else
+      pattern=`echo "${sp0}${TOPDIR}/[^ 	/][^ /	]* .*"|sed "s%//*%/%"`
+      sed -n "s%^${sp0}\(${nsp}\)${sp0}:[^:]*:${action}:${pattern}$%\1%p"
+    fi
+  }
+}
+
+filterLabels ()
+{
+  eval `EntryPoint 3`
+
+  while read label; do
+    if [ "${LABEL_LIST:+set}" = set ]; then
+      for l in $LABEL_LIST; do
+        [ "$l" = "$label" ] && {
+          echo "$label"
+          break;
+        }
+      done
+    else
+      case "$label" in
+        \#*) 
+        ;;
+        *)
+          echo $label
+        ;;
+      esac
+    fi
+  done
+}
+
+printLabels ()
+{
+  [ "$PRINT_LABELS" = YES ] && {
+    for label in "$@"; do
+      ShowMsg "$label"
+    done
+  }
+}
+
+setAction ()
+{
+  eval `EntryPoint 3`
+
+  [ $# -eq 0 ] || {
+    action=$1
+    shift
+    [ $# -eq 0 ] || {
+      for label in "$@"; do
+        echo "1,\$s/^\(${sp0}${label}${sp0}:[^:]*\):[^:]*:/\1:${action}:/"
+      done
+      echo "w\nq"
+    }|{
+      [ "$DONOTHING" = YES ] || {
+        ed - "$INITTAB" || {
+          ErrMsg "Cannot edit \"$INITTAB\""
+          return 3
+        }
+        line=`init q 2>&1` || {
+          ErrMsg "$line"
+          return 3
+        }
+      }
+    }
+  }
+}
+
+startProduct ()
+{
+  eval `EntryPoint 2`
+
+  LABELS=`findLabels off "$@"|filterLabels`
+  setAction respawn $LABELS && {
+    printLabels $LABELS
+  }
+}
+
+stopProduct ()
+{
+  eval `EntryPoint 2`
+  
+  LABELS=`findLabels respawn "$@"|filterLabels`
+  [ "${LABELS:+set}" = set ] && {
+    setAction off $LABELS && {
+      printLabels $LABELS
+      [ "$DONOTHING" = "YES" ] || {
+        sleep 3
+      }
+    }
+    return $?
+  }
+  return 0
+}
+
+##################
+# Script Library #
+##################
+
+ScriptName=`basename $0`; status=0; umask 0
+AWK=nawk; { $AWK ''; } >/dev/null 2>&1 || AWK=awk
+
+> "${ERRLOG:=/tmp/$ScriptName.$$}"
+exec 3>&1 4>&2 
+[ "$RedirectErrors" = YES ] && exec 2>"$ERRLOG" 1>&2
+
+UPPER="[A-Z]"; LOWER="[a-z]"
+tr "[A-Z]" "[a-z]" </dev/null 1>&0 2>&1 || {
+  UPPER="[:upper:]"; LOWER="[:lower:]"
+}
+
+tolower () 
+{
+  echo $*|tr "$UPPER" "$LOWER"
+}
+
+toupper () 
+{
+  echo $*|tr "$LOWER" "$UPPER"
+}
+
+ErrMsg () 
+{
+  echo "$ScriptName: $*" 1>&4 2>&1
+}
+
+ShowMsg () 
+{
+  echo "$*" 1>&3 2>&4
+}
+
+runEcho ()
+{
+  ShowMsg "$*"
+  "$@" 1>&3 2>&4
+  status=$?
+  return $status
+}
+
+GenDirPath () 
+{
+  [ $# -eq 1 ] && {
+    (cd "$1">/dev/null 2>&1  && pwd)
+  }
+  return $?
+}
+
+ShowProgress () 
+{
+  cnt=0; max=${2:-75}
+  while read line;do
+    [ "$cnt" -eq 0 ] && ShowMsg "${1:-Doing} \c"
+    ShowMsg ".\c"; cnt=`expr $cnt + 1`
+    [ $cnt -gt "$max" ] && {
+      cnt=0; ShowMsg;
+    }
+  done
+  [ $cnt -eq 0 ] || ShowMsg
+}
+
+PrintVars () 
+{
+  for v in "$@"; do
+    eval echo $v=\$$v
+  done
+}
+
+VerifyDir () 
+{
+  eval test -d "$1" -a -r "$1"; return $?
+}
+
+VerifyFile () 
+{
+  eval test -f "$1" -a -r "$1"; return $?
+}
+
+VerifyProg () 
+{
+  eval test -f "$1" -a -x "$1"; return $?
+}
+
+ExtractValues () 
+{
+  [ $# -gt 1 ] && {
+    file=$1; unset pattern; shift
+    for arg
+    do
+      arg=`echo $arg|sed -n '/^[a-zA-Z][a-zA-Z1-9_]*$/p'`
+      [ "${arg:+set}" = set ] && {
+        [ "${pattern:+set}" = set ] && {
+          pattern="${pattern};"
+        }
+        search='^[ 	]*'"${arg}"'=\([^`;]*\)[ 	]*$'
+        replace="${arg}="\''\1'\'
+        pattern="${pattern}s/$search/$replace/gp"
+      }
+    done
+    [ "${pattern:+set}" = set ] && VerifyFile "$file" && {
+      eval `sed -n "$pattern"<"$file"`
+    }
+  }
+}
+
+EntryPoint () 
+{
+  [ "${DebugLevel:=0}" -ge "${1:-1}" ] && {
+    echo 'echo "[Function: $0]" 1>&2; set -xv'
+  }
+}
+
+AwkLibrary='
+  function norm(str){
+    while(substr(str,1,1)==" ") str = substr(str,2);
+    while(substr(str,length(str),1)==" ")
+      str = substr(str,1,length(str)-1)
+    return str
+  }
+'
+
+trap CleanUp 0 $SigList
+[ "$ShowProdStamp" = YES ] &&  echo "$PRODSTAMP" 1>&4
+
+main "$@"
+exit $?
+
+#############
+# TEMPLATES #
+#############
+
+Fun () 
+{
+  eval `EntryPoint 5`
+  return 0
+}
+
+$AWK '
+  '"$AwkLibrary"'
+'
+
+#############
+#############

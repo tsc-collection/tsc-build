@@ -1,0 +1,525 @@
+#!/bin/ksh
+#
+#            Tone Software Corporation BSD License ("License")
+# 
+#                        Software Build Environment
+#                        
+# Please read this License carefully before downloading this software. By
+# downloading or using this software, you are agreeing to be bound by the
+# terms of this License. If you do not or cannot agree to the terms of
+# this License, please do not download or use the software.
+# 
+# A set of Jam configuration files and a Jam front-end for advanced
+# software building with automatic dependency checking for the whole
+# project. Provides a hierarchical project description while performing
+# build procedures without changing directories. The resulting domain
+# language changes emphasis from how to build to what to build. Provides
+# separation of compilation artifacts (object files, binaries,
+# intermediate files) from the original sources. Comes standard with
+# ability to build programs, test suites, static and shared libraries,
+# shared modules, code generation, and many others. Provides the bridge to
+# ANT for building Java, with abilities to build JNI libraries.
+# 
+# Copyright (c) 2003, 2005, Tone Software Corporation
+# 
+# All rights reserved.
+# 
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are
+# met:
+#   * Redistributions of source code must retain the above copyright
+#     notice, this list of conditions and the following disclaimer. 
+#   * Redistributions in binary form must reproduce the above copyright
+#     notice, this list of conditions and the following disclaimer in the
+#     documentation and/or other materials provided with the distribution. 
+#   * Neither the name of the Tone Software Corporation nor the names of
+#     its contributors may be used to endorse or promote products derived
+#     from this software without specific prior written permission. 
+# 
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS
+# IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+# TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
+# PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER
+# OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+# EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+# PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+# PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+# LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+# NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+# 
+
+#@(#)Title:     Prepare installation utility
+#@(#)Author:    Gennady F. Bystritsky (gfb@tonesoft.com)
+#@(#)Version:   1.1
+#@(#)Copyright: Tone Software Corporation, Inc. (1999)
+
+PRODSTAMP='
+#############################################################################
+# Prepare installation utility. Copyright(c) 1998 Tone Software Corporation #
+#############################################################################
+'
+DESCRIPTION="
+  Script to build packages.
+"
+ARGUMENTS="
+  [-x<debug level>][-h][-t<product line>[-l<level>]
+  [-s<source dir>][-b<binary dir>][-d<dest dir>][-p<patch dir>]
+  {release|jumbo-release|package|jumbo-package} <package name>
+"
+    RedirectErrors=YES
+     ShowProdStamp=NO
+ShowCleanupMessage=YES
+           SigList="1 2 3 8 15"
+
+main () 
+{
+  eval `EntryPoint 2 main`
+
+  PATH=${PATH}:${ScriptDir} export PATH
+  unset CDPATH
+
+  unset SRCTOP PATCHINFODIR DESTDIR BINTOP ACTION PKGNAME 
+  unset PKGPRODLINE JUMBO
+
+  TEMPSTORAGE="/tmp/${ScriptName}.depot.${$}"
+
+  UpdateCleanupList "${TEMPSTORAGE}-1"
+  UpdateCleanupList "${TEMPSTORAGE}-2"
+
+  ParseCommandParameters "s:d:b:p:t:l:" "${@}" || {
+    PrintUsage
+    return 2
+  }
+  eval `EntryPoint 2 main`
+
+  [ "${REQUIRED_LEVEL:+set}" = set ] && {
+    REQUIRED_LEVEL=`expr ${REQUIRED_LEVEL} + 0`
+    [ "${REQUIRED_LEVEL:+set}" = set ] || {
+      ErrMsg "Bad patch level specification (-l ${2})"
+      return 3
+    }
+  }
+  case "${ACTION}" in
+    release)
+      doRelease
+    ;;
+    jumbo-release)
+      JUMBO="yes"
+      doRelease
+    ;;
+    package)
+      doPackage
+    ;;
+    jumbo-package)
+      JUMBO="yes"
+      doPackage
+    ;;
+    *)
+      PrintUsage
+      return 2
+    ;;
+  esac
+  return ${?}
+}
+
+OnOption ()
+{
+  eval `EntryPoint 6 OnOption`
+
+  case "${1}" in
+    t)
+      PKGPRODLINE=`toupper ${2}`
+    ;;
+    b)
+      BINTOP=${2}
+    ;;
+    d)
+      DESTDIR=${2}
+    ;;
+    p)
+      PATCHINFODIR=${2}
+    ;;
+    l)
+      REQUIRED_LEVEL=${2}
+    ;;
+    s)
+      SRCTOP=${2}
+    ;;
+    *) 
+      return 2
+    ;;
+  esac
+  return 0
+}
+
+OnArguments ()
+{
+  eval `EntryPoint 6 OnArguments`
+
+  [ ${#} -eq 2 ] || {
+    return 2
+  }
+  ACTION=${1}
+  PKGNAME=${2}
+  return 0
+}
+
+doRelease ()
+{
+  eval `EntryPoint 3 doRelease`
+
+  checkEnvironment && {
+    ShowMsg "Next PATCHLEVEL: ${PATCHLEVEL}"
+    checkSourceTree && makePackage release && createPatchLevel && {
+      unset TARGET_PACKAGE
+    }
+  }
+  return ${?}
+}
+
+doPackage ()
+{
+  eval `EntryPoint 3 doPackage`
+
+  checkEnvironment && { 
+    makePackage preview && {
+      unset TARGET_PACKAGE
+    }
+  }
+  return ${?}
+}
+
+makePackage ()
+{
+  eval `EntryPoint 4 makePackage`
+
+  case "${1}" in
+    preview)
+      suffix="w"
+      mkdistr_options="-w"
+    ;;
+    release)
+      unset suffix mkdistr_options
+    ;;
+    *)
+      return 1
+    ;;
+  esac
+  package=`BuildPackageName "${PATCHLEVEL}" w`
+  rm -f "${DESTDIR}/${package}"
+  [ "${PATCHLEVEL}" -gt 1 ] && {
+    package=`BuildPackageName "${PATCHLEVEL}" w j`
+    rm -f "${DESTDIR}/${package}"
+  }
+  [ "${DebugLevel:+set}" = set ] && {
+    mkdistr_options="${mkdistr_options} -x${DebugLevel}"
+  }
+  if [ "${JUMBO}" = "yes" -a "${PATCHLEVEL}" -gt 1 ]; then
+    package=`BuildPackageName "${PATCHLEVEL}" "${suffix}" "j"`
+    mkdistr_options="${mkdistr_options} -j"
+  else
+    package=`BuildPackageName "${PATCHLEVEL}" "${suffix}"`
+  fi
+  ShowMsg "Package: ${package}"
+  prepChangedList && copyChangedFiles && {
+    TARGET_PACKAGE="${DESTDIR}/${package}"
+    UpdateCleanupList '${TARGET_PACKAGE}'
+    runEcho mkdistr ${mkdistr_options} \
+      -t "${PKGPRODLINE}" -v "${PRODVERSION}" -l "${PATCHLEVEL}" \
+      -b "${BINTOP}/pkg" -s "${SRCTOP}/pkginfo" -d "${DESTDIR}" \
+      -c "${BINTOP}/perms" "${PKGNAME}" "${package}" 
+  }
+  return ${?}
+}
+
+checkEnvironment ()
+{
+  eval `EntryPoint 4 checkEnvironment`
+
+  : ${SRCTOP:=.} ${BINTOP:=.} ${DESTDIR:=.}
+  mkdir -p "${DESTDIR}" >/dev/null 2>&1
+  
+  SRCTOP=`GenDirPath ${SRCTOP}`
+  BINTOP=`GenDirPath ${BINTOP}`
+  DESTDIR=`GenDirPath ${DESTDIR}`
+
+  CheckVars SRCTOP DESTDIR BINTOP || {
+    return 3
+  }
+  [ "${DebugLevel}" -ge 1 ] && {
+    PrintVars SRCTOP BINTOP DESTDIR
+  }
+  [ "${SRCTOP}" = "${BINTOP}" ] && {
+    ErrMsg "Source and binary directories should not be the same."
+    return 4
+  }
+  [ "${SRCTOP}" = "${DESTDIR}" ] && {
+    ErrMsg "Source and destination directories should not be the same."
+    return 4
+  }
+  cd "${SRCTOP}" || {
+    ErrMsg "Cannot access source directory."
+    return 5
+  }
+  entry=`prodinfo -nvpb`
+  eval `SetInputFields entry`
+  [ "${#}" -eq 4 ] || {
+    ErrMsg "Cannot obtain product info (check source directory)."
+    return 5
+  }
+  PRODNAME=${1}
+  PRODVERSION=${2}
+  PATCHLEVEL=${3}
+  PRODBASEDEPOT=${4}
+
+  [ "${REQUIRED_LEVEL:+set}" = set ] && {
+    [ "${REQUIRED_LEVEL}" -ge "${PATCHLEVEL}" ] && {
+      ErrMsg "Required patch level too high, must be ${PATCHLEVEL} or less."
+      return 6
+    }
+    PATCHLEVEL=${REQUIRED_LEVEL}
+  }
+  PREVPATCHLEVEL=`expr "${PATCHLEVEL}" - 1`
+  ARCH=`sysid`
+
+  PATCHINFODIR="${PATCHINFODIR:-.}/${ARCH}/${PRODNAME}/${PRODVERSION}"
+  mkdir -p "${PATCHINFODIR}" >/dev/null 2>&1
+
+  PATCHINFODIR=`GenDirPath ${PATCHINFODIR}`
+  CheckVars PATCHINFODIR || {
+    ErrMsg "Cannot acces patch info directory."
+    return 5
+  }
+  return 0
+}
+
+checkSourceTree ()
+{
+  eval `EntryPoint 4 checkSourceTree`
+
+  cd "${SRCTOP}" && {
+    ShowMsg "Looking for source files being edited"
+    p4 opened | egrep "^${PRODBASEDEPOT}" | {
+      tee "${TEMPSTORAGE}-1" > /dev/null # |ShowProgress
+    }
+    [ -s "${TEMPSTORAGE}-1" ] && {
+      echo "
+        Not saved files found. Use \"p4 opened -a\" for details
+      " | ShowBox FATAL
+      return 1
+    }
+    ShowMsg "Looking for source files not in repository"
+    p4 sync -nf ./... | sed -n 's%^.*\('"`pwd`"'.*\)$%\1%p' | sort -u | {
+      tee "${TEMPSTORAGE}-1"  > /dev/null # | ShowProgress
+    }
+    find `pwd` -type f -print | sort | {
+      tee "${TEMPSTORAGE}-2"  > /dev/null # | ShowProgress
+    }
+    diff "${TEMPSTORAGE}-1" "${TEMPSTORAGE}-2" 2>/dev/null || {
+      echo "
+        Client view and depot differ. Look for files that are not
+	added to repository yet and/or synchronize your view.
+      " | ShowBox FATAL
+      return 1
+    }
+    return 0
+  }
+  return 3
+}
+
+createLabel ()
+{
+  eval `EntryPoint 5 createLabel`
+
+  options="${*}"
+  unset jumbo
+  [ "${JUMBO}" = "yes" ] && {
+    jumbo="(jumbo)"
+  }
+  p4 label -i << EOM
+Label: ${PRODNAME}-${PRODVERSION}-${PATCHLEVEL}
+Owner: ${LOGNAME}
+Description: 
+  Patch level ${PATCHLEVEL} for ${PRODNAME} v.${PRODVERSION} ${jumbo}
+Options: ${options}
+View: ${PRODBASEDEPOT}/...
+EOM
+}
+
+checkLabel ()
+{
+  eval `EntryPoint 5 checkLabel`
+
+  p4 labels | ${awk} -v status=1 '
+    $2 ~ /^'"${PRODNAME}-${PRODVERSION}-${PATCHLEVEL}"'$/ {
+      status=0
+      exit
+    }
+    END {
+      exit(status)
+    }
+  '
+  return $?
+}
+
+saveChecksums ()
+{
+  eval `EntryPoint 5 saveChecksums`
+
+  [ -f "${CHECKSUMS_FILE}" ] || {
+    ErrMsg "No checksum file found."
+    return 1
+  }
+  CHECKSUMS_DEPOT="${PATCHINFODIR}/checksums.${PATCHLEVEL}"
+  VerifyFile "${CHECKSUMS_DEPOT}" && {
+    ShowMsg "WARNING: Patch ${PATCHLEVEL} checksums for ${ARCH} already exists."
+    return 0
+  }
+  UpdateCleanupList '${CHECKSUMS_DEPOT}'
+  cp "${CHECKSUMS_FILE}" "${CHECKSUMS_DEPOT}"
+  p4 add "${CHECKSUMS_DEPOT}" | egrep -s ' opened for add$'
+  [ $? -eq 0 ] || {
+    p4 revert "${CHECKSUMS_DEPOT}"
+    echo "
+      Cannot save patch info. You may lack permissions for
+      release creation.
+    " | ShowBox "FATAL"
+    return 1
+  }
+  {
+    P4EDITOR=ed p4 submit "${CHECKSUMS_DEPOT}" << EOM
+/^Description:/+1,/^Files:/-1c
+  Official release of ${PRODNAME} ${PRODVERSION}/p${PATCHLEVEL} (${ARCH})
+
+.
+w
+q
+EOM
+  } | egrep -s '^Change [0-9]+ submitted.$'
+  [ $? -eq 0 ] && {
+    unset CHECKSUMS_DEPOT
+    return 0
+  }
+  p4 revert "${CHECKSUMS_DEPOT}"
+  return 1
+}
+
+createPatchLevel ()
+{
+  eval `EntryPoint 4 createPatchLevel`
+
+  saveChecksums && {
+    checkLabel && {
+      ShowMsg "WARNING: Patch level ${PATCHLEVEL} already exists."
+      return 0
+    }
+    ShowMsg "Creating patch level ${PATCHLEVEL}"
+    createLabel unlocked && {
+      p4 labelsync -l "${PRODNAME}-${PRODVERSION}-${PATCHLEVEL}" && {
+	createLabel locked && {
+	  return 0
+	}
+      }
+    }
+  }
+  ErrMsg "Cannot create patch level ${PATCHLEVEL}"
+  p4 label -d "${PRODNAME}-${PRODVERSION}-${PATCHLEVEL}"
+  return 1
+}
+
+prepChangedList ()
+{
+  eval `EntryPoint 4 prepChangedList`
+
+  cd "${BINTOP}" && {
+    ShowMsg "Preparing the list of changes"
+    [ -d top ] || {
+      ErrMsg "No files in distribution tree. Use \"make install\" to fix."
+      return 5
+    }
+    p4 sync -f "${PATCHINFODIR}/..."
+    [ "${PATCHLEVEL}" -gt 0 ] && {
+      if [ "${JUMBO}" = "yes" ]; then
+	level=0
+      else
+	level="${PREVPATCHLEVEL}"
+      fi
+      checksums="checksums.${level}"
+      VerifyFile "${PATCHINFODIR}/${checksums}" || {
+	ErrMsg "No checksums level ${level} for ${ARCH} found."
+	ErrMsg "Consider using variable REQUIRED_LEVEL to recreate it."
+	return 1
+      }
+    }
+    CHECKSUMS_FILE="/tmp/checksums.${$}"
+    CHANGES_FILE="/tmp/changes.${$}"
+    UpdateCleanupList "${CHECKSUMS_FILE}" "${CHANGES_FILE}"
+    (cd top && find . \( -type f -o -type l \) -exec checksum {} \;) | {
+      while read line
+      do
+        echo ${line}
+        echo ${line} 1>&2
+      done | tee "${CHECKSUMS_FILE}" | {
+        ${awk} -v patch_level="${PATCHLEVEL}" '
+          BEGIN {
+            if(patch_level>0){
+              while(getline line<"'"${PATCHINFODIR}/${checksums}"'"){
+                if(split(line,arr)==3){
+                  sm[arr[3]] = arr[1] " " arr[2]
+                }
+              }
+            }
+          }
+          NF==3 {
+            sum = $1 " " $2
+            if(sm[$3] != sum){
+              print $3
+            }
+          }
+        ' > "${CHANGES_FILE}"
+      }
+    } 2>&1 | ShowProgress
+  }
+}
+
+copyChangedFiles ()
+{
+  eval `EntryPoint 4 copyChangedFiles`
+  trap CleanUp 0
+
+  cd "${BINTOP}" && {
+    ShowMsg "Copying files"
+    rm -rf pkg
+    mkdir pkg || {
+      ErrMsg "Cannot create package directory."
+      return 5
+    }
+    if [ -s "${CHANGES_FILE}" ]; then
+      (cd top && cpio -pdlv ../pkg) < "${CHANGES_FILE}" 1>&3 2>&4
+    else
+      ShowMsg "WARNING: No files were modified, package is not built"
+      exit 0
+    fi
+  }
+  return ${?}
+}
+
+BuildPackageName ()
+{
+  eval `EntryPoint 5 BuildPackageName`
+
+  level=${1} v_sfx=${2} p_sfx=${3}
+
+  if [ "${level}" -eq 1 ]; then
+    p_sfx="P${p_sfx}"
+  elif [ "${level}" -gt 1 ]; then
+    p_sfx="P${level}${p_sfx}"
+  fi
+  echo "${PKGPRODLINE}${PKGNAME}${p_sfx}-${PRODVERSION}${v_sfx}.pkg"
+}
+
+##################################################
+## Here 'library.sh' must be copied or included ##
+##################################################
+. library.sh

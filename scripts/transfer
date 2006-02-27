@@ -1,0 +1,500 @@
+#!/bin/ksh
+#
+#            Tone Software Corporation BSD License ("License")
+# 
+#                        Software Build Environment
+#                        
+# Please read this License carefully before downloading this software. By
+# downloading or using this software, you are agreeing to be bound by the
+# terms of this License. If you do not or cannot agree to the terms of
+# this License, please do not download or use the software.
+# 
+# A set of Jam configuration files and a Jam front-end for advanced
+# software building with automatic dependency checking for the whole
+# project. Provides a hierarchical project description while performing
+# build procedures without changing directories. The resulting domain
+# language changes emphasis from how to build to what to build. Provides
+# separation of compilation artifacts (object files, binaries,
+# intermediate files) from the original sources. Comes standard with
+# ability to build programs, test suites, static and shared libraries,
+# shared modules, code generation, and many others. Provides the bridge to
+# ANT for building Java, with abilities to build JNI libraries.
+# 
+# Copyright (c) 2003, 2005, Tone Software Corporation
+# 
+# All rights reserved.
+# 
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are
+# met:
+#   * Redistributions of source code must retain the above copyright
+#     notice, this list of conditions and the following disclaimer. 
+#   * Redistributions in binary form must reproduce the above copyright
+#     notice, this list of conditions and the following disclaimer in the
+#     documentation and/or other materials provided with the distribution. 
+#   * Neither the name of the Tone Software Corporation nor the names of
+#     its contributors may be used to endorse or promote products derived
+#     from this software without specific prior written permission. 
+# 
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS
+# IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+# TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
+# PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER
+# OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+# EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+# PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+# PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+# LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+# NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+# 
+
+    IDENT="@(#)Title:     File transfer utility"
+   AUTHOR="@(#)Author:    Gennady F. Bystritsky (gfb@tonesoft.com)"
+  VERSION="@(#)Version:   1.1"
+COPYRIGHT="@(#)Copyright: Tone Software Corporation, Inc. (1998)"
+PRODSTAMP="
+######################################################################
+# File transfer utility. Copyright(c) 1998 Tone Software Corporation #
+######################################################################
+"
+unset ERRLOG
+
+RedirectErrors=NO
+ ShowProdStamp=NO
+       SigList="1 2 3 8 15"
+
+PrintUsage () 
+{
+  ShowMsg "USAGE: $ScriptName [-x<debug level>][-smogt][-b<base>] <file> <dir>"
+}
+
+CleanUp () 
+{
+  eval `EntryPoint 3`
+  [ "${ERRLOG:+set}" = set ] && {
+    rm -f "$ERRLOG"
+  }
+}
+
+BASEDIR=/usr/local
+
+main () 
+{
+  unset STRIP DISTRIB TYPE SYMLINK RECURSION
+  unset PERMS OWNER GROUP
+
+  [ $# -eq 0 ] || {
+    while getopts "x:sdb:m:g:o:t:lr" opt; do
+      case "$opt" in
+        x)
+          DebugLevel=$OPTARG
+          [ "$DebugLevel" -ge 1 ] && {
+            exec 1>&3 2>&4
+          }
+        ;;
+        l)
+          SYMLINK=YES
+        ;;
+        r)
+          RECURSION=YES
+        ;;
+        d)
+          DISTRIB=YES
+        ;;
+        s)
+          STRIP=YES
+        ;;
+        b)
+          BASEDIR=$OPTARG
+        ;;
+        t)
+          TYPE=$OPTARG
+        ;;
+        m)
+          PERMS=$OPTARG
+        ;;
+        o)
+          OWNER=$OPTARG
+        ;;
+        g)
+          GROUP=$OPTARG
+        ;;
+        *) 
+          PrintUsage
+          return 2
+        ;;
+      esac
+    done
+    shift `expr $OPTIND - 1`
+  }
+  eval `EntryPoint 1`
+
+  [ $# -eq 2 ] || {
+    PrintUsage
+    return 2
+  }
+  unset DIR CLASS FILE_DST FILE_SRC
+  eval `parseDir  $2`
+  if [ "$SYMLINK" = YES ]; then
+    FILE_SRC=$1
+    FILE_DST=`basename "$DIR"`
+    DIR=`dirname "$DIR"`
+  else
+    eval `parseFile $1`
+  fi
+
+  : ${FILE_DST:="$FILE_SRC"}
+  : ${FILE_SRC:="$FILE_DST"}
+  : ${CLASS:=reloc}
+
+  [ "$DebugLevel" -ge 1 ] && {
+    PrintVars DIR CLASS FILE_DST FILE_SRC OWNER GROUP PERMS BASEDIR TYPE
+  }
+  if [ "$DISTRIB" = YES ]; then
+    doInstall
+  else
+    doTransfer
+  fi
+  return $?
+}
+
+parseDir ()
+{
+  eval `EntryPoint 3`
+  echo $1|$AWK -F@ '{
+    if(NF==2){
+      printf("CLASS='\''%s'\'';\n",$1);
+      dir = $2;
+    }
+    else{
+      dir = $1;
+    }
+    printf("DIR='\''%s'\'';\n",dir);
+  }'
+}
+
+parseFile ()
+{
+  eval `EntryPoint 3`
+
+  echo $1|$AWK -F= '{
+    if(NF==2){
+      printf("FILE_DST='\''%s'\'';\n",$1);
+      source=$2
+    }
+    else{
+      source=$0
+    }
+    n = split(source,arr,"@");
+    printf("FILE_SRC='\''%s'\'';\n",arr[1]);
+    if(n==2){
+      n = split(arr[2],arr1,"/");
+      if(n==2){
+        printf("PERMS='\''%s'\'';\n",arr1[2]);
+      }
+      n = split(arr1[1],arr2,"%");
+      printf("OWNER='\''%s'\'';\n",arr2[1]);
+      if(n==2){
+        printf("GROUP='\''%s'\'';\n",arr2[2]);
+      }
+    }
+  }'
+}
+
+doTransfer ()
+{
+  eval `EntryPoint 2`
+
+  case "$DIR" in
+    /*)
+    ;;
+    *)
+      DIR="${BASEDIR}/$DIR"
+    ;;
+  esac
+  FILE_DST=`basename "${FILE_DST}"`
+  mkdir -p "$DIR"
+  [ -d "$DIR" ] || {
+    ErrMsg "Cannot create directory \"$DIR\"."
+    return 3
+  }
+  [ "$SYMLINK" = YES ] && {
+    runEcho rm -f "$DIR/$FILE_DST"
+    runEcho ln -s "$FILE_SRC" "$DIR/$FILE_DST"
+    return $?
+  }
+  [ "${TYPE:+set}" = set ] && {
+    ShowMsg "conf-$TYPE" -p stop $DIR/$FILE_DST
+    modified=`
+      "conf-$TYPE" ${DebugLevel:+-x$DebugLevel} -p stop "$DIR/$FILE_DST" 2>&4
+    ` 
+    [ $? -eq 0 ] || {
+      return 4
+    }
+  }
+  status=0
+  while true; do
+    [ "${FILE_DST:+set}" = set ] && {
+      if [ "$RECURSION" = YES ]; then
+        runEcho rm -rf "$DIR/$FILE_DST"
+        runEcho cp -R "$FILE_SRC" "$DIR/$FILE_DST"  || break
+      else
+        runEcho rm -f "$DIR/$FILE_DST"
+        runEcho cp "$FILE_SRC" "$DIR/$FILE_DST"  || break
+        [ "${STRIP:+set}" = set ] && {
+          runEcho strip "$DIR/$FILE_DST" || break
+        }
+      fi
+    }
+    [ "${PERMS:+set}"  = set ] && {
+      runEcho chmod -R "$PERMS"  "$DIR/$FILE_DST" || break
+    }
+    [ "${GROUP:+set}" = set ] && {
+      runEcho chgrp -R "$GROUP" "$DIR/$FILE_DST" || break
+    }
+    [ "${OWNER:+set}" = set ] && {
+      runEcho chown -R "$OWNER" "$DIR/$FILE_DST" || break
+    }
+    break
+  done
+  stat=$status
+  [ "${modified:+set}" = set ] && {
+    runEcho "conf-$TYPE" -l "$modified" start "$DIR/$FILE_DST"
+  }
+  return $stat
+}
+
+doInstall ()
+{
+  eval `EntryPoint 2`
+  CheckVars TOPDST PKGNAME || {
+    return 2
+  }
+  FILE_DST=`basename "${FILE_DST}"`
+  PKGTOPDST="$TOPDST/$PKGNAME/top"
+  PKGTOPPERMS="$TOPDST/$PKGNAME/perms"
+  [ "${CLASS:+set}" = set ] && {
+    PKGTOPDST="$PKGTOPDST/$CLASS"
+    PKGTOPPERMS="$PKGTOPPERMS/$CLASS"
+  }
+  mkdir -p "$PKGTOPDST/$DIR"
+  [ -d "$PKGTOPDST/$DIR" ] || {
+    ErrMsg "Cannot create directory \"$PKGTOPDST/$DIR\"."
+    return 3
+  }
+  [ "$SYMLINK" = YES ] && {
+    runEcho rm -f "$PKGTOPDST/$DIR/$FILE_DST"
+    runEcho ln -s "$FILE_SRC" "$PKGTOPDST/$DIR/$FILE_DST"
+    return $?
+  }
+  [ "${FILE_DST:+set}" = set ] && {
+    unset CONTENTS
+    [ "${OWNER:+set}" = set ] && {
+      CONTENTS="${CONTENTS}OWNER=$OWNER\n"
+    }
+    [ "${GROUP:+set}" = set ] && {
+      CONTENTS="${CONTENTS}GROUP=$GROUP\n"
+    }
+    [ "${PERMS:+set}" = set -a "${CONTENTS:+set}" = set ] && {
+      CONTENTS="${CONTENTS}PERMS=$PERMS\n"
+    }
+    if [ "$RECURSION" = YES ]; then
+      runEcho rm -rf "$PKGTOPDST/$DIR/$FILE_DST"
+      runEcho cp -R "$FILE_SRC" "$PKGTOPDST/$DIR/$FILE_DST" || return 4
+    else
+      [ "${CONTENTS:+set}" = set ] && {
+        mkdir -p "$PKGTOPPERMS/$DIR"
+        [ -d "$PKGTOPPERMS/$DIR" ] || {
+          ErrMsg "Cannot create perms directory \"$PKGTOPPERMS/$DIR\"."
+          return 3
+        }
+        runEcho rm -f "$PKGTOPPERMS/$DIR/$FILE_DST"
+        echo "$CONTENTS\c"|runEcho tee "$PKGTOPPERMS/$DIR/$FILE_DST"
+        [ $# -eq 0 ] || return 4
+      }
+      runEcho rm -f "$PKGTOPDST/$DIR/$FILE_DST"
+      runEcho cp "$FILE_SRC" "$PKGTOPDST/$DIR/$FILE_DST" || return 4
+      [ "${STRIP:+set}" = set ] && {
+        runEcho strip "$PKGTOPDST/$DIR/$FILE_DST" || return 4
+      }
+    fi
+  }
+  #
+  # The following code is executed both for a file and
+  # a directory.
+  #
+  [ "${PERMS:+set}"  = set ] && {
+    runEcho chmod -R "$PERMS" "$PKGTOPDST/$DIR/$FILE_DST" || break
+  }
+  return 0
+}
+
+##################
+# Script Library #
+##################
+AWK=nawk; { $AWK ''; } >/dev/null 2>&1 || AWK=awk
+
+ScriptPath=`whence $0`
+ScriptName=`basename $ScriptPath`
+ScriptDir=`dirname $ScriptPath`
+
+PATH=$PATH:$ScriptDir export PATH
+
+status=0
+umask 0
+
+> "${ERRLOG:=/tmp/$ScriptName.$$}"
+exec 3>&1 4>&2 
+[ "$RedirectErrors" = YES ] && exec 2>"$ERRLOG" 1>&2
+
+UPPER="[A-Z]"; LOWER="[a-z]"
+tr "[A-Z]" "[a-z]" </dev/null 1>&0 2>&1 || {
+  UPPER="[:upper:]"; LOWER="[:lower:]"
+}
+
+tolower () 
+{
+  echo $*|tr "$UPPER" "$LOWER"
+}
+
+toupper () 
+{
+  echo $*|tr "$LOWER" "$UPPER"
+}
+
+ErrMsg () 
+{
+  echo "$ScriptName: $*" 1>&4 2>&1
+}
+
+ShowMsg () 
+{
+  echo "$*" 1>&3 2>&4
+}
+
+runEcho ()
+{
+  ShowMsg "$*"
+  "$@" 1>&3 2>&4
+  status=$?
+  return $status
+}
+
+GenDirPath () 
+{
+  [ $# -eq 1 ] && {
+    (cd "$1">/dev/null 2>&1  && pwd)
+  }
+  return $?
+}
+
+ShowProgress () 
+{
+  cnt=0; max=${2:-75}
+  while read line;do
+    [ "$cnt" -eq 0 ] && ShowMsg "${1:-Doing} \c"
+    ShowMsg ".\c"; cnt=`expr $cnt + 1`
+    [ $cnt -gt "$max" ] && {
+      cnt=0; ShowMsg;
+    }
+  done
+  [ $cnt -eq 0 ] || ShowMsg
+}
+
+CheckVars () 
+{
+  for v in $*
+  do
+    eval var=\$$v
+    [ "${var:+set}" = set ] || {
+      ErrMsg "$v is not set"
+      return 1
+    }
+  done
+  return 0
+}
+
+PrintVars () 
+{
+  for v in $*
+  do
+    eval echo $v=\$$v
+  done
+}
+
+VerifyDir () 
+{
+  eval test -d "$1" -a -r "$1"; return $?
+}
+
+VerifyFile () 
+{
+  eval test -f "$1" -a -r "$1"; return $?
+}
+
+VerifyProg () 
+{
+  eval test -f "$1" -a -x "$1"; return $?
+}
+
+ExtractValues () 
+{
+  [ $# -gt 1 ] && {
+    file=$1; unset pattern; shift
+    for arg
+    do
+      arg=`echo $arg|sed -n '/^[a-zA-Z][a-zA-Z1-9_]*$/p'`
+      [ "${arg:+set}" = set ] && {
+        [ "${pattern:+set}" = set ] && {
+          pattern="${pattern};"
+        }
+        search='^[ 	]*'"${arg}"'=\([^`;]*\)[ 	]*$'
+        replace="${arg}="\''\1'\'
+        pattern="${pattern}s/$search/$replace/gp"
+      }
+    done
+    [ "${pattern:+set}" = set ] && VerifyFile "$file" && {
+      eval `sed -n "$pattern"<"$file"`
+    }
+  }
+}
+
+EntryPoint () 
+{
+  [ "${DebugLevel:=0}" -ge "${1:-1}" ] && {
+    echo 'echo "[Function: $0]" 1>&2; set -xv'
+  }
+}
+
+AwkLibrary='
+  function norm(str){
+    while(substr(str,1,1)==" ") str = substr(str,2);
+    while(substr(str,length(str),1)==" ")
+      str = substr(str,1,length(str)-1)
+    return str
+  }
+'
+
+trap CleanUp 0 $SigList
+[ "$ShowProdStamp" = YES ] &&  ShowMsg "$PRODSTAMP"
+
+main "$@"
+exit $?
+
+#############
+# TEMPLATES #
+#############
+
+Fun () 
+{
+  eval `EntryPoint 5`
+  return 0
+}
+
+$AWK '
+  '"$AwkLibrary"'
+'
+
+#############
+#############

@@ -1,0 +1,103 @@
+#
+#            Tone Software Corporation BSD License ("License")
+# 
+#                        Software Build Environment
+#                        
+# Please read this License carefully before downloading this software. By
+# downloading or using this software, you are agreeing to be bound by the
+# terms of this License. If you do not or cannot agree to the terms of
+# this License, please do not download or use the software.
+# 
+# A set of Jam configuration files and a Jam front-end for advanced
+# software building with automatic dependency checking for the whole
+# project. Provides a hierarchical project description while performing
+# build procedures without changing directories. The resulting domain
+# language changes emphasis from how to build to what to build. Provides
+# separation of compilation artifacts (object files, binaries,
+# intermediate files) from the original sources. Comes standard with
+# ability to build programs, test suites, static and shared libraries,
+# shared modules, code generation, and many others. Provides the bridge to
+# ANT for building Java, with abilities to build JNI libraries.
+# 
+# Copyright (c) 2003, 2005, Tone Software Corporation
+# 
+# All rights reserved.
+# 
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are
+# met:
+#   * Redistributions of source code must retain the above copyright
+#     notice, this list of conditions and the following disclaimer. 
+#   * Redistributions in binary form must reproduce the above copyright
+#     notice, this list of conditions and the following disclaimer in the
+#     documentation and/or other materials provided with the distribution. 
+#   * Neither the name of the Tone Software Corporation nor the names of
+#     its contributors may be used to endorse or promote products derived
+#     from this software without specific prior written permission. 
+# 
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS
+# IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+# TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
+# PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER
+# OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+# EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+# PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+# PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+# LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+# NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+# 
+
+
+if $(core.JAMCORE_LOADED) {
+  exit Multiple Jam.core loaded ;
+}
+core.JAMCORE_LOADED = true ;
+
+rule core.check-top
+{
+  if ! $(core.TOP) {
+    exit core.TOP is not set ;
+  }
+}
+
+rule core.load
+{
+  core.LAST_LOADED_FILE = $(<:J=/) ;
+  if core in $(TRACE) {
+    echo "### Loading $(core.LAST_LOADED_FILE)" ;
+  }
+  local _directive ;
+  for _directive in $(>) {
+    $(_directive) $(core.LAST_LOADED_FILE) ;
+  }
+  include $(core.LAST_LOADED_FILE) ;
+}
+
+rule core.load-config
+{
+  core.load $(core.TOP) src config $(<) : $(>) ;
+}
+
+rule core.load-project-config
+{
+  if $(PROJECT_DIR) {
+    core.load $(core.TOP) src $(PROJECT_DIR) config $(<) : $(>) ;
+  }
+}
+
+core.check-top ;
+
+core.load-config Jam.util ;
+core.load-config Jam.system ;
+
+system.figure-top-dirs ;
+
+core.load-config Jam.env ;
+core.load-project-config Jam.project : NoCare ;
+
+core.load-config Jamrules ;
+core.load-project-config Jamrules : NoCare ;
+
+system.setup-environment ;
+system.load-top-jamfile ;

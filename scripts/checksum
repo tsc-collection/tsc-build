@@ -1,0 +1,162 @@
+#!/bin/ksh
+#
+#            Tone Software Corporation BSD License ("License")
+# 
+#                        Software Build Environment
+#                        
+# Please read this License carefully before downloading this software. By
+# downloading or using this software, you are agreeing to be bound by the
+# terms of this License. If you do not or cannot agree to the terms of
+# this License, please do not download or use the software.
+# 
+# A set of Jam configuration files and a Jam front-end for advanced
+# software building with automatic dependency checking for the whole
+# project. Provides a hierarchical project description while performing
+# build procedures without changing directories. The resulting domain
+# language changes emphasis from how to build to what to build. Provides
+# separation of compilation artifacts (object files, binaries,
+# intermediate files) from the original sources. Comes standard with
+# ability to build programs, test suites, static and shared libraries,
+# shared modules, code generation, and many others. Provides the bridge to
+# ANT for building Java, with abilities to build JNI libraries.
+# 
+# Copyright (c) 2003, 2005, Tone Software Corporation
+# 
+# All rights reserved.
+# 
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are
+# met:
+#   * Redistributions of source code must retain the above copyright
+#     notice, this list of conditions and the following disclaimer. 
+#   * Redistributions in binary form must reproduce the above copyright
+#     notice, this list of conditions and the following disclaimer in the
+#     documentation and/or other materials provided with the distribution. 
+#   * Neither the name of the Tone Software Corporation nor the names of
+#     its contributors may be used to endorse or promote products derived
+#     from this software without specific prior written permission. 
+# 
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS
+# IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+# TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
+# PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER
+# OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+# EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+# PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+# PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+# LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+# NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+# 
+
+#@(#)Title:     Computing checksums for different files
+#@(#)Author:    Gennady F. Bystritsky (gfb@tonesoft.com)
+#@(#)Version:   3.1
+#@(#)Copyright: Tone Software Corporation, Inc. (1999-2000)
+
+PRODSTAMP='
+#################################################################
+# Checksum utility. Copyright(c) 2000 Tone Software Corporation #
+#################################################################
+'
+DESCRIPTION="
+  This utility is a frontend for sum(1) that distinguishes file
+  types. The most important functionality is computing checksum
+  for jar archives by first extracting files and then running
+  sum(1) on sorted concatenation of them.
+"
+ARGUMENTS="
+  [-x<debug level>][-h][-r]
+"
+    RedirectErrors=NO
+ShowCleanupMessage=NO
+     ShowProdStamp=NO
+           SigList="1 2 3 8 15"
+
+main () 
+{
+  eval `EntryPoint 1 main`
+
+  unset SUM_OPTIONS
+  ParseCommandParameters "r" "${@}" || {
+    PrintUsage
+    return 2
+  }
+  eval `EntryPoint 1 main`
+
+  TEMPDIR=/tmp/${ScriptName}.$$.d
+  UpdateCleanupList "${TEMPDIR}"
+
+  [ "${FILE_LIST:+set}" != set ] && {
+    sum ${SUM_OPTIONS}
+    return ${?}
+  }
+  for file in ${FILE_LIST}; do
+    case "${file}" in
+      *.jar)
+        computeJarChecksum "${file}" || return ${?}
+      ;;
+      *)
+        sum ${SUM_OPTIONS} "${file}" 1>&3 2>&4 || return ${?}
+      ;;
+    esac
+  done
+  return 0
+}
+
+computeJarChecksum()
+{
+  eval `EntryPoint 2 computeJarChecksum`
+
+  file="${1}"
+  VerifyFile "${file}" && {
+    name=`basename "${file}"`
+    dir=`dirname "${1}"`
+    dir=`GenDirPath "${dir}"`
+    [ "${dir:+set}" = set ] && {
+      jarfile="${dir}/${name}"
+      rm -rf "${TEMPDIR}"
+      mkdir -p "${TEMPDIR}"
+      cd "${TEMPDIR}" && {
+        jar xf "${jarfile}" && {
+	  set entry `find . -type f -print | sort | xargs cat | sum ${SUM_OPTIONS}`
+	  shift
+	  [ ${#} -eq 2 ] && {
+	    echo "${1} ${2} ${file}"
+	    return 0
+	  }
+	}
+      }
+    }
+  }
+  ErrMsg "Cannot process \"${file}\"."
+  return 2
+}
+
+OnOption ()
+{
+  eval `EntryPoint 3 OnOption`
+
+  case "${1}" in 
+    r)
+      SUM_OPTIONS="${SUM_OPTIONS} -r"
+    ;;
+    *)
+      return 1
+    ;;
+  esac
+  return 0
+}
+
+OnArguments ()
+{
+  eval `EntryPoint 2 OnArguments`
+
+  FILE_LIST="${@}"
+  return 0
+}
+
+##################################################
+## Here 'library.sh' must be copied or included ##
+##################################################
+. library.sh

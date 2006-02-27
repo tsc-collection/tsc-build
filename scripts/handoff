@@ -1,0 +1,214 @@
+#!/usr/bin/env ruby
+#
+#            Tone Software Corporation BSD License ("License")
+# 
+#                        Software Build Environment
+#                        
+# Please read this License carefully before downloading this software. By
+# downloading or using this software, you are agreeing to be bound by the
+# terms of this License. If you do not or cannot agree to the terms of
+# this License, please do not download or use the software.
+# 
+# A set of Jam configuration files and a Jam front-end for advanced
+# software building with automatic dependency checking for the whole
+# project. Provides a hierarchical project description while performing
+# build procedures without changing directories. The resulting domain
+# language changes emphasis from how to build to what to build. Provides
+# separation of compilation artifacts (object files, binaries,
+# intermediate files) from the original sources. Comes standard with
+# ability to build programs, test suites, static and shared libraries,
+# shared modules, code generation, and many others. Provides the bridge to
+# ANT for building Java, with abilities to build JNI libraries.
+# 
+# Copyright (c) 2003, 2005, Tone Software Corporation
+# 
+# All rights reserved.
+# 
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are
+# met:
+#   * Redistributions of source code must retain the above copyright
+#     notice, this list of conditions and the following disclaimer. 
+#   * Redistributions in binary form must reproduce the above copyright
+#     notice, this list of conditions and the following disclaimer in the
+#     documentation and/or other materials provided with the distribution. 
+#   * Neither the name of the Tone Software Corporation nor the names of
+#     its contributors may be used to endorse or promote products derived
+#     from this software without specific prior written permission. 
+# 
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS
+# IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+# TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
+# PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER
+# OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+# EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+# PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+# PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+# LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+# NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+# 
+
+$:.concat ENV['PATH'].split(':')
+
+require 'getoptlong'
+require 'singleton'
+
+require 'net/ftp'
+require 'net/http'
+require 'net/smtp'
+
+require 'tsc/launch'
+require 'tsc/progress'
+require 'tsc.product'
+require 'tsc.netrc'
+
+class Handoff
+  include Singleton
+  attr_reader :name, :verbose
+
+  def printUsage
+    $stderr.puts "USAGE: #{File.basename $0} " +
+      "[-h][-v][-p<product][-m<list>][-s<server>]"
+  end
+
+  def make
+    @product ||= TSC::Product.detect
+    @name ||= "#{@product.name}#{product_release}" + 
+      "-b%02d" % @product.build + "-#{@product.platform}"
+
+    Dir.chdir @product.toppkg
+
+    createHandoffArchive
+    if @server && @productName
+      storeHandoffArchive
+      if @recipients.size > 0
+	sendHandoffNotify
+      end
+    end
+  end
+
+  private
+  #######
+  def initialize
+    _opts = GetoptLong.new(
+      [ '--mail',    '-m',       GetoptLong::REQUIRED_ARGUMENT],
+      [ '--product', '-p',       GetoptLong::REQUIRED_ARGUMENT],
+      [ '--server',  '-s',       GetoptLong::REQUIRED_ARGUMENT],
+      ['--verbose',  '-v',       GetoptLong::NO_ARGUMENT],
+      [ '--help',    '-h', '-?', GetoptLong::NO_ARGUMENT]
+    );
+
+    @verbose = false
+    @recipients = []
+
+    _opts.each do |opt,arg|
+      case opt
+        when '--help' 
+	  printUsage
+	  exit 0
+	when '--verbose' then @verbose = true
+	when '--server' then @server = arg
+	when '--product' then @productName = arg
+	when '--mail' then @recipients = arg.split('[\t ,]+').compact
+      end
+    end
+  end
+
+  def archive
+    "#{@name}.tar"
+  end
+
+  def createHandoffArchive
+    _progress = TSC::Progress.new "Creating \"#{archive}\""
+    launch "gtar cvf #{archive} *-b#{@product.build}-*.tpm" do
+      _progress.print
+    end
+    _progress.done
+
+  end
+
+  def storeHandoffArchive
+    _user, _passwd, _account = TSC::Netrc.instance.userinfo(@server)
+    if !_user || !_passwd
+      raise "FTP user name and/or password not available"
+    end
+    _ftp = Net::FTP.new(@server,_user,_passwd,_account)
+    _ftp.chdir("pkg/#{@productName}")
+
+    _progress = TSC::Progress.new "Storing \"#{archive}\" at #{@server}", 4, 2, 75
+    _ftp.putbinaryfile(archive,archive,8192) do
+      _progress.print
+    end
+    _progress.done
+    
+    _ftp.close
+  end
+
+  def obtainHandoffInfo
+    _progress = TSC::Progress.new "Downloading handoff info"
+    begin
+      @page = "/products/handoff.rhtml?" +
+        "product=#{@productName}&" +
+	"version=#{product_release}&build=#{@product.build}&" + 
+	"platform=#{@product.platform}"
+
+      _site = Net::HTTP.new(@server,80)
+      @resp, @data = _site.get(@page,nil)
+    ensure
+      _progress.done
+    end
+  end
+  
+  def mailHandoffInfo
+    $stdout.puts "Sending handoff notification to #{@recipients.join(',')}"
+
+    _subject = @data.delete("\r\n").scan(%r{(<title>)(.*)(</title>)})[0][1].strip
+    _contentHeader = "Content-type";
+
+    _userName = launch('id').first.first.scan(%r{(\()(.*?)(\))})[0][1]
+    _userHost = 'tonesoft.com'# launch('uname -n')
+
+    _snmp = Net::SMTP.new 'inet0.tonesoft.com'
+    _snmp.start
+    _snmp.ready("#{_userName}@#{_userHost}",@recipients) do |adaptor|
+      adaptor.write "To: #{@recipients}\r\n"
+      adaptor.write "From: #{_userName}@#{_userHost}\r\n"
+      adaptor.write "Subject: #{_subject}\r\n"
+      adaptor.write "Date: #{Time.now.strftime("%a, %d %b %Y %T %Z")}\r\n"
+      adaptor.write "#{_contentHeader}: #{@resp[_contentHeader]}\r\n"
+      adaptor.write "\r\n"
+      @data.each do |line|
+	adaptor.write "#{line.chomp}\r\n"
+	if line =~ /<head>/
+	  adaptor.write "<BASE href=\"http://#{@server}#{@page}\"\r\n"
+	end
+      end
+    end
+  end
+
+  def sendHandoffNotify
+    obtainHandoffInfo
+    mailHandoffInfo
+  end
+
+  def product_release
+    release = @product.release
+    array = release.scan(%r{^(\d+)[.](\d+)$}).first
+    unless array.nil?
+      release = "#{array[0]}#{array[1]}0"
+    end
+    release
+  end
+end
+
+begin
+  Handoff.instance.make
+  exit 0
+rescue GetoptLong::InvalidOption
+  Handoff.instance.printUsage
+rescue => exception
+  $stderr.puts "#{File.basename($0)}: #{exception.message}"
+end
+
+exit 2

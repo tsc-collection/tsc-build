@@ -1,0 +1,117 @@
+#
+#            Tone Software Corporation BSD License ("License")
+# 
+#                        Software Build Environment
+#                        
+# Please read this License carefully before downloading this software. By
+# downloading or using this software, you are agreeing to be bound by the
+# terms of this License. If you do not or cannot agree to the terms of
+# this License, please do not download or use the software.
+# 
+# A set of Jam configuration files and a Jam front-end for advanced
+# software building with automatic dependency checking for the whole
+# project. Provides a hierarchical project description while performing
+# build procedures without changing directories. The resulting domain
+# language changes emphasis from how to build to what to build. Provides
+# separation of compilation artifacts (object files, binaries,
+# intermediate files) from the original sources. Comes standard with
+# ability to build programs, test suites, static and shared libraries,
+# shared modules, code generation, and many others. Provides the bridge to
+# ANT for building Java, with abilities to build JNI libraries.
+# 
+# Copyright (c) 2003, 2005, Tone Software Corporation
+# 
+# All rights reserved.
+# 
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are
+# met:
+#   * Redistributions of source code must retain the above copyright
+#     notice, this list of conditions and the following disclaimer. 
+#   * Redistributions in binary form must reproduce the above copyright
+#     notice, this list of conditions and the following disclaimer in the
+#     documentation and/or other materials provided with the distribution. 
+#   * Neither the name of the Tone Software Corporation nor the names of
+#     its contributors may be used to endorse or promote products derived
+#     from this software without specific prior written permission. 
+# 
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS
+# IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+# TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
+# PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER
+# OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+# EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+# PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+# PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+# LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+# NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+# 
+
+rule project.use-db
+{
+  use-project-libraries $(1) : datahandler data cpevent proto ffc yacc++ allsys util ;
+  RLTDBLIBS ?= dbmock dboracle dbpgsql ;
+  local _library ;
+  for _library in $(RLTDBLIBS) {
+    use-project-libraries $(1) : : $(_library) ;
+  }
+}
+
+rule project.generate-proto-libraries
+{
+  util.foreach $(1) : project.generate-proto-library ;
+}
+
+rule project.generate-proto-library
+{ 
+  local _name = $(1[1]) ;
+  local _proto = cp$(_name) ;
+  local _target = [ system.project-lib-target-path $(_proto) ] ;
+
+  local _codegendir = $(SRCTOP) project codegen proto ;
+  local _templatedir = [ util.make-path $(_codegendir) cpp-templates ] ;
+  local _templates = [ Glob $(_templatedir) : * ] ;
+  local _protodesc = [ util.make-path $(_codegendir) $(_name).xml ] ;
+
+  local _protogentop = [ util.consume $(GENTOP) : $(core.TOP) ] ;
+  local _protogenlibtop = $(_protogentop) lib $(_proto) ;
+  local _protogeninctop = $(_protogentop) include $(_proto) ;
+
+  local _jamfile = [ util.make-path $(core.TOP) $(_protogenlibtop) $(JAMFILE) ] ;
+  local _protogenlibdir = [ util.make-path $(core.TOP) $(_protogenlibtop) ] ;
+  local _protogenincdir = [ util.make-path $(core.TOP) $(_protogeninctop) ] ;
+
+  system.assign-category proto : $(_protogenlibdir) $(_protogenincdir) ;
+  Depends $(_protogenlibdir) $(_protogenincdir) : $(_target) ;
+
+  Depends $(_jamfile) : $(_templates) $(_protodesc) ;
+  util.foreach $(_templates) : system.mark-for-c-include-scan ;
+
+  Depends $(_target) : $(_jamfile) [ system.make-build-target ] ;
+  system.assign-category lib : $(_target) ;
+
+  PROTOGENDIR on $(_jamfile) = [ util.make-path $(core.TOP) $(_protogentop) ] ;
+  TEMPLATEDIR on $(_jamfile) = $(_templatedir) ;
+  GENERATOR on $(_jamfile) = ruby [ util.make-path $(_codegendir) bin proto-gen.rb ] ;
+  project.action.generate-proto-library $(_jamfile) : $(_protodesc) ;
+
+  PROTOLIBTOP on $(_target) = $(_protogenlibtop) ;
+  project.action.build-proto-library $(_target) ;
+}
+
+actions project.action.generate-proto-library
+{
+  $(GENERATOR) -v -l cpp -o $(PROTOGENDIR) -t $(TEMPLATEDIR) $(>) 
+}
+
+# NOTE: Construct "` echo $(VAR) `" is used here to ensure proper VAR 
+#   expansion (mind the space before the closing back quote, the space 
+#   after the opening back quote is for visual symmetry only). Otherwise, 
+#   every element of VAR would be joined with immediatelly preceeding or 
+#   following non-space characters.
+#
+actions project.action.build-proto-library
+{
+  $(JAM) -sJAMTOP="` echo $(PROTOLIBTOP) `" -score.TOP="` echo $(core.TOP) `" $(<)
+}

@@ -1,0 +1,780 @@
+#
+#            Tone Software Corporation BSD License ("License")
+# 
+#                        Software Build Environment
+#                        
+# Please read this License carefully before downloading this software. By
+# downloading or using this software, you are agreeing to be bound by the
+# terms of this License. If you do not or cannot agree to the terms of
+# this License, please do not download or use the software.
+# 
+# A set of Jam configuration files and a Jam front-end for advanced
+# software building with automatic dependency checking for the whole
+# project. Provides a hierarchical project description while performing
+# build procedures without changing directories. The resulting domain
+# language changes emphasis from how to build to what to build. Provides
+# separation of compilation artifacts (object files, binaries,
+# intermediate files) from the original sources. Comes standard with
+# ability to build programs, test suites, static and shared libraries,
+# shared modules, code generation, and many others. Provides the bridge to
+# ANT for building Java, with abilities to build JNI libraries.
+# 
+# Copyright (c) 2003, 2005, Tone Software Corporation
+# 
+# All rights reserved.
+# 
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are
+# met:
+#   * Redistributions of source code must retain the above copyright
+#     notice, this list of conditions and the following disclaimer. 
+#   * Redistributions in binary form must reproduce the above copyright
+#     notice, this list of conditions and the following disclaimer in the
+#     documentation and/or other materials provided with the distribution. 
+#   * Neither the name of the Tone Software Corporation nor the names of
+#     its contributors may be used to endorse or promote products derived
+#     from this software without specific prior written permission. 
+# 
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS
+# IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+# TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
+# PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER
+# OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+# EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+# PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+# PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+# LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+# NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+# 
+
+
+rule system.error
+{
+  echo ERROR in $(core.LAST_LOADED_FILE) ;
+  exit $(1): $(2) ;
+}
+
+rule system.error-no-rule
+{
+  system.error $(1) : Rule is not implemented yet ;
+}
+
+rule system.figure-cwd-from-top
+{
+  return [ util.reverse [ util.trim [ util.reverse-split-path $(CWD) ] : $(core.TOP) ] ] ;
+}
+
+rule system.is-cwd-under
+{
+  if ! [ util.consume $(<) : $(system.CWD_FROM_TOP) ] {
+    return true ;
+  }
+}
+
+rule system.is-cwd-under-dot
+{
+  return [ system.is-cwd-under $(system.DOT) ] ;
+}
+
+rule system.figure-top-dirs
+{
+  SRCTOP = $(core.TOP) src ;
+  BINTOP = $(core.TOP) bin ;
+  PKGTOP = $(core.TOP) pkg ;
+  GENTOP = $(core.TOP) gen ;
+
+  SRCTOPDIR = $(SRCTOP:J=/) ;
+  BINTOPDIR = $(BINTOP:J=/) ;
+  PKGTOPDIR = $(PKGTOP:J=/) ;
+  GENTOPDIR = $(GENTOP:J=/) ;
+}
+
+rule system.load-top-jamfile
+{
+  if $(JAMTOP) = . {
+    JAMTOP = $(system.CWD_FROM_TOP) ;
+  }
+  system.load-jamfile-from $(JAMTOP:E=src) ;
+
+  if [ Glob . : $(JAMFILE) ] {
+    if $(system.CWD_SRCDIR) {
+      on $(system.CWD_SRCDIR) if $(system.DIRECTORY_LOADED) != true {
+        if ! $(JAMTOP) {
+          exit "Current $(JAMFILE) is not part of the build process" ;
+        }
+        if [ system.is-cwd-under $(JAMTOP) ] {
+          system.load-jamfile-from $(system.CWD_FROM_TOP) ;
+        }
+      }
+    }
+  }
+}
+
+rule system.load-jamfile-from
+{
+  local system.PARENT_DOT_TARGET = $(system.DOT_TARGET) ;
+  local system.DOT = $(system.DOT) $(<) ;
+
+  local _top = $(3) ;
+  if $(_top) {
+    INCLUDES += [ util.make-path $(_top) src project include ] ;
+  }
+  else _top = $(core.TOP) ;
+  local core.TOP = $(_top) ;
+
+  local system.SRCDIR = [ util.make-path $(core.TOP) $(system.DOT) ] ;
+  local system.BINDIR = [ util.make-path $(BINTOP) $(system.DOT[2-]) ] ;
+  local system.GENDIR = [ util.make-path $(GENTOP) $(system.DOT[2-]) ] ;
+  local system.DOT_TARGET = $(system.DOT:J=/) ;
+
+  NotFile $(system.DOT_TARGET) $(system.CWD_SUBDIR_TARGETS)@$(system.DOT_TARGET) ;
+  Always $(system.DOT_TARGET) $(system.CWD_SUBDIR_TARGETS)@$(system.DOT_TARGET) ;
+
+  Depends $(system.DOT_TARGET) : all@$(system.DOT_TARGET) ;
+  local _target ;
+  for _target in $(system.CWD_SUBDIR_TARGETS) {
+    Depends $(_target)@$(system.PARENT_DOT_TARGET) : $(_target)@$(system.DOT_TARGET) ;
+  }
+  on $(system.SRCDIR) if $(system.DIRECTORY_LOADED) != true {
+    core.load $(system.SRCDIR)/$(JAMFILE) : $(>) ;
+    system.DIRECTORY_LOADED on $(system.SRCDIR) = true ;
+  }
+}
+
+rule system.setup-environment
+{
+  system.CWD_FROM_TOP = [ system.figure-cwd-from-top ] ;
+
+  system.CWD_SRCDIR = [ util.make-path $(core.TOP) $(system.CWD_FROM_TOP) ] ;
+  system.CWD_BINDIR = [ util.make-path $(BINTOP) $(system.CWD_FROM_TOP[2-]) ] ;
+
+  system.TOP_TARGET = top ;
+  system.MAIN_TARGET = $(system.CWD_FROM_TOP:J=/:E=$(system.TOP_TARGET)) ;
+  system.DOT_TARGET = $(system.TOP_TARGET) ;
+
+  system.TARGET_CATEGORIES = exe jni lib obj gen proto ant reloc ;
+
+  system.CWD_SUBDIR_TARGETS = test $(system.TARGET_CATEGORIES) clean-$(system.TARGET_CATEGORIES) ;
+  system.CWD_NOT_SUBDIR_TARGETS = run try-libs ;
+
+  Depends all : exe lib jni ant ;
+  Depends clean : clean-$(system.TARGET_CATEGORIES) ;
+
+  Depends top : exe@top lib@top jni@top ant@top ;
+  Depends top-clean : clean-$(system.TARGET_CATEGORIES)@top ;
+
+  Depends java : ant@top ;
+  Depends java-clean : clean-ant@top ;
+
+  NotFile 
+    all clean
+    top top-clean
+    java java-clean
+    try package release handoff
+    $(system.CWD_SUBDIR_TARGETS) 
+    $(system.CWD_NOT_SUBDIR_TARGETS) 
+  ;
+  Always 
+    run test 
+    java java-clean 
+    try try-libs package release handoff 
+    clean top-clean clean-$(system.TARGET_CATEGORIES) 
+  ;
+  local _cwd_targets = $(system.CWD_SUBDIR_TARGETS) $(system.CWD_NOT_SUBDIR_TARGETS) ;
+  NotFile $(system.MAIN_TARGET) $(_cwd_targets)@$(system.MAIN_TARGET) ;
+  Always $(system.MAIN_TARGET) $(_cwd_targets)@$(system.MAIN_TARGET) ;
+
+  local _target ;
+  for _target in $(_cwd_targets) {
+    Depends $(_target) : $(_target)@$(system.MAIN_TARGET) ;
+  }
+  Depends try : all ;
+  Depends package : top ;
+  Depends release : test@top package ;
+  Depends handoff : release ;
+
+  setup-binclean-target ;
+
+  util.set-target-variable try : TARGET_DIRS : 
+    $(system.CWD_SRCDIR) $(system.CWD_BINDIR) 
+  ;
+  action.install try ;
+  action.package package ;
+  action.handoff handoff ;
+}
+
+rule setup-binclean-target
+{
+  local _binclean_target = "directory $(system.CWD_BINDIR)" ;
+
+  NotFile binclean $(_binclean_target) ;
+  Always  binclean $(_binclean_target) ;
+  Depends binclean : $(_binclean_target) ;
+
+  action.remove $(_binclean_target) : $(system.CWD_BINDIR)  ;
+}
+
+rule system.project-lib-name
+{
+  return [ util.join $(project.LIB_PREFIX) $(1[1]:B) ] ;
+}
+
+rule system.project-lib-dir
+{
+  return $(BINTOP) $(PROJECT_DIR) lib $(1[1]:B) ;
+}
+
+rule system.project-jni-dir
+{
+  return $(BINTOP) $(PROJECT_DIR) jni $(1[1]:B) ;
+}
+
+rule system.project-jni-target
+{
+  return [ util.join lib $(1) .so ] ;
+}
+
+rule system.project-jni-target-path
+{
+  return [ util.make-path [ system.project-jni-dir $(1) ] [ system.project-jni-target $(1) ] ] ;
+}
+
+rule system.project-lib-target
+{
+  return [ util.join lib [ system.project-lib-name $(1) ] .a ] ;
+}
+
+rule system.project-lib-target-path
+{
+  return [ util.make-path [ system.project-lib-dir $(1) ] [ system.project-lib-target $(1) ] ] ;
+}
+
+rule system.assign-category
+{
+  Depends $(1)@$(system.DOT_TARGET) : $(2) ;
+
+  local _clean_target = "$(1) in $(system.BINDIR)" ;
+
+  NotFile $(_clean_target) ;
+  Always $(_clean_target) ;
+  Depends clean-$(1)@$(system.DOT_TARGET) : $(_clean_target) ;
+  action.remove $(_clean_target) : $(2) ;
+}
+
+rule system.associate-binary-targets 
+{
+  system.associate $(system.BINDIR)/$(1) : $(system.BINDIR)/$(2) ;
+}
+
+rule system.associate-source-target 
+{
+  system.associate $(system.SRCDIR)/$(1) : $(system.BINDIR)/$(1) ;
+}
+
+rule system.associate
+{
+  local _target = $(1[1]) ;
+  local _source = $(2[1]) ;
+
+  NotFile $(_source) ;
+  Depends $(_target) : $(_source) ;
+
+  util.clone-target-variable $(_source) : $(_target) : 
+    TARGET_LIBDIRS TARGET_LIBDIRS_I TARGET_LIBS TARGET_SYSLIBS TARGET_STATIC_LIBS 
+  ;
+}
+
+rule system.make-empty-static-library
+{
+  local _library = $(1) ;
+  local _object = $(1).o ;
+  local _source = $(1).cc ;
+
+  Depends $(_library) : $(_object) ;
+  Depends $(_object) : $(_source) ;
+
+  system.assign-category obj : $(_source) $(_object) ;
+  system.assign-category lib : $(_library) ;
+
+  action.touch $(_source) ;
+  action.compile-cc $(_object) : $(_source) ;
+
+  action.static-library $(_library) : $(_object) ;
+}
+
+rule system.make-reloc-object
+{
+  local _reloc = $(1).reloc.o ;
+  local _objects = $(2) ;
+
+  system.assign-category reloc : $(_reloc) ;
+  local _static_libs = [ util.get-target-variable $(1) : TARGET_STATIC_LIBS ] ;
+
+  Depends $(_reloc) : $(_objects) $(_static_libs) ;
+  action.reloc $(_reloc) : $(_objects) $(_static_libs) ;
+  return $(_reloc) ;
+}
+
+rule system.make-build-target
+{
+  if ! $(PRODUCT_BUILD) {
+    return ;
+  }
+  local _object = $(BINTOPDIR)/build.o ;
+  local _source = $(BINTOPDIR)/build.$(PRODUCT_BUILD).c ;
+
+  Depends $(_object) : $(_source) ;
+
+  action.generate-build-file $(_source) : $(_object) ;
+  action.compile-c $(_object) : $(_source) ;
+  return $(_object) ;
+}
+
+rule system.make-program
+{
+  local _target = $(system.BINDIR)/$(1) ;
+  local _reloc = [ system.make-reloc-object $(_target) : [ system.make-objects $(2) ] ] ;
+
+  system.ensure-directory-for $(_target) ;
+  system.assign-category exe : $(_target) ;
+
+  local _build = [ system.make-build-target ] ;
+
+  Depends $(_target) : $(_reloc) $(_build) ;
+  TARGET_OBJECTS on $(_target) = $(_reloc) $(_build) ;
+
+  if $(3) {
+    TARGET_FLAGS on $(_target) += $(3) ;
+  }
+  local _options = [ util.get-target-variable $(_target) : TARGET_OPTIONS ] ;
+  if $(_options) {
+    local _item ;
+    for _item in [ util.combinations $(_options) ] {
+      NotFile $(_item) ;
+      action.link $(_target) : $(_item) ;
+    }
+  }
+  else action.link $(_target) ;
+
+  return $(_target) ;
+}
+
+rule system.make-objects
+{
+  local _object_list _object ;
+  for _object in $(1) {
+    _object_list += [ system.make-single-object $(_object) ] ;
+  }
+  system.setup-object-targets-in-cwd $(_object_list) ;
+  system.assign-category obj : $(_object_list) ;
+  return $(_object_list) ;
+}
+
+rule system.setup-object-targets-in-cwd
+{
+  if $(system.SRCDIR) = $(system.CWD_SRCDIR) {
+    local _target _name ;
+    for _target in $(1) {
+      _name = $(_target:D=) ;
+      NotFile $(_name) ;
+      Depends $(_name) : $(_target) ;
+    }
+  }
+}
+
+rule system.setup-program-targets-in-cwd
+{
+  if $(system.SRCDIR) = $(system.CWD_SRCDIR) {
+    for _target in $(1) {
+      local _name = $(_target:D=) ;
+      NotFile $(_name) ldpath@$(_name) ;
+      Always $(_name) ldpath@$(_name) ;
+      Depends $(_name) : $(_target) ;
+
+      system.invoke $(_name) : $(_target) ;
+      system.print-library-path ldpath@$(_name) : $(_target) ;
+    }
+  }
+}
+
+rule system.make-single-object
+{
+  local _kind = $(1[1]:S) ;
+
+  local _source = $(system.SRCDIR)/$(1[1]) ;
+  local _target = $(system.BINDIR)/$(1[1]:S=.o) ;
+
+  if ! $(_kind) {
+    exit Cannot determine compilation mode for $(_source) (no extention) ;
+  }
+  system.ensure-directory-for $(_target) ;
+
+  Depends $(_target) : $(_source) ;
+  system.process-object$(_kind) $(_target) : $(_source) ;
+
+  util.clone-target-variable $(_target) : $(_source) : TARGET_INCLUDES ;
+  return $(_target) ;
+}
+
+rule system.generate-cc
+{
+  local _name = system.generate-cc ;
+  local _processor = [ util.join $(_name) $(1:S) ] ;
+
+  if $(_processor) = $(_name) {
+    exit Cannot determine generation processor for '$(1)' (no extention) ;
+  }
+  local _original = $(system.SRCDIR)/$(1) ;
+  local _original_cc = $(system.SRCDIR)/$(1:S=.cc) ;
+
+  local _generated_cc = $(system.BINDIR)/$(1).cc ;
+  local _final_o = $(system.BINDIR)/$(1:S=.o) ;
+  local _merged_cc = $(system.BINDIR)/$(1:S=.cc) ;
+
+  system.ensure-directory-for $(_generated_cc) ;
+  system.assign-category gen : $(_generated_cc) $(_merged_cc) ;
+
+  Depends $(_generated_cc) : $(_original) $(system.SRCDIR)/$(2) ;
+  Depends $(_merged_cc) : $(_generated_cc) $(_original_cc) ;
+  Depends $(_final_o) : $(_merged_cc) ;
+
+  NoCare $(_original_cc) ;
+
+  util.set-target-variable $(_final_o) : TARGET_BINARY_SOURCE : $(_merged_cc) ;
+  util.set-target-variable $(_merged_cc) : GENERATED_CODE_LIST_MAIN : $(_original_cc) ;
+  util.add-target-variable $(_merged_cc) : GENERATED_CODE_LIST : $(_generated_cc) ;
+
+  system.mark-for-c-include-scan $(_original) ;
+
+  $(_processor) $(_generated_cc) : $(_original) ;
+  action.merge-generated-code $(_merged_cc) ;
+}
+
+rule system.generate-cc.l
+{
+  FLEX_SKELETON on $(1) = [ util.make-path $(SRCTOP) $(PROJECT_DIR) lib yacc++ skeleton.flex ] ;
+  CLASS_NAME on $(1) = $(2:D=:B) ;
+  action.generate-cc-lex $(1) : $(2) ;
+}
+
+rule system.generate-cc.y
+{
+  CLASS_NAME on $(1) = $(2:D=:B) ;
+  action.generate-cc-yacc $(1) : $(2) ;
+}
+
+rule system.generate-cc.rcc
+{
+  action.generate-cc-eruby $(1) : $(2) ;
+}
+
+rule system.generate-cc.pc
+{
+  local _target = $(1:S=) ;
+  local _includes ;
+
+  on $(_target:S=.o) _includes = $(TARGET_INCLUDES) ;
+  _includes += $(INCLUDES) ;
+
+  ORACLE_HOME on $(1) = $(project.ORACLE_HOME) ;
+  PROCC_INCLUDES on $(1) = sys_include='($(PROCC_SYSINCLUDES:J=,))' INCLUDE='($(_includes:J=,))' ;
+
+  action.generate-cc-proc $(1) : $(2) ;
+}
+
+rule system.ensure-directory-for
+{
+  local _target = $(1[1]) ;
+  local _target_directories = $(_target:D) $(2) ;
+
+  Depends $(_target) : $(_target_directories) ;
+  NoUpdate $(_target_directories) ;
+  action.make-directory $(_target_directories) ;
+}
+
+rule system.process-object.c
+{
+  system.mark-for-c-include-scan $(2) ;
+  action.compile-c $(1) : $(2) ;
+}
+
+rule system.process-object.cc
+{
+  system.mark-for-c-include-scan $(2) ;
+  action.compile-cc $(1) : $(2) ;
+}
+
+rule system.mark-for-c-include-scan
+{
+  local _file = $(1[1]) ;
+  HDRSCAN on $(_file) = $(CHDRPATTERN) ;
+  on $(_file) if ! $(HDRRULE)  {
+    HDRRULE on $(_file) = system.process-header ;
+  }
+}
+
+rule system.process-header 
+{
+  local _includes = $(1:D) $(INCLUDES) [ util.get-target-variable $(1) : TARGET_INCLUDES ] ;
+  local _headers = $(_includes)/$(2) ;
+  local _item ;
+  for _item in $(_headers) {
+    if ! [ util.is-absolute-path $(_item) ] {
+      util.clone-target-variable $(1) : $(_item) : HDRRULE HDRSCAN TARGET_INCLUDES ;
+    }
+  }
+  NoCare $(_headers) ;
+  Includes $(1) : $(_headers) ;
+}
+
+rule system.process-header-jni
+{
+  if ! [ util.get-target-variable java : SRCDIR ] {
+    system.error system.process-header-jni : Java project is not set up so far. ;
+  }
+  system.process-header $(1) : $(2) ;
+
+  local _object = [ util.get-target-variable $(1) : OBJECT ] ;
+  util.add-target-variable $(_object) : TARGET_INCLUDES :
+    [ util.get-target-variable java : BINDIR ]
+  ;
+  local _item ;
+  for _item in $(2) {
+    if $(_item:D) = jni {
+      local _class = [ util.split $(_item:B) : _ ] ;
+
+      local _bindir = [ util.get-target-variable java : BINDIR ] ;
+      local _srcdir = [ util.get-target-variable java : SRCDIR ] ;
+
+      local _class_spec = $(_class:J=.) ;
+      local _class_header = [ util.make-path $(_bindir) jni $(_class:J=_).h ] ;
+      local _class_class = [ util.make-path $(_bindir) $(_class:J=/).class ] ;
+      local _class_source = [ util.make-path $(_srcdir) $(_class:J=/).java ] ;
+
+      Includes $(1) : $(_class_header) ;
+      NotFile $(_class_spec) ;
+
+      util.clone-target-variable java : $(_class_header) : BINDIR ;
+      system.assign-category gen : $(_class_header) ;
+      action.create-jni-header $(_class_header) : $(_class_spec) ;
+
+      Depends $(_class_header) : $(_class_class) ;
+      Depends $(_class_class) : $(_class_source) ;
+
+      system.invoke-ant $(_class_class) : compile ;
+    }
+  }
+}
+
+rule system.scan-for-jni.cc
+{
+  HDRRULE on $(system.SRCDIR)/$(1) = system.process-header-jni ;
+  OBJECT on $(system.SRCDIR)/$(1) = $(system.BINDIR)/$(1:S=.o) ;
+}
+
+rule system.use-project-libraries.cc
+{
+  local _target = $(system.BINDIR)/$(1:S=.o) ;
+  local _item _library ;
+  for _item in $(2) {
+    _library = [ system.project-lib-target-path $(_item) ] ;
+    Depends $(_target) : $(_library) ;
+  }
+}
+
+rule system.use-project-libraries
+{
+  local _target = $(system.BINDIR)/$(1) ;
+  if $(2) {
+    system.setup-project-libraries $(_target) : : $(2) ;
+  }
+  local _parameter _option _suffix ;
+  for _parameter in 3 4 5 6 7 8 9 {
+    _option = $($(_parameter)) ;
+    if ! $(_option) {
+      break ;
+    }
+    TARGET_OPTIONS on $(_target) += I ;
+    on $(_target) _suffix = $(TARGET_OPTIONS) ;
+    system.setup-project-libraries $(_target) : $(_suffix:J=) : $(_option) ;
+  }
+}
+
+rule system.setup-project-libraries
+{
+  local _v _v_LIBS _v_SYSLIBS _v_LIBDIRS _v_STATIC_LIBS ;
+  for _v in LIBS SYSLIBS LIBDIRS STATIC_LIBS {
+    _v_$(_v) = [ util.join TARGET $(_v) $(2) : _ ] ;
+  }
+  local _item _library _libdirs _libs _syslibs ;
+  for _item in $(3) {
+    _library = [ system.project-lib-target-path $(_item) ] ;
+
+    _libdirs = [ util.get-target-variable $(_library) : TARGET_LIBDIRS ] ;
+    _libs = [ util.get-target-variable $(_library) : TARGET_LIBS ] ;
+    _syslibs = [ util.get-target-variable $(_library) : TARGET_SYSLIBS ] ;
+    
+    util.add-target-variable $(1) : $(_v_LIBS) : [ system.project-lib-name $(_item) ] $(_libs) ;
+    util.add-target-variable $(1) : $(_v_SYSLIBS) : $(_syslibs) ;
+    util.add-target-variable $(1) : $(_v_STATIC_LIBS) : $(_library) ;
+    util.add-target-variable $(1) : $(_v_LIBDIRS) : $(_library:D) $(_libdirs) ;
+
+    Depends $(1) : $(_library) ;
+  }
+}
+
+rule system.use-project-libraries.xml
+{
+  local _target = $(system.BINDIR)/$(1) ;
+  local _item _library ;
+  for _item in $(2) {
+    _library = [ system.project-lib-target-path $(_item) ] ;
+    util.add-target-variable $(_target) : TARGET_LIBDIRS : $(_library:D) ;
+    Depends $(_target) : $(_library) ;
+  }
+}
+
+rule system.use-project-jni-module.xml
+{
+  local _target = $(system.BINDIR)/$(1) ;
+  local _item ;
+  for _item in $(2) {
+    local _module = [ system.project-jni-target-path $(_item) ] ;
+    util.add-target-variable $(_target) : TARGET_LIBDIRS : $(_module:D) ;
+
+    util.add-target-variable $(_target) : JNI_LIBS : $(_module) ;
+    util.add-target-variable $(_target) : TARGET_LIBDIRS :
+      [ util.get-target-variable $(_module) : TARGET_LIBDIRS ]
+    ;
+  }
+}
+
+rule system.use-local-libraries
+{
+  local _target = $(system.BINDIR)/$(1) ;
+  local _item _lib_target _library ;
+  for _item in $(2) {
+    _lib_target = [ system.project-lib-target $(_item) ] ;
+    _library = $(system.BINDIR)/$(_item)/$(_lib_target) ;
+
+    util.add-target-variable $(_target) : TARGET_LIBDIRS : $(_library:D) ;
+    util.add-target-variable $(_target) : TARGET_STATIC_LIBS : $(_library) ;
+    util.add-target-variable $(_target) : TARGET_LIBS : [ system.project-lib-name $(_item) ]  ;
+
+    Depends $(_target) : $(_library) ;
+  }
+}
+
+rule system.use-local-libraries.cc
+{
+  util.add-target-variable $(system.BINDIR)/$(1:S=.o) : TARGET_INCLUDES : $(system.SRCDIR)/$(2) ;
+}
+
+rule system.use-product
+{
+  local _target = $(system.BINDIR)/$(1) ;
+
+  util.add-target-variable $(_target) : TARGET_LIBDIRS : $(2) ;
+  util.add-target-variable $(_target) : TARGET_LIBS : $(3) ;
+  util.add-target-variable $(_target) : TARGET_SYSLIBS : $(4) ;
+}
+
+rule system.use-product.cc
+{
+  local _target = $(system.BINDIR)/$(1:S=.o) ;
+
+  util.add-target-variable $(_target) : TARGET_INCLUDES : $(5) ;
+  util.add-target-variable $(_target) : TARGET_DEFINES : $(6) ;
+}
+
+rule system.use-product.c
+{
+  system.use-product.cc $(1) : : : : $(5) : $(6) ;
+}
+
+rule system.use-product.xml
+{
+  util.add-target-variable $(system.BINDIR)/$(1) : TARGET_CLASSPATH : $(7) ;
+}
+
+rule system.use-defines.cc
+{
+  system.use-defines.c $(1) : $(2) ;
+}
+
+rule system.use-defines.c
+{
+  util.add-target-variable $(system.BINDIR)/$(1:S=.o) : TARGET_DEFINES : $(2) ;
+}
+
+rule system.use-project-includes.cc
+{
+  system.use-project-includes.c $(1) : $(2) ;
+}
+
+rule system.use-project-includes.c
+{
+  local _directory = [ util.make-path $(SRCTOP) $(PROJECT_DIR) ] ;
+  util.add-target-variable $(system.BINDIR)/$(1:S=.o) : TARGET_INCLUDES : $(_directory)/$(2) ;
+}
+
+# Rule system.invoke prepares program execution. It sets up the environment
+# so that the current directory for the invokation is the one where the
+# program's  Jamfile is located. This way the program may open files (e.g. 
+# congig files) from the guaranteed location. 
+# 
+# To make it possible, the rule sets up LD_LIBRARY_PATH and the program
+# invokation path relative to the program's Jamfile location.
+# 
+rule system.invoke
+{
+  Depends $(1) : $(2) ;
+
+  LD_LIBRARY_PATH-$(2) on $(1) = [ system.convert-path-from-cwd $(LIBDIRS) : $(2) : TARGET_LIBDIRS ] ;
+  COMMAND-$(2) on $(1) = $(CWD)/$(2) ;
+  ARGS-$(2) on $(1) = $(3) ;
+  SRCDIR on $(1) = $(system.SRCDIR) ;
+
+  action.invoke $(1) : $(2) ;
+}
+
+rule system.convert-path-from-cwd
+{
+  local _libdirs = $(1) [ util.get-target-variable $(2) : $(3) $(3)_I ] ;
+  return [ util.join [ util.prepend-if-relative-path $(_libdirs) : $(CWD) ] : ":" ] ;
+}
+
+rule system.print-library-path
+{
+  LD_LIBRARY_PATH on $(1) = [ system.convert-path-from-cwd $(LIBDIRS) : $(2) : TARGET_LIBDIRS ] ;
+  action.print-library-path $(1) ;
+}
+
+rule system.invoke-ant
+{
+  util.clone-target-variable java : $(1) :
+    ANT_BUILD_FILE LD_LIBRARY_PATH CLASSPATH
+    SRCDIR BINDIR BINDIR_FROM_SRCDIR GENDIR_FROM_SRCDIR
+  ;
+  ACTION on $(1) = $(2) ;
+  action.invoke-ant $(1) ;
+}
+
+rule system.setup-try-libs-for
+{
+  local _libdirs = [ util.get-target-variable $(1) : TARGET_LIBDIRS ] ;
+  util.add-target-variable try-libs@$(system.DOT_TARGET) : TARGET_DIRS : $(_libdirs) ;
+  action.install try-libs@$(system.DOT_TARGET) ;
+}
+
+rule system.export-to-env 
+{
+  local _colon = ":" ;
+  if $(1) {
+    system.ENV_EXPORT_LIST += $(1[1])=$(2:J=$(_colon)) ;
+    system.export-to-env $(1[2-]) : $(2) ;
+  }
+}
+
+core.load-config Jam.action ;

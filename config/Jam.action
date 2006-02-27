@@ -1,0 +1,238 @@
+#
+#            Tone Software Corporation BSD License ("License")
+# 
+#                        Software Build Environment
+#                        
+# Please read this License carefully before downloading this software. By
+# downloading or using this software, you are agreeing to be bound by the
+# terms of this License. If you do not or cannot agree to the terms of
+# this License, please do not download or use the software.
+# 
+# A set of Jam configuration files and a Jam front-end for advanced
+# software building with automatic dependency checking for the whole
+# project. Provides a hierarchical project description while performing
+# build procedures without changing directories. The resulting domain
+# language changes emphasis from how to build to what to build. Provides
+# separation of compilation artifacts (object files, binaries,
+# intermediate files) from the original sources. Comes standard with
+# ability to build programs, test suites, static and shared libraries,
+# shared modules, code generation, and many others. Provides the bridge to
+# ANT for building Java, with abilities to build JNI libraries.
+# 
+# Copyright (c) 2003, 2005, Tone Software Corporation
+# 
+# All rights reserved.
+# 
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are
+# met:
+#   * Redistributions of source code must retain the above copyright
+#     notice, this list of conditions and the following disclaimer. 
+#   * Redistributions in binary form must reproduce the above copyright
+#     notice, this list of conditions and the following disclaimer in the
+#     documentation and/or other materials provided with the distribution. 
+#   * Neither the name of the Tone Software Corporation nor the names of
+#     its contributors may be used to endorse or promote products derived
+#     from this software without specific prior written permission. 
+# 
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS
+# IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+# TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
+# PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER
+# OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+# EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+# PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+# PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+# LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+# NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+# 
+
+
+actions together action.compile-cc
+{
+  $(C++) -c $(C++ALLFLAGS) $(TARGET_FLAGS) -D$(DEFINES) -D$(TARGET_DEFINES) -I$(>:D) -I$(INCLUDES) -I$(TARGET_INCLUDES) -o $(<) $(TARGET_BINARY_SOURCE:E=$(>))
+}
+
+actions together action.compile-c
+{
+  $(CC) -c $(CCALLFLAGS) $(TARGET_FLAGS) -D$(DEFINES) -D$(TARGET_DEFINES) -I$(>:D) -I$(INCLUDES) -I$(TARGET_INCLUDES) -o $(<) $(TARGET_BINARY_SOURCE:E=$(>))
+}
+
+actions together action.generate-build-file
+{
+  rm -f $(>[1]:S=).*.c
+  echo 'const char * const __TSC_BUILD__ = "@(#)build $(PRODUCT_BUILD) of $(PRODUCT_NAME) $(PRODUCT_RELEASE) for $(PRODUCT_PLATFORM) by $(USER)";' > $(<[1])
+}
+
+actions together action.reloc
+{
+  $(LD) -r -o $(<) $(LDFLAGS) $(>)
+}
+
+actions together action.shared-library
+{
+  rm -f $(<:S=).[0-9]*
+  $(CC) $(DLLFLAGS) $(C++LDALLFLAGS) $(TARGET_FLAGS) -Wl,-h$(TARGET_SONAME) -L$(TARGET_LIBDIRS) -l$(TARGET_LIBS) -l$(TARGET_SYSLIBS) -o $(<) $(>)
+}
+
+actions together action.static-library
+{
+  rm -f $(<)
+  $(AR) $(<) $(>)
+}
+
+actions together action.shared-module
+{
+  $(C++) $(DLLFLAGS) $(C++LDALLFLAGS) $(TARGET_FLAGS) -o $(<) $(>) -L$(LIBDIRS) -L$(TARGET_LIBDIRS) -l$(TARGET_LIBS) -l$(LIBS) -l$(TARGET_SYSLIBS) -l$(SYSLIBS)
+}
+
+actions action.link
+{
+  $(C++) $(C++LDALLFLAGS) $(TARGET_FLAGS) -o $(<) $(TARGET_OBJECTS) -L$(LIBDIRS) -L$(TARGET_LIBDIRS_$(>)) -L$(TARGET_LIBDIRS) -l$(TARGET_LIBS_$(>)) -l$(TARGET_LIBS) -l$(LIBS) -l$(TARGET_SYSLIBS) -l$(SYSLIBS)
+}
+
+actions action.print-library-path
+{
+  echo $(LD_LIBRARY_PATH)
+}
+
+actions action.invoke
+{
+  cd $(SRCDIR) && {
+    $(system.ENV_EXPORT_LIST) \
+    LD_LIBRARY_PATH=$(LD_LIBRARY_PATH-$(>)) \
+      $(RUNEXEC) $(COMMAND-$(>)) $(RUNARGS) $(ARGS-$(>))
+  }
+}
+
+actions action.invoke-ant
+{
+  cd $(SRCDIR) && {
+    $(system.ENV_EXPORT_LIST) \
+    LD_LIBRARY_PATH=$(LD_LIBRARY_PATH) \
+    CLASSPATH=$(CLASSPATH) \
+    JAVA_HOME=$(project.JAVA_HOME) \
+    ANT_OPTS=$(ANT_JAVA_OPTIONS) \
+      ant -f $(ANT_BUILD_FILE) $(ANTFLAGS) -Dsrcdir=. -Dbindir=$(BINDIR_FROM_SRCDIR) -Dgendir=$(GENDIR_FROM_SRCDIR) $(ACTION)
+  }
+}
+
+actions together action.make-directory
+{
+  $(MKDIR) $(<)
+}
+
+actions existing together action.remove
+{
+  $(RMRF) $(>)
+}
+
+actions together action.cleanup-for
+{
+  $(RMRF) $(CLEANUP_LIST)
+}
+
+actions action.symlink
+{
+  rm -f $(<)
+  ln -s $(>) $(<) 
+}
+
+actions together action.touch
+{
+  touch $(<)
+}
+
+actions together action.generate-cc-lex
+{
+  flex++ -S$(FLEX_SKELETON) -t $(>[1]) > $(<[1]) && {
+    echo ',s/yyFlexLexer/$(CLASS_NAME)/g
+    w
+    q' | ed - $(<[1])
+    echo 'g/<FlexLexer[.]h>/d
+    w
+    q' | ed - $(<[1])
+    true
+  }
+}
+
+actions together action.generate-cc-yacc
+{
+  bison -o $(<[1]) -b $(CLASS_NAME) -p_$(CLASS_NAME)_yy $(>[1]) && {
+    echo ',s/yyparse/yyPARSE/g
+    w
+    q' | ed - $(<[1])
+    echo ',s/yylex/yyLEX/g
+    w
+    q' | ed - $(<[1])
+    echo ',s/yyerror/yyERROR/g
+    w
+    q' | ed - $(<[1])
+    echo ',s/^yyPARSE/$(CLASS_NAME)::yyparse/g
+    w
+    q' | ed - $(<[1])
+    echo ',s/_$(CLASS_NAME)_yyLEX/$(CLASS_NAME)::nextToken/g
+    w
+    q' | ed - $(<[1])
+    echo ',s/_$(CLASS_NAME)_yyERROR/$(CLASS_NAME)::yyerror/g
+    w
+    q' | ed - $(<[1])
+    true
+  }
+}
+
+actions together action.generate-cc-proc
+{
+  ORACLE_HOME=$(ORACLE_HOME) LD_LIBRARY_PATH=$(ORACLE_HOME)/lib $(PROCC) $(PROCCFLAGS) $(PROCC_INCLUDES) iname=$(>) oname=$(<) | sed -n '/[Ee]rror/,$p'
+}
+
+actions together action.merge-generated-code
+{
+  for f in $(GENERATED_CODE_LIST) $(GENERATED_CODE_LIST_MAIN) ; do
+    test -f ${f} && {
+      echo '#line 1 "'${f}'"' | cat - ${f}
+    }
+  done > $(<[1])
+  test -s $(<[1])
+}
+
+actions together action.generate-cc-eruby
+{
+  echo '#line 1 "$(>)"' | cat - $(>) | (cd $(>:D) && eruby)  > $(<)
+}
+
+actions action.create-jni-header
+{
+  javah -force -jni -classpath $(BINDIR)/classes -d $(<:D) $(>)
+}
+
+actions together action.install
+{
+  $(system.ENV_EXPORT_LIST) sudo distributor -i -r$(project.DISTRIB_ENV) -m$(project.DISTRIB_MODE) -p$(project.LIB_PREFIX) -l$(project.LIB_MAJOR) -b$(PRODUCT_BUILD) $(project.DISTRIB_PRODINFO) $(TARGET_DIRS)
+}
+
+actions action.package
+{
+  $(system.ENV_EXPORT_LIST) distributor -o$(PKGTOP:J=/) -m$(project.DISTRIB_MODE) -p$(project.LIB_PREFIX) -l$(project.LIB_MAJOR) -b$(PRODUCT_BUILD) $(project.DISTRIB_PRODINFO)
+}
+
+actions action.handoff
+{
+  handoff -p $(project.HANDOFF_PRODUCT) -s$(project.HANDOFF_SERVER) -m$(project.HANDOFF_RECEPIENTS) 
+}
+
+actions action.generate-swig-interface
+{
+  for i in $(CLASS_INTERFACES:D=) ; do echo '%include "'"${i}"'"'; done | cat $(2) - > $(1) 
+}
+
+actions action.swig-ruby
+{
+  LD_LIBRARY_PATH=$(GCC_ROOT)/lib swig -w401 -w509 -I$(INCLUDES) -I$(TARGET_INCLUDES) -Werror -c++ -ruby -o $(1) $(2)
+}
+
+actions action.generate-c-includes
+{
+  for i in $(2:D=) ; do echo '#include "'"${i}"'"'; done > $(1)
+}

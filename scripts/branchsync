@@ -1,0 +1,235 @@
+#!/usr/local/bin/ruby
+#
+#            Tone Software Corporation BSD License ("License")
+# 
+#                        Software Build Environment
+#                        
+# Please read this License carefully before downloading this software. By
+# downloading or using this software, you are agreeing to be bound by the
+# terms of this License. If you do not or cannot agree to the terms of
+# this License, please do not download or use the software.
+# 
+# A set of Jam configuration files and a Jam front-end for advanced
+# software building with automatic dependency checking for the whole
+# project. Provides a hierarchical project description while performing
+# build procedures without changing directories. The resulting domain
+# language changes emphasis from how to build to what to build. Provides
+# separation of compilation artifacts (object files, binaries,
+# intermediate files) from the original sources. Comes standard with
+# ability to build programs, test suites, static and shared libraries,
+# shared modules, code generation, and many others. Provides the bridge to
+# ANT for building Java, with abilities to build JNI libraries.
+# 
+# Copyright (c) 2003, 2005, Tone Software Corporation
+# 
+# All rights reserved.
+# 
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are
+# met:
+#   * Redistributions of source code must retain the above copyright
+#     notice, this list of conditions and the following disclaimer. 
+#   * Redistributions in binary form must reproduce the above copyright
+#     notice, this list of conditions and the following disclaimer in the
+#     documentation and/or other materials provided with the distribution. 
+#   * Neither the name of the Tone Software Corporation nor the names of
+#     its contributors may be used to endorse or promote products derived
+#     from this software without specific prior written permission. 
+# 
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS
+# IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+# TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
+# PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER
+# OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+# EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+# PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+# PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+# LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+# NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+# 
+
+$:.concat ENV['PATH'].split(':')
+
+require 'singleton'
+require 'getoptlong'
+require 'net/smtp'
+require 'tsc/launch'
+
+class Syncer
+  include Singleton
+
+  def printUsage
+    $stderr.puts "USAGE: #{File.basename $0} " + 
+      "[-d<domain>][-s<SMTP server>][-m<mailing list>][-f][-q] <branch file>"
+  end
+
+  def parse(file)
+    @branches = Hash.new
+    IO.foreach "#{file}" do |line|
+      _fields = line.sub('#.*$','').split
+      if not _fields.empty?
+        _branch = _fields[0]
+	@branches[ _branch ] ||= [ 0, [] ]
+	if _fields.size == 1
+	  @branches[_branch][0] |= 1
+	else
+	  2.upto(_fields.size - 1) do |index|
+	    @branches[_branch][1].concat _fields[index].scan(/\d+/).collect do |num|
+	      num.to_i
+	    end
+	  end
+	  @branches[_branch][0] |= 1 if _fields[1].include?  ">"
+	  @branches[_branch][0] |= 2 if _fields[1].include?  "<"
+	end
+      end
+    end
+  end
+
+  def obtainBranchList
+    @availableBranches = Array.new
+    launch 'p4 branches' do |line,|
+      unless line.nil?
+	_fields = line.split
+	@availableBranches << _fields[1] if _fields.size > 2 && _fields[0] == "Branch"
+      end
+    end
+  end
+
+  def init
+    _opts = GetoptLong.new(
+      [ '--server',  '-s',       GetoptLong::REQUIRED_ARGUMENT],
+      [ '--mail',    '-m',       GetoptLong::REQUIRED_ARGUMENT],
+      [ '--force',   '-f',       GetoptLong::NO_ARGUMENT],
+      [ '--quiet',   '-q',       GetoptLong::NO_ARGUMENT],
+      [ '--command', '-c',       GetoptLong::NO_ARGUMENT],
+      [ '--help',    '-h', '-?', GetoptLong::NO_ARGUMENT]
+    )
+    @mailRecipients = []
+    @force = false
+    @quiet = false
+    @showCommand = false
+    _opts.each do |opt,arg|
+      case opt
+        when '--help' 
+	  printUsage
+	  exit 0
+        when '--server' then @smtpServer = arg
+	when '--mail' then @mailRecipients = arg.split('[\t ,]+').compact
+	when '--force' then @force = true
+	when '--quiet' then @quiet = true
+	when '--command' then @showCommand = true
+      end
+    end
+    if @smtpServer != nil
+      @tcpDomain = @smtpServer.sub(%r{^[^.]+\.(.*)$},'\1').strip
+      if @tcpDomain.size == 0 || @tcpDomain == @smtpServer
+        raise "SMTP server name \"#{@smtpServer}\" must have domain part."
+      end
+      @mailRecipients.collect! do |recipient|
+	if recipient.include?('@') == false
+	  "#{recipient}@#{@tcpDomain}"
+	else
+	  recipient
+	end
+      end
+    end
+
+    @userName = launch('id')[0][0].scan(%r{(\()(.*?)(\))})[0][1]
+
+    if ARGV.size != 1 
+      printUsage
+      exit 2
+    end
+    obtainBranchList
+    parse ARGV[0]
+  end
+
+  def checkSchedule(sched)
+    if sched.empty? == true
+      return true
+    end
+    if sched.sort.last.to_i > 6
+      return sched.include? Time.now.day
+    else 
+      return sched.include? Time.now.wday
+    end
+  end
+
+  def report(subject,command,messages)
+    if @tcpDomain && @smtpServer && @mailRecipients.empty? == false
+      _smtp = Net::SMTP.new(@smtpServer);
+      _smtp.start
+      _smtp.ready("#{@userName}@#{@tcpDomain}",@mailRecipients) do |adaptor|
+        adaptor.write("To: #{@mailRecipients.join(', ')}\r\n")
+        adaptor.write("Subject: #{subject}\r\n")
+	adaptor.write("\r\n")
+	adaptor.write("#{subject}\r\n")
+	if @showCommand == true
+	  adaptor.write("#{command}\r\n")
+	end
+	if @quiet == false
+	  messages.each do |line|
+	    adaptor.write("  #{line}\r\n")
+	  end
+	end
+      end
+    else
+      puts "#{subject}"
+      if @showCommand == true
+        puts "#{command}"
+      end
+      if @quiet == false
+	messages.each do |line|
+	  puts "  #{line}"
+	end
+      end
+    end
+  end
+
+  def perform(branch,reverse,sched)
+    if @force == false && checkSchedule(sched) == false
+      return
+    end
+    _command = "p4 integrate -n -i -d -b #{branch} " + (reverse ? "-r" : "")
+    _stdmsg, _errmsg = launch _command
+    _direction = reverse ? "reverse" : "direct"
+    if _stdmsg.empty? == false
+      _subject = "Branch \"#{branch}\" (#{_direction}) out of sync"
+      report _subject, _command, _stdmsg.collect do |line|
+        "#{line.sub(' from //.*$','')}"
+      end
+    end
+    if _errmsg.empty? == false
+      if _errmsg.size == 1
+        if _errmsg.first =~ /already integrated/
+	  return
+	end
+      end
+      _subject = "Failure checking branch \"#{branch}\" (#{_direction})"
+      report _subject, _command, _errmsg
+    end
+  end
+
+  def sync
+    init
+    @branches.keys.sort.each do |entry|
+      if @availableBranches.include?(entry) == true
+	if (@branches[entry][0] & 1) != 0
+	  perform(entry,false,@branches[entry][1])
+	end
+	if (@branches[entry][0] & 2) != 0
+	  perform(entry,true,@branches[entry][1])
+	end
+      end
+    end
+  end
+end
+
+begin
+  Syncer.instance.sync
+rescue GetoptLong::InvalidOption
+  Syncer.instance.printUsage
+rescue => exception
+  $stderr.puts "#{File.basename($0)}: #{exception.message}, #{$@.join("\n")}"
+end
