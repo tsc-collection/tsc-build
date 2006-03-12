@@ -49,19 +49,18 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 # 
 
-$:.push File.dirname(__FILE__)
-
-require 'tsc/application.rb'
+[ 'tsc/application.rb' ].each do |a|
+  $: << ENV.to_hash['PATH'].split(':').find { |p| Dir[ p + '/' + a ].first }
+  require a
+end
 
 class Application < TSC::Application
-  PROJECT_DIR = 'project'
   def start
-    options['verbose'] = true
     handle_errors {
-      @top = File.dirname(script_location)
+      self.verbose = ENV['TRACE'].to_s.split.include?(script_name)
 
-      commands = find_in_path script_name
-      commands.shift while commands[0] == $0
+      commands = find_in_path(script_name)
+      commands.shift while commands.first == $0
 
       raise "No #{script_name.inspect} in PATH" if commands.empty?
       invoke commands.first
@@ -70,44 +69,81 @@ class Application < TSC::Application
 
   private
   #######
-  def config(*args)
-    File.join @top, 'config', *args
+
+  def expanded_script_location
+    @expanded_script_location ||= File.expand_path(script_location)
   end
 
-  def project_config(*args)
-    File.join @top, PROJECT_DIR, 'config', *args
+  def config_location
+    @config_location ||= begin
+      File.join File.dirname(expanded_script_location), 'config'
+    end
   end
 
-  def find_in_path(command)
-    ENV['PATH'].split(File::PATH_SEPARATOR).map { |_path|
-      Dir[ File.join(_path, command) ]
-    }.flatten
+  def core_config_file
+    @core_config_file ||= File.join(config_location, 'Jam.core')
   end
 
-  def bootstrap_file
-    @bootstrap_file ||= config('Jam.bootstrap')
+  def cwd
+    @cwd ||= Dir.getwd.split(File::SEPARATOR).slice(1..-1)
+  end
+
+  def cwd_from_top
+    @cwd_from_top ||= begin
+      index = cwd.rindex('src')
+      raise 'No src in current path' unless index
+
+      cwd.slice(index .. -1)
+    end
+  end
+  
+  def project_offset
+    figure_project_config.first
   end
 
   def project_config_file
-    @project_config_file ||= project_config('jam-config.rb')
+    figure_project_config.last
+  end
+
+  def figure_project_config
+    @project_config ||= begin
+      config_dir = 'config'
+      config_file = 'jam-config.rb'
+
+      top_config_file = File.join(top + [ 'src', config_dir, config_file ])
+      return [ '', top_config_file ] if File.file? top_config_file
+
+      path, *extra = Dir[ File.join(top + [ 'src', '*', config_dir, config_file ]) ]
+      raise "Multiple project #{config_file.inspect} found" unless extra.empty?
+
+      return [ '', nil ] unless path
+      [ path.split(File::SEPARATOR).slice(top.size + 1), path ]
+    end
+  end
+
+  def top
+    Array.new(cwd_from_top.size, '..')
   end
 
   def invoke(command)
     jam_options = []
     jam_project_options = []
 
-    if File.file? bootstrap_file
+    if File.file? core_config_file
       jam_options = [
-	'-f', bootstrap_file,
-	'-s', "PROJECT_DIR=#{PROJECT_DIR}",
-        '-s', "JAM=#{__FILE__}", 
-	'-s', "CWD=#{Dir.getwd}"
+	'-f' + core_config_file,
+	'-score.PROJECT_OFFSET=' + project_offset,
+        '-score.CWD_FROM_TOP=' + cwd_from_top.join(' '),
+        '-score.CONFIG=' + config_location, 
+        '-score.JAM=' + File.join(expanded_script_location, script_name),
+	'-score.CWD=' + Dir.getwd,
+        '-score.TOP=' + top.join(' ')
       ]
       unless ENV.has_key? 'JAM_NOTQUICK'
 	jam_options.push '-q' ;
       end
 
-      if File.file? project_config_file
+      if project_config_file
 	load project_config_file, false
 	jam_project_options = JamConfig.new.options
       end

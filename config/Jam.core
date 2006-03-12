@@ -1,3 +1,4 @@
+# vim:ft=jam
 #
 #            Tone Software Corporation BSD License ("License")
 # 
@@ -48,25 +49,43 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 # 
 
-
 if $(core.JAMCORE_LOADED) {
   exit Multiple Jam.core loaded ;
 }
 core.JAMCORE_LOADED = true ;
 
-rule core.check-top
+rule core.unset-if-empty
 {
-  if ! $(core.TOP) {
-    exit core.TOP is not set ;
+  local _item ;
+  for _item in $(<) {
+    if $($(_item)) = "" {
+      $(_item) = ;
+    }
+  }
+}
+
+rule core.ensure-defined
+{
+  local _item ;
+  for _item in $(<) {
+    if ! $($(_item)) {
+      exit $(_item) not defined ;
+    }
+  }
+}
+
+rule core.trace
+{
+  if $(<) in $(TRACE) {
+    echo "###" $(>) ;
   }
 }
 
 rule core.load
 {
   core.LAST_LOADED_FILE = $(<:J=/) ;
-  if core in $(TRACE) {
-    echo "### Loading $(core.LAST_LOADED_FILE)" ;
-  }
+  core.trace core : Loading $(core.LAST_LOADED_FILE) ;
+
   local _directive ;
   for _directive in $(>) {
     $(_directive) $(core.LAST_LOADED_FILE) ;
@@ -76,17 +95,30 @@ rule core.load
 
 rule core.load-config
 {
-  core.load $(core.TOP) src config $(<) : $(>) ;
+  core.load $(core.CONFIG) $(<) : $(>) ;
 }
 
 rule core.load-project-config
 {
-  if $(PROJECT_DIR) {
-    core.load $(core.TOP) src $(PROJECT_DIR) config $(<) : $(>) ;
-  }
+  core.load $(core.TOP) src $(core.PROJECT_OFFSET) config $(<) : $(>) ;
 }
 
-core.check-top ;
+core.unset-if-empty 
+  core.PROJECT_OFFSET 
+  core.CWD_FROM_TOP
+  core.CONFIG 
+  core.JAM
+  core.CWD 
+  core.TOP 
+;
+
+core.ensure-defined 
+  core.CWD_FROM_TOP 
+  core.CONFIG 
+  core.JAM 
+  core.TOP 
+  core.CWD 
+;
 
 core.load-config Jam.util ;
 core.load-config Jam.system ;
@@ -97,7 +129,7 @@ core.load-config Jam.env ;
 core.load-project-config Jam.project : NoCare ;
 
 core.load-config Jamrules ;
-core.load-project-config Jamrules : NoCare ;
+core.load-project-config Jamrules.project : NoCare ;
 
 system.setup-environment ;
 system.load-top-jamfile ;

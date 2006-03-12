@@ -1,3 +1,4 @@
+# vim:ft=jam
 #
 #            Tone Software Corporation BSD License ("License")
 # 
@@ -48,7 +49,6 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 # 
 
-
 rule system.error
 {
   echo ERROR in $(core.LAST_LOADED_FILE) ;
@@ -60,14 +60,9 @@ rule system.error-no-rule
   system.error $(1) : Rule is not implemented yet ;
 }
 
-rule system.figure-cwd-from-top
-{
-  return [ util.reverse [ util.trim [ util.reverse-split-path $(CWD) ] : $(core.TOP) ] ] ;
-}
-
 rule system.is-cwd-under
 {
-  if ! [ util.consume $(<) : $(system.CWD_FROM_TOP) ] {
+  if ! [ util.consume $(<) : $(core.CWD_FROM_TOP) ] {
     return true ;
   }
 }
@@ -92,8 +87,10 @@ rule system.figure-top-dirs
 
 rule system.load-top-jamfile
 {
+  core.trace system : system.load-top-jamfile ;
+
   if $(JAMTOP) = . {
-    JAMTOP = $(system.CWD_FROM_TOP) ;
+    JAMTOP = $(core.CWD_FROM_TOP) ;
   }
   system.load-jamfile-from $(JAMTOP:E=src) ;
 
@@ -104,7 +101,7 @@ rule system.load-top-jamfile
           exit "Current $(JAMFILE) is not part of the build process" ;
         }
         if [ system.is-cwd-under $(JAMTOP) ] {
-          system.load-jamfile-from $(system.CWD_FROM_TOP) ;
+          system.load-jamfile-from $(core.CWD_FROM_TOP) ;
         }
       }
     }
@@ -118,7 +115,7 @@ rule system.load-jamfile-from
 
   local _top = $(3) ;
   if $(_top) {
-    INCLUDES += [ util.make-path $(_top) src project include ] ;
+    INCLUDES += [ util.make-path $(_top) src $(PROJECT_OFFSET) include ] ;
   }
   else _top = $(core.TOP) ;
   local core.TOP = $(_top) ;
@@ -144,13 +141,13 @@ rule system.load-jamfile-from
 
 rule system.setup-environment
 {
-  system.CWD_FROM_TOP = [ system.figure-cwd-from-top ] ;
+  core.trace system : system.setup-environment ;
 
-  system.CWD_SRCDIR = [ util.make-path $(core.TOP) $(system.CWD_FROM_TOP) ] ;
-  system.CWD_BINDIR = [ util.make-path $(BINTOP) $(system.CWD_FROM_TOP[2-]) ] ;
+  system.CWD_SRCDIR = [ util.make-path $(core.TOP) $(core.CWD_FROM_TOP) ] ;
+  system.CWD_BINDIR = [ util.make-path $(BINTOP) $(core.CWD_FROM_TOP[2-]) ] ;
 
   system.TOP_TARGET = top ;
-  system.MAIN_TARGET = $(system.CWD_FROM_TOP:J=/:E=$(system.TOP_TARGET)) ;
+  system.MAIN_TARGET = $(core.CWD_FROM_TOP:J=/:E=$(system.TOP_TARGET)) ;
   system.DOT_TARGET = $(system.TOP_TARGET) ;
 
   system.TARGET_CATEGORIES = exe jni lib obj gen proto ant reloc ;
@@ -217,17 +214,17 @@ rule setup-binclean-target
 
 rule system.project-lib-name
 {
-  return [ util.join $(project.LIB_PREFIX) $(1[1]:B) ] ;
+  return [ util.join $(project.LIB_PREFIX) $(1) ] ;
 }
 
 rule system.project-lib-dir
 {
-  return $(BINTOP) $(PROJECT_DIR) lib $(1[1]:B) ;
+  return $(BINTOP) $(PROJECT_OFFSET) lib [ util.split $(1) : . ] ;
 }
 
 rule system.project-jni-dir
 {
-  return $(BINTOP) $(PROJECT_DIR) jni $(1[1]:B) ;
+  return $(BINTOP) $(PROJECT_OFFSET) jni $(1) ;
 }
 
 rule system.project-jni-target
@@ -453,7 +450,7 @@ rule system.generate-cc
 
 rule system.generate-cc.l
 {
-  FLEX_SKELETON on $(1) = [ util.make-path $(SRCTOP) $(PROJECT_DIR) lib yacc++ skeleton.flex ] ;
+  FLEX_SKELETON on $(1) = [ util.make-path $(SRCTOP) $(PROJECT_OFFSET) lib yacc++ skeleton.flex ] ;
   CLASS_NAME on $(1) = $(2:D=:B) ;
   action.generate-cc-lex $(1) : $(2) ;
 }
@@ -715,7 +712,7 @@ rule system.use-project-includes.cc
 
 rule system.use-project-includes.c
 {
-  local _directory = [ util.make-path $(SRCTOP) $(PROJECT_DIR) ] ;
+  local _directory = [ util.make-path $(SRCTOP) $(PROJECT_OFFSET) ] ;
   util.add-target-variable $(system.BINDIR)/$(1:S=.o) : TARGET_INCLUDES : $(_directory)/$(2) ;
 }
 
@@ -732,7 +729,7 @@ rule system.invoke
   Depends $(1) : $(2) ;
 
   LD_LIBRARY_PATH-$(2) on $(1) = [ system.convert-path-from-cwd $(LIBDIRS) : $(2) : TARGET_LIBDIRS ] ;
-  COMMAND-$(2) on $(1) = $(CWD)/$(2) ;
+  COMMAND-$(2) on $(1) = $(core.CWD)/$(2) ;
   ARGS-$(2) on $(1) = $(3) ;
   SRCDIR on $(1) = $(system.SRCDIR) ;
 
