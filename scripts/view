@@ -138,8 +138,8 @@ main ()
     return 1
   }
   cd "${DEV_ROOT}/src" && {
-    exec 1>&3 2>&4
-    tty -s 0<&3 && {
+    # exec 1>&3 2>&4
+    tty -s 0<&1 && {
       eval `print_profile_commands`
       eval `print_path_commands`
       eval `print_info_command`
@@ -234,7 +234,7 @@ buildScriptsPath ()
     unset colon
     for directory in project/scripts scripts; do
       [ -d "${DEV_ROOT}/src/${directory}" ] && {
-	echo "${colon}${DEV_ROOT}/src/${directory}\c"
+	printf "${colon}${DEV_ROOT}/src/${directory}"
 	colon=":"
       }
     done
