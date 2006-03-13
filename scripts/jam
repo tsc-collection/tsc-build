@@ -148,6 +148,10 @@ class Application < TSC::Application
 	jam_project_options = JamConfig.new.options
       end
     end
+    dirs = ENV.to_hash['PATH'].split(':')
+    dirs.delete('.')
+    ENV['PATH'] = dirs.join(':')
+
     exec command, *(jam_options + jam_project_options + ARGV)
   end
 end
