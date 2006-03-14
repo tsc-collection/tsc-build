@@ -50,6 +50,7 @@
 # 
 
 rule use-project-library { use-project-libraries $(1) : $(2) ; }
+rule use-top-library { use-top-libraries $(1) : $(2) ; }
 rule use-project-jni-module { use-project-jni-modules $(1) : $(2) ; }
 rule use-local-library { use-local-libraries $(1) : $(2) ; }
 rule make-subdir { make-subdirs $(1) ; }
@@ -302,7 +303,12 @@ rule generate-cc
 
 rule use-project-libraries
 {
-  util.foreach-kind $(1) : system.use-project-libraries : $(2) : $(3) : $(4) : $(5) : $(6) : $(7) : $(8) ;
+  util.foreach-kind $(1) : system.use-project-libraries : lib : $(2) : $(3) : $(4) : $(5) : $(6) : $(7) : $(8) ;
+}
+
+rule use-top-libraries
+{
+  util.foreach-kind $(1) : system.use-project-libraries : : $(2) : $(3) : $(4) : $(5) : $(6) : $(7) : $(8) ;
 }
 
 rule scan-for-jni
