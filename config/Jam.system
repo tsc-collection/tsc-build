@@ -155,7 +155,7 @@ rule system.setup-environment
   system.CWD_SUBDIR_TARGETS = test $(system.TARGET_CATEGORIES) clean-$(system.TARGET_CATEGORIES) ;
   system.CWD_NOT_SUBDIR_TARGETS = run try-libs ;
 
-  Depends all : exe lib jni ant ;
+  Depends all : exe lib gen jni ant ;
   Depends clean : clean-$(system.TARGET_CATEGORIES) ;
 
   Depends top : exe@top lib@top jni@top ant@top ;
