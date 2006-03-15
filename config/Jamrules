@@ -190,73 +190,30 @@ rule make-ruby-extension
 
 rule make-library
 {
+  local _objects = [ system.make-objects $(2) ] ;
   if $(project.MAKE_DLL) = true {
-    make-shared-library $(1) : $(2) : $(3) ;
+    system.make-shared-library $(1) : $(_objects) : $(3) ;
   }
-  else make-static-library $(1) : $(2) ;
+  else system.make-static-library $(1) : $(_objects) ;
 }
 
 rule make-shared-library
 {
-  local _lib_target = [ system.project-lib-target $(1) ] ;
-  local _target = $(system.BINDIR)/$(_lib_target) ;
-
-  local _target_so = $(_target:S=.so) ;
-  local _target_so_major = $(_target_so).$(project.LIB_MAJOR:E=0) ;
-
-  local _reloc = [ system.make-reloc-object $(_target_so) : [ system.make-objects $(2) ] ] ;
-
-  system.associate-binary-targets $(_target_so_major:D=) : $(1) ;
-  system.associate-binary-targets $(_target:D=) : $(1) ;
-
-  system.ensure-directory-for $(_target) ;
-  system.assign-category lib : $(_target) $(_target_so) $(_target_so_major) ;
-
-  Depends $(_target) : $(_target_so) ;
-  system.make-empty-static-library $(_target) ;
-  system.make-in-directory-symlink $(_target_so) : $(_target_so_major) ;
-
-  if $(3) {
-    _lib_target = [ system.project-lib-target $(3) ] ;
-    local _target_soname = $(system.BINDIR)/$(_lib_target:S=.so)$(_target_so_major:S) ;
-    
-    Depends $(_target) : $(_target_soname) ;
-    system.make-in-directory-symlink  $(_target_soname) : $(_target_so_major) ;
-    system.assign-category lib : $(_target_soname) ;
-
-    util.set-target-variable $(_target_so_major) : TARGET_SONAME : $(_target_soname:D=) ;
-  }
-  else util.set-target-variable $(_target_so_major) : TARGET_SONAME : $(_target_so_major:D=) ;
-
-  local _build = [ system.make-build-target ] ;
-  Depends $(_target_so_major) : $(_reloc) $(_build) ;
-  action.shared-library $(_target_so_major) : $(_reloc) $(_build) ;
-}
-
-rule system.make-in-directory-symlink
-{
-  Depends $(<) : $(>) ;
-  local _destination = $(>:D=) ;
-  NotFile $(_destination) ;
-  action.symlink $(<) : $(_destination) ;
+  system.make-shared-library $(1) : [ system.make-objects $(2) ] : $(3) ;
 }
 
 rule make-static-library
 {
-  local _lib_target = [ system.project-lib-target $(1) ] ;
-  local _target = $(system.BINDIR)/$(_lib_target) ;
-  local _objects = [ system.make-objects $(2) ] ;
+  system.make-static-library $(1) : [ system.make-objects $(2) ] ;
+}
 
-  system.associate-binary-targets $(_target:D=) : $(1) ;
-
-  system.ensure-directory-for $(_target) ;
-  system.assign-category lib : $(_target) ;
-
-  Depends $(_target) : $(_objects) ;
-
-  action.static-library $(_target) : $(_objects) ;
-  CLEANUP_LIST on $(_target) =  $(_target:S=.so) $(_target:S=.so.*) ;
-  action.cleanup-for $(_target) ;
+rule make-merged-library
+{
+  local _objects = [ system.reloc-objects-for-libs $(4) : $(2) ] ;
+  if $(project.MAKE_DLL) = true {
+    system.make-shared-library $(1) : $(_objects) : $(3) ;
+  }
+  else system.make-static-library $(1) : $(_objects) ;
 }
 
 rule make-ant-project
