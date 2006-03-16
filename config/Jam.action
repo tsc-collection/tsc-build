@@ -73,7 +73,7 @@ actions together action.reloc
 actions together action.shared-library
 {
   rm -f $(<:S=).[0-9]*
-  $(CC) $(DLLFLAGS) $(C++LDALLFLAGS) $(TARGET_FLAGS) -Wl,-h$(TARGET_SONAME) -L$(TARGET_LIBDIRS) -l$(TARGET_LIBS) -l$(TARGET_SYSLIBS) -o $(<) $(>)
+  $(CC) $(DLLFLAGS) $(C++LDALLFLAGS) $(TARGET_FLAGS) $(CC_SONAME_FLAG)$(TARGET_SONAME) -L$(TARGET_LIBDIRS) -l$(TARGET_LIBS) -l$(TARGET_SYSLIBS) -o $(<) $(>)
 }
 
 actions together action.static-library
@@ -142,6 +142,12 @@ actions action.symlink
 actions together action.touch
 {
   touch $(<)
+}
+
+actions action.empty-c-source
+{
+  rm -f $(<)
+  echo '#include <stdio.h>' > $(<)
 }
 
 actions together action.generate-cc-lex

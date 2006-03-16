@@ -286,7 +286,7 @@ rule system.make-empty-static-library
 {
   local _library = $(1) ;
   local _object = $(1).o ;
-  local _source = $(1).cc ;
+  local _source = $(1).c ;
 
   Depends $(_library) : $(_object) ;
   Depends $(_object) : $(_source) ;
@@ -294,8 +294,8 @@ rule system.make-empty-static-library
   system.assign-category obj : $(_source) $(_object) ;
   system.assign-category lib : $(_library) ;
 
-  action.touch $(_source) ;
-  action.compile-cc $(_object) : $(_source) ;
+  action.empty-c-source $(_source) ;
+  action.compile-c $(_object) : $(_source) ;
 
   action.static-library $(_library) : $(_object) ;
 }
