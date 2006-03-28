@@ -141,17 +141,20 @@ class Application < TSC::Application
 	'-score.CWD=' + Dir.getwd,
         '-score.TOP=' + top.join(' ')
       ]
-      unless ENV.has_key? 'JAM_NOTQUICK'
-	jam_options.push '-q' ;
-      end
-
       if project_config_file
 	load project_config_file, false
 	jam_project_options = JamConfig.new.options
       end
     end
 
-    exec command, *(jam_options + jam_project_options + ARGV)
+    unless ENV.has_key? 'JAM_NOTQUICK'
+      jam_options.push '-q' ;
+    end
+
+    cmdline = [ command, jam_options, jam_project_options, ARGV ].flatten
+
+    puts "[#{cmdline.join(' ')}]" if verbose?
+    exec *cmdline
   end
 end
 
