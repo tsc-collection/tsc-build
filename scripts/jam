@@ -61,11 +61,15 @@ class Application < TSC::Application
     handle_errors {
       self.verbose = ENV['TRACE'].to_s.split.include?(script_name)
 
-      commands = find_in_path(script_name)
-      commands.shift while commands.first == $0
+      if defined? JAM_ORIGINAL
+        invoke JAM_ORIGINAL
+      else
+        commands = find_in_path(script_name)
+        commands.shift while commands.first == $0
 
-      raise "No #{script_name.inspect} in PATH" if commands.empty?
-      invoke commands.first
+        raise "No #{script_name.inspect} in PATH" if commands.empty?
+        invoke commands.first
+      end
     }
   end
 
@@ -158,4 +162,19 @@ class Application < TSC::Application
   end
 end
 
-Application.new.start
+unless defined? Installation::Generator
+  Application.new.start
+  exit 0
+end
+
+class Generator < Installation::Generator
+  def create(io)
+    bindir = File.join(self.class.installation_tools, 'bin')
+    [
+      '#!' + File.join(bindir, 'ruby'),
+      "ENV['PATH'] = [ #{bindir.inspect}, *ENV['PATH'].split(':') ].join(':')",
+      "JAM_ORIGINAL = #{(target + '-original').inspect}",
+    ] + IO::readlines(__FILE__).slice(1..-1)
+  end
+end
+
