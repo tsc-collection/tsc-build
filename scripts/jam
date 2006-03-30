@@ -59,6 +59,8 @@ end
 class Application < TSC::Application
   def start
     handle_errors {
+      localize_ruby_loadpath
+
       self.verbose = ENV['TRACE'].to_s.split.include?(script_name)
 
       if defined? JAM_ORIGINAL
