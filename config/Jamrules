@@ -355,6 +355,7 @@ rule use-unit-test
     : $(UNITTEST_DIRS)/include
     : $(UNITTEST_DEFINES)
     : $(UNITTEST_JARS)
+    : test
   ;
 }
 

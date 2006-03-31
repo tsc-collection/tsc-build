@@ -150,9 +150,9 @@ rule system.setup-environment
   system.MAIN_TARGET = $(core.CWD_FROM_TOP:J=/:E=$(system.TOP_TARGET)) ;
   system.DOT_TARGET = $(system.TOP_TARGET) ;
 
-  system.TARGET_CATEGORIES = exe jni lib obj gen proto ant reloc ;
+  system.TARGET_CATEGORIES = exe jni test lib obj gen proto ant reloc ;
 
-  system.CWD_SUBDIR_TARGETS = test $(system.TARGET_CATEGORIES) clean-$(system.TARGET_CATEGORIES) ;
+  system.CWD_SUBDIR_TARGETS = $(system.TARGET_CATEGORIES) clean-$(system.TARGET_CATEGORIES) ;
   system.CWD_NOT_SUBDIR_TARGETS = run try-libs ;
 
   Depends all : exe lib gen jni ant ;
@@ -173,7 +173,7 @@ rule system.setup-environment
     $(system.CWD_NOT_SUBDIR_TARGETS) 
   ;
   Always 
-    run test 
+    run $(system.TARGET_CATEGORIES)
     java java-clean 
     try try-libs package release handoff 
     clean top-clean clean-$(system.TARGET_CATEGORIES) 
@@ -752,6 +752,10 @@ rule system.use-product
   util.add-target-variable $(_target) : TARGET_LIBDIRS : $(2) ;
   util.add-target-variable $(_target) : TARGET_LIBS : $(3) ;
   util.add-target-variable $(_target) : TARGET_SYSLIBS : $(4) ;
+
+  if $(8) {
+    system.assign-category $(8) : $(_target) ;
+  }
 }
 
 rule system.use-product.cc
@@ -760,16 +764,28 @@ rule system.use-product.cc
 
   util.add-target-variable $(_target) : TARGET_INCLUDES : $(5) ;
   util.add-target-variable $(_target) : TARGET_DEFINES : $(6) ;
+
+  if $(8) {
+    system.assign-category $(8) : $(_target) ;
+  }
 }
 
 rule system.use-product.c
 {
   system.use-product.cc $(1) : : : : $(5) : $(6) ;
+
+  if $(8) {
+    system.assign-category $(8) : $(_target) ;
+  }
 }
 
 rule system.use-product.xml
 {
   util.add-target-variable $(system.BINDIR)/$(1) : TARGET_CLASSPATH : $(7) ;
+
+  if $(8) {
+    system.assign-category $(8) : $(_target) ;
+  }
 }
 
 rule system.use-defines.cc
