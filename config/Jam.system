@@ -579,6 +579,11 @@ rule system.process-object.cc
   action.compile-cc $(1) : $(2) ;
 }
 
+rule system.process-object.cpp
+{
+  system.process-object.cc $(1) : $(2) : $(3) ;
+}
+
 rule system.mark-for-c-include-scan
 {
   local _file = $(1[1]) ;
@@ -768,6 +773,11 @@ rule system.use-product.cc
   if $(8) {
     system.assign-category $(8) : $(_target) ;
   }
+}
+
+rule system.use-product.cpp
+{
+  system.use-product.cc $(1) : $(2) : $(3) : $(4) : $(5) : $(6) : $(7) : $(8) : $(9) ;
 }
 
 rule system.use-product.c
