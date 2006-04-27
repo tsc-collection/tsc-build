@@ -57,10 +57,16 @@ if defined? Installation::Generator
       [
         '#!' + File.join(bindir, 'ruby'),
         "ENV['PATH'] = [ #{bindir.inspect}, *ENV.to_hash['PATH'].split(':') ].join(':')",
-        "JAM_ORIGINAL = #{(target + '-original').inspect}",
+        "JAM_ORIGINAL = #{original(target).inspect}",
       ] + IO::readlines(__FILE__).slice(1..-1)
     end
+
+    def original(target)
+      directory, file = File.split(target)
+      File.join(directory, 'original', file)
+    end
   end
+
   throw :generator, Generator
 end
 
