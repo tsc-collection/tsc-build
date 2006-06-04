@@ -825,7 +825,7 @@ rule system.use-project-includes.c
 # congig files) from the guaranteed location. 
 # 
 # To make it possible, the rule sets up LD_LIBRARY_PATH and the program
-# invokation path relative to the program's Jamfile location.
+# invocation path relative to the program's Jamfile location.
 # 
 rule system.invoke
 {
@@ -842,7 +842,7 @@ rule system.invoke
 rule system.convert-path-from-cwd
 {
   local _libdirs = $(1) [ util.get-target-variable $(2) : $(3) $(3)_I ] ;
-  return [ util.join [ util.prepend-if-relative-path $(_libdirs) : $(CWD) ] : ":" ] ;
+  return [ util.join [ util.prepend-if-relative-path $(_libdirs) : $(core.CWD) ] : ":" ] ;
 }
 
 rule system.print-library-path
