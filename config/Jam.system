@@ -372,7 +372,8 @@ rule system.reloc-objects-for-libs
 {
   local _result _item ;
   for _item in $(2) {
-    _result += [ system.reloc-object-name [ system.project-lib-target-path $(1) : $(_item) ] ] ;
+    local _components = [ util.reverse-split $(_item) : / ] ;
+    _result += [ system.reloc-object-name [ system.project-lib-target-path $(1) [ util.reverse $(_components[2-]) ] : $(_components[1]) ] ] ;
   }
   return $(_result) ;
 }
