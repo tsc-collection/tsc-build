@@ -71,11 +71,9 @@ if defined? Installation::Generator
 end
 
 $VERBOSE = nil
+$:.concat ENV['PATH'].split(':')
 
-[ 'tsc/application.rb' ].each do |a|
-  $: << ENV['PATH'].split(':').find { |p| Dir[ p + '/' + a ].first }
-  require a
-end
+require 'tsc/application.rb'
 
 class Application < TSC::Application
   def start
