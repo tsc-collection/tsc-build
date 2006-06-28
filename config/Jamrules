@@ -301,7 +301,7 @@ rule use-product
 rule use-oracle
 {
   use-product $(1) 
-    : $(project.ORACLE_HOME)/lib
+    : $(project.ORACLE_LIBDIR:E=$(project.ORACLE_HOME)/lib)
     : $(project.ORACLE_LIBS)
     :
     : $(project.ORACLE_HOME)/$(project.ORACLE_INCLUDES)
