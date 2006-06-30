@@ -291,7 +291,8 @@ rule system.make-empty-static-library
   Depends $(_library) : $(_object) ;
   Depends $(_object) : $(_source) ;
 
-  system.assign-category obj : $(_source) $(_object) ;
+  system.assign-category gen : $(_source) ;
+  system.assign-category obj : $(_object) ;
   system.assign-category lib : $(_library) ;
 
   action.empty-c-source $(_source) ;
