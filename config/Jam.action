@@ -216,12 +216,12 @@ actions action.create-jni-header
 
 actions together action.install
 {
-  $(system.ENV_EXPORT_LIST) sudo distributor -i -r$(project.DISTRIB_ENV) -m$(project.DISTRIB_MODE) -p$(project.LIB_PREFIX) -l$(project.LIB_MAJOR) -b$(PRODUCT_BUILD) $(project.DISTRIB_PRODINFO) $(TARGET_DIRS)
+  $(system.ENV_EXPORT_LIST) $(INSTALL_LAUNCHER) distributor --source $(SRCTOPDIR) --binary $(BINTOPDIR) -i -r$(project.DISTRIB_ENV) -m$(project.DISTRIB_MODE) -p$(project.LIB_PREFIX) -l$(project.LIB_MAJOR) -b$(PRODUCT_BUILD) $(project.DISTRIB_PRODINFO) $(TARGET_DIRS)
 }
 
 actions action.package
 {
-  $(system.ENV_EXPORT_LIST) distributor -o$(PKGTOP:J=/) -m$(project.DISTRIB_MODE) -p$(project.LIB_PREFIX) -l$(project.LIB_MAJOR) -b$(PRODUCT_BUILD) $(project.DISTRIB_PRODINFO)
+  $(system.ENV_EXPORT_LIST) distributor --source $(SRCTOPDIR) --binary $(BINTOPDIR) --output $(PKGTOPDIR) -m$(project.DISTRIB_MODE) -p$(project.LIB_PREFIX) -l$(project.LIB_MAJOR) -b$(PRODUCT_BUILD) $(project.DISTRIB_PRODINFO)
 }
 
 actions action.handoff
