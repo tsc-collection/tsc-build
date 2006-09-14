@@ -51,12 +51,12 @@
 
 actions together action.compile-cc
 {
-  $(C++) -c $(C++ALLFLAGS) $(TARGET_FLAGS) -D$(DEFINES) -D$(TARGET_DEFINES) -I$(>:D) -I$(INCLUDES) -I$(TARGET_INCLUDES) -o $(<) $(TARGET_BINARY_SOURCE:E=$(>))
+  $(C++) -c $(C++ALLFLAGS) $(TARGET_FLAGS) -D$(DEFINES) -D$(TARGET_DEFINES) -I$(INCLUDES) -I$(>:D) -I$(TARGET_INCLUDES) -o $(<) $(TARGET_BINARY_SOURCE:E=$(>))
 }
 
 actions together action.compile-c
 {
-  $(CC) -c $(CCALLFLAGS) $(TARGET_FLAGS) -D$(DEFINES) -D$(TARGET_DEFINES) -I$(>:D) -I$(INCLUDES) -I$(TARGET_INCLUDES) -o $(<) $(TARGET_BINARY_SOURCE:E=$(>))
+  $(CC) -c $(CCALLFLAGS) $(TARGET_FLAGS) -D$(DEFINES) -D$(TARGET_DEFINES) -I$(INCLUDES) -I$(>:D) -I$(TARGET_INCLUDES) -o $(<) $(TARGET_BINARY_SOURCE:E=$(>))
 }
 
 actions together action.generate-build-file

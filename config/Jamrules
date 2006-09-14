@@ -268,6 +268,11 @@ rule use-top-libraries
   util.foreach-kind $(1) : system.use-project-libraries : : $(2) : $(3) : $(4) : $(5) : $(6) : $(7) : $(8) ;
 }
 
+rule ensure-system-includes
+{
+  util.foreach-kind $(1) : system.ensure-system-includes : : $(2) : $(3) : $(4) : $(5) : $(6) : $(7) : $(8) ;
+}
+
 rule scan-for-jni
 {
   util.foreach-kind $(1) : system.scan-for-jni : $(2) ;

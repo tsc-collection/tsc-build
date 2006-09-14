@@ -752,6 +752,16 @@ rule system.use-local-libraries.cc
   util.add-target-variable $(system.BINDIR)/$(1:S=.o) : TARGET_INCLUDES : $(system.SRCDIR)/$(2) ;
 }
 
+rule system.ensure-system-includes.c
+{
+  util.add-target-variable $(system.BINDIR)/$(1:S=.o) : INCLUDES : /usr/include $(INCLUDES) ;
+}
+
+rule system.ensure-system-includes.cc
+{
+  system.ensure-system-includes.c $(1) ;
+}
+
 rule system.use-product
 {
   local _target = $(system.BINDIR)/$(1) ;
