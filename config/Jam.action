@@ -62,7 +62,7 @@ actions together action.compile-c
 actions together action.generate-build-file
 {
   rm -f $(>[1]:S=).*.c
-  echo 'const char * const __TSC_BUILD__ = "@(#)build $(PRODUCT_BUILD) of $(PRODUCT_NAME) $(PRODUCT_RELEASE) for $(PRODUCT_PLATFORM) by $(USER)";' > $(<[1])
+  echo 'const char * const __TSC_BUILD__ = "@(#)build $(PRODUCT_BUILD) of $(PRODUCT_NAME) ($(PRODUCT_TAG)) $(PRODUCT_RELEASE) for $(PRODUCT_PLATFORM) by $(USER)";' > $(<[1])
 }
 
 actions together action.reloc
