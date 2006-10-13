@@ -648,10 +648,20 @@ rule system.process-header-jni
   }
 }
 
-rule system.scan-for-jni.cc
+rule system.scan-for-jni.c
 {
   HDRRULE on $(system.SRCDIR)/$(1) = system.process-header-jni ;
   OBJECT on $(system.SRCDIR)/$(1) = $(system.BINDIR)/$(1:S=.o) ;
+}
+
+rule system.scan-for-jni.cc
+{
+  system.scan-for-jni.c $(1) ;
+}
+
+rule system.scan-for-jni.cpp
+{
+  system.scan-for-jni.c $(1) ;
 }
 
 rule system.use-project-libraries
@@ -695,7 +705,7 @@ rule system.setup-project-libraries
   }
 }
 
-rule system.use-project-libraries.cc
+rule system.use-project-libraries.c
 {
   local _target = $(system.BINDIR)/$(1:S=.o) ;
   local _item _library ;
@@ -703,6 +713,16 @@ rule system.use-project-libraries.cc
     _library = [ system.project-lib-target-path $(2) : $(_item) ] ;
     Depends $(_target) : $(_library) ;
   }
+}
+
+rule system.use-project-libraries.cc
+{
+  system.use-project-libraries.c $(1) : $(2) : $(3) ;
+}
+
+rule system.use-project-libraries.cpp
+{
+  system.use-project-libraries.c $(1) : $(2) : $(3) ;
 }
 
 rule system.use-project-libraries.xml
@@ -762,6 +782,11 @@ rule system.ensure-system-includes.cc
   system.ensure-system-includes.c $(1) ;
 }
 
+rule system.ensure-system-includes.cpp
+{
+  system.ensure-system-includes.c $(1) ;
+}
+
 rule system.use-product
 {
   local _target = $(system.BINDIR)/$(1) ;
@@ -807,12 +832,22 @@ rule system.use-defines.cc
   system.use-defines.c $(1) : $(2) ;
 }
 
+rule system.use-defines.cpp
+{
+  system.use-defines.c $(1) : $(2) ;
+}
+
 rule system.use-defines.c
 {
   util.add-target-variable $(system.BINDIR)/$(1:S=.o) : TARGET_DEFINES : $(2) ;
 }
 
 rule system.use-project-includes.cc
+{
+  system.use-project-includes.c $(1) : $(2) ;
+}
+
+rule system.use-project-includes.cpp
 {
   system.use-project-includes.c $(1) : $(2) ;
 }
