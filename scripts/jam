@@ -168,7 +168,9 @@ class Application < TSC::Application
       ]
       if project_config_file
         load project_config_file, false
-        jam_project_options = JamConfig.new.options
+        arity = JamConfig.allocate.method(:initialize).arity
+        config = (arity == 1 ? JamConfig.new(top) : JamConfig.new)
+        jam_project_options = config.options
       end
     end
 
@@ -176,7 +178,7 @@ class Application < TSC::Application
       jam_options.push '-q' ;
     end
 
-    cmdline = [ command, jam_options, jam_project_options, ARGV ].flatten
+    cmdline = [ command, jam_options, jam_project_options, ARGV ].flatten.compact
 
     puts "[#{cmdline.join(' ')}]" if verbose?
     exec *cmdline
