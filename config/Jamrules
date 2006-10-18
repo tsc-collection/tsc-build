@@ -305,7 +305,7 @@ rule use-product
 
 rule use-oracle
 {
-  use-product $(1) 
+  use-product $(1) $(2) $(3) $(4) $(5) $(6) $(7) $(8) $(9)
     : $(project.ORACLE_LIBDIR:E=$(project.ORACLE_HOME)/lib)
     : $(project.ORACLE_LIBS)
     :
@@ -317,7 +317,7 @@ rule use-oracle
 
 rule use-pgsql 
 {
-  use-product $(1) 
+  use-product $(1) $(2) $(3) $(4) $(5) $(6) $(7) $(8) $(9)
     : $(PGSQL_LIBDIRS)
     : $(PGSQL_LIBS)
     :
@@ -329,7 +329,7 @@ rule use-pgsql
 
 rule use-java-enterprise
 {
-  use-product $(1)
+  use-product $(1) $(2) $(3) $(4) $(5) $(6) $(7) $(8) $(9)
     :
     :
     :
@@ -341,7 +341,7 @@ rule use-java-enterprise
 
 rule use-java-comm
 {
-  use-product $(1) 
+  use-product $(1) $(2) $(3) $(4) $(5) $(6) $(7) $(8) $(9)
     : $(project.JAVACOMM_LIBDIR)
     :
     :
@@ -353,7 +353,7 @@ rule use-java-comm
 
 rule use-unit-test
 {
-  use-product $(1) 
+  use-product $(1) $(2) $(3) $(4) $(5) $(6) $(7) $(8) $(9)
     : $(UNITTEST_DIRS)/lib
     : $(UNITTEST_LIBS)
     :
@@ -366,7 +366,7 @@ rule use-unit-test
 
 rule use-boost
 {
-  use-product $(1)
+  use-product $(1) 
     : $(CONTRIB_ROOT)/boost-$(BOOST_VERSION)/lib
     : boost_$(2)_$(BOOST_VERSION)
     :
@@ -378,7 +378,7 @@ rule use-boost
 
 rule use-xml-parser
 {
-  use-product $(1) 
+  use-product $(1) $(2) $(3) $(4) $(5) $(6) $(7) $(8) $(9)
     : $(XERCESC_ROOT)/lib
     : $(XERCESC_LIBS)
     :
@@ -390,7 +390,7 @@ rule use-xml-parser
 
 rule use-openssl
 {
-  use-product $(1) 
+  use-product $(1) $(2) $(3) $(4) $(5) $(6) $(7) $(8) $(9)
     : $(OPENSSL_ROOT)/lib
     : $(OPENSSL_LIBS)
     : 
@@ -403,7 +403,7 @@ rule use-net-snmp
   if $(NETSNMP_USES_OPENSSL) = yes {
     use-openssl $(1) ;
   }
-  use-product $(1) 
+  use-product $(1) $(2) $(3) $(4) $(5) $(6) $(7) $(8) $(9)
     : $(NETSNMP_ROOT)/lib
     : $(NETSNMP_LIBS)
     : $(project.NETSNMP_SYSLIBS)
@@ -413,7 +413,7 @@ rule use-net-snmp
 
 rule use-curses
 {
-  use-product $(1)
+  use-product $(1) $(2) $(3) $(4) $(5) $(6) $(7) $(8) $(9)
     :
     :
     : $(project.CURSES_LIBS) 
@@ -422,7 +422,7 @@ rule use-curses
 
 rule use-ruby
 {
-  use-product $(1)
+  use-product $(1) $(2) $(3) $(4) $(5) $(6) $(7) $(8) $(9)
     : $(project.RUBY_DIR)
     : ruby 
     :
