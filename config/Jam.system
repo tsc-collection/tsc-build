@@ -229,7 +229,7 @@ rule system.project-jni-dir
 
 rule system.project-jni-target
 {
-  return [ util.join lib $(1) .so ] ;
+  return [ util.join lib $(1) . $(jam.DSO_EXTENTION) ] ;
 }
 
 rule system.project-jni-target-path
@@ -306,7 +306,7 @@ rule system.make-shared-library
   local _lib_target = [ system.project-lib-target $(1) ] ;
   local _target = $(system.BINDIR)/$(_lib_target) ;
 
-  local _target_so = $(_target:S=.so) ;
+  local _target_so = $(_target:S=.$(jam.DSO_EXTENTION)) ;
   local _target_so_major = $(_target_so).$(project.LIB_MAJOR:E=0) ;
 
   local _reloc = [ system.make-reloc-object $(_target) : $(2) ] ;
@@ -323,7 +323,7 @@ rule system.make-shared-library
 
   if $(3) {
     _lib_target = [ system.project-lib-target $(3) ] ;
-    local _target_soname = $(system.BINDIR)/$(_lib_target:S=.so)$(_target_so_major:S) ;
+    local _target_soname = $(system.BINDIR)/$(_lib_target:S=.$(jam.DSO_EXTENTION))$(_target_so_major:S) ;
     
     Depends $(_target) : $(_target_soname) ;
     system.make-in-directory-symlink  $(_target_soname) : $(_target_so_major) ;
@@ -352,7 +352,7 @@ rule system.make-static-library
   Depends $(_target) : $(2) ;
 
   action.static-library $(_target) : $(2) ;
-  CLEANUP_LIST on $(_target) =  $(_target:S=.so) $(_target:S=.so.*) ;
+  CLEANUP_LIST on $(_target) =  $(_target:S=.$(jam.DSO_EXTENTION)) $(_target:S=.$(jam.DSO_EXTENTION).*) ;
   action.cleanup-for $(_target) ;
 }
 

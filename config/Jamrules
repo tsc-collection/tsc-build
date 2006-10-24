@@ -111,12 +111,12 @@ rule make-jni-module
 {
   scan-for-jni $(2) ;
 
-  local _target = $(system.BINDIR)/lib$(1).so ;
+  local _target = $(system.BINDIR)/lib$(1).$(jam.DSO_EXTENTION) ;
   local _objects = [ system.make-objects $(2) ] ;
   local _reloc = [ system.make-reloc-object $(_target) : [ system.make-objects $(2) ] ] ;
 
   system.ensure-directory-for $(_target) ;
-  system.associate-binary-targets lib$(1).so : $(1) ;
+  system.associate-binary-targets lib$(1).$(jam.DSO_EXTENTION) : $(1) ;
   system.assign-category jni : $(_target) ;
 
   util.add-target-variable $(_objects) : TARGET_INCLUDES :
@@ -131,11 +131,11 @@ rule make-jni-module
 
 rule make-shared-module
 {
-  local _target = $(system.BINDIR)/$(1).so ;
+  local _target = $(system.BINDIR)/$(1).$(jam.DSO_EXTENTION) ;
   local _reloc = [ system.make-reloc-object $(_target) : [ system.make-objects $(2) ] ] ;
 
   system.ensure-directory-for $(_target) ;
-  system.associate-binary-targets $(1).so : $(1) ;
+  system.associate-binary-targets $(1).$(jam.DSO_EXTENTION) : $(1) ;
   system.assign-category exe : $(_target) ;
 
   local _build = [ system.make-build-target ] ;
@@ -148,7 +148,7 @@ rule make-shared-module
 
 rule make-ruby-extension
 {
-  local _target = $(system.BINDIR)/$(1).so ;
+  local _target = $(system.BINDIR)/$(1).$(jam.DSO_EXTENTION) ;
   local _swig_base = $(system.SRCDIR)/$(1).swig ;
   local _swig_interface = $(system.BINDIR)/$(1).swig ;
   local _swig_wrap = $(system.BINDIR)/$(1).swig.cc ;
@@ -159,7 +159,7 @@ rule make-ruby-extension
   local _reloc = [ system.make-reloc-object $(_target) : $(_object) [ system.make-objects $(3) ] ] ;
 
   system.ensure-directory-for $(_target) ;
-  system.associate-binary-targets $(1).so : $(1) ;
+  system.associate-binary-targets $(1).$(jam.DSO_EXTENTION) : $(1) ;
   system.assign-category exe : $(_target) ;
 
   util.foreach $(_class_interfaces) $(_class_implementations) $(_swig_base) : system.mark-for-c-include-scan ;
