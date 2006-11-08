@@ -103,6 +103,7 @@ actions action.invoke
   cd $(SRCDIR) && {
     $(system.ENV_EXPORT_LIST) \
     LD_LIBRARY_PATH=$(LD_LIBRARY_PATH-$(>)) \
+    SHLIB_PATH=$(LD_LIBRARY_PATH-$(>)) \
       $(RUNEXEC) $(COMMAND-$(>)) $(RUNARGS) $(ARGS-$(>))
   }
 }
