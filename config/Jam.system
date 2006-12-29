@@ -74,10 +74,13 @@ rule system.is-cwd-under-dot
 
 rule system.figure-top-dirs
 {
+  if $(USE_JAMCONFIG_PRODUCT_PLATFORM) {
+    system.PLATFORM = $(JAMCONFIG_PRODUCT_PLATFORM) ;
+  }
   SRCTOP = $(core.TOP) src ;
-  BINTOP = $(core.TOP) bin ;
-  PKGTOP = $(core.TOP) pkg ;
-  GENTOP = $(core.TOP) gen ;
+  BINTOP = $(core.TOP) bin $(system.PLATFORM) ;
+  PKGTOP = $(core.TOP) pkg $(system.PLATFORM) ;
+  GENTOP = $(core.TOP) gen $(system.PLATFORM) ;
 
   SRCTOPDIR = $(SRCTOP:J=/) ;
   BINTOPDIR = $(BINTOP:J=/) ;
