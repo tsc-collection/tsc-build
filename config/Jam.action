@@ -100,10 +100,11 @@ actions action.print-library-path
 
 actions action.invoke
 {
-  cd $(SRCDIR) && {
+  cd $(BINDIR) && {
     $(system.ENV_EXPORT_LIST) \
     LD_LIBRARY_PATH=$(LD_LIBRARY_PATH-$(>)) \
     SHLIB_PATH=$(LD_LIBRARY_PATH-$(>)) \
+    JAM_SRCDIR=$(SRCDIR) \
       $(RUNEXEC) $(COMMAND-$(>)) $(RUNARGS) $(ARGS-$(>))
   }
 }

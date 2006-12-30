@@ -862,9 +862,13 @@ rule system.use-project-includes.c
 }
 
 # Rule system.invoke prepares program execution. It sets up the environment
-# so that the current directory for the invokation is the one where the
-# program's  Jamfile is located. This way the program may open files (e.g. 
-# congig files) from the guaranteed location. 
+# so that the current directory for the invocation is the binary directory
+# corresponding to that of where the program's Jamfile is located. This way 
+# the program may open termporary files right in the current directory.
+# For opening source files (e.g. config files) from the guaranteed location,
+# environment variable JAM_SRCDIR willl be setup, as well as whatever is
+# passed a fourth parameter will be converted to the absolute path an passed
+# as an argument to the launched program (unit tests are invoked this way).
 # 
 # To make it possible, the rule sets up LD_LIBRARY_PATH and the program
 # invocation path relative to the program's Jamfile location.
@@ -875,15 +879,25 @@ rule system.invoke
 
   LD_LIBRARY_PATH-$(2) on $(1) = [ system.convert-path-from-cwd $(LIBDIRS) : $(2) : TARGET_LIBDIRS ] ;
   COMMAND-$(2) on $(1) = $(core.CWD)/$(2) ;
+
   ARGS-$(2) on $(1) = $(3) ;
-  SRCDIR on $(1) = $(system.SRCDIR) ;
+
+  if $(4) {
+    ARGS-$(2) on $(1) += [ system.convert-path-from-cwd $(4) ] ;
+  }
+  SRCDIR on $(1) = [ system.convert-path-from-cwd $(system.SRCDIR) ] ;
+  BINDIR on $(1) = $(system.BINDIR) ;
 
   action.invoke $(1) : $(2) ;
 }
 
 rule system.convert-path-from-cwd
 {
-  local _libdirs = $(1) [ util.get-target-variable $(2) : $(3) $(3)_I ] ;
+  local _libdirs = $(1) ;
+
+  if $(2) {
+    _libdirs += [ util.get-target-variable $(2) : $(3) $(3)_I ] ;
+  }
   return [ util.join [ util.prepend-if-relative-path $(_libdirs) : $(core.CWD) ] : ":" ] ;
 }
 

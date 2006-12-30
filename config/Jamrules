@@ -92,7 +92,7 @@ rule setup-script
 rule make-cpp-test
 {
   local _target = [ system.make-program $(1) : $(2) : $(3) ] ;
-  system.invoke test@$(system.DOT_TARGET) : $(_target) ;
+  system.invoke test@$(system.DOT_TARGET) : $(_target) : : $(system.SRCDIR) ;
   system.setup-program-targets-in-cwd $(_target) ;
 }
 
