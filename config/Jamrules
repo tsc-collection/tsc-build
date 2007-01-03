@@ -96,6 +96,24 @@ rule make-cpp-test
   system.setup-program-targets-in-cwd $(_target) ;
 }
 
+rule test-package-actions
+{
+  local _list = $(system.SRCDIR)/$(1) ;
+
+  Always $(1) ;
+  NotFile $(_list) ;
+
+  action.invoke-package-test test@$(system.DOT_TARGET) : $(_list) ;
+
+  local _file _target ;
+  for _file  in $(1) {
+    _target = $(_file)@$(system.DOT_TARGET) ;
+    Depends $(_file) : $(_target) ;
+
+    action.invoke-package-test $(_target) : $(system.SRCDIR)/$(_file) ;
+  }
+}
+
 rule invoke-for
 {
   local _target ;

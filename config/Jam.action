@@ -221,6 +221,11 @@ actions together action.install
   $(system.ENV_EXPORT_LIST) $(INSTALL_LAUNCHER) distributor --source $(SRCTOPDIR) --binary $(BINTOPDIR) -i -r$(project.DISTRIB_ENV) -m$(project.DISTRIB_MODE) -p$(project.LIB_PREFIX) -l$(project.LIB_MAJOR) -P$(PRODUCT_ID) -V$(PRODUCT_RELEASE) -B$(PRODUCT_BUILD) -T$(PRODUCT_TAG) -E$(jam.DSO_EXTENTION) $(project.DISTRIB_PRODINFO) $(TARGET_DIRS)
 }
 
+actions together action.invoke-package-test
+{
+  $(system.ENV_EXPORT_LIST) $(INSTALL_LAUNCHER) distributor -t -r$(2) -- $(UNIT_TEST_ARGS)
+}
+
 actions action.package
 {
   $(system.ENV_EXPORT_LIST) distributor --source $(SRCTOPDIR) --binary $(BINTOPDIR) --output $(PKGTOPDIR) -m$(project.DISTRIB_MODE) -p$(project.LIB_PREFIX) -l$(project.LIB_MAJOR) -P$(PRODUCT_ID) -V$(PRODUCT_RELEASE) -B$(PRODUCT_BUILD) -T$(PRODUCT_TAG) -E$(jam.DSO_EXTENTION) $(project.DISTRIB_PRODINFO)
