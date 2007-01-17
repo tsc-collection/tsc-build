@@ -81,11 +81,13 @@ rule system.figure-top-dirs
   BINTOP = $(core.TOP) bin $(system.PLATFORM) ;
   PKGTOP = $(core.TOP) pkg $(system.PLATFORM) ;
   GENTOP = $(core.TOP) gen $(system.PLATFORM) ;
+  RUNTOP = $(core.TOP) run $(system.PLATFORM) ;
 
   SRCTOPDIR = $(SRCTOP:J=/) ;
   BINTOPDIR = $(BINTOP:J=/) ;
   PKGTOPDIR = $(PKGTOP:J=/) ;
   GENTOPDIR = $(GENTOP:J=/) ;
+  RUNTOPDIR = $(RUNTOP:J=/) ;
 }
 
 rule system.load-top-jamfile
