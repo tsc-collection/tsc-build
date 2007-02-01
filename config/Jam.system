@@ -761,12 +761,12 @@ rule system.use-local-libraries
   local _target = $(system.BINDIR)/$(1) ;
   local _item _lib_target _library ;
   for _item in $(2) {
-    _lib_target = [ system.project-lib-target $(_item) ] ;
-    _library = $(system.BINDIR)/$(_item)/$(_lib_target) ;
+    _lib_target = [ system.project-lib-target $(_item:B) ] ;
+    _library = [ util.normalize-path $(system.BINDIR)/$(_item)/$(_lib_target) ] ;
 
     util.add-target-variable $(_target) : TARGET_LIBDIRS : $(_library:D) ;
     util.add-target-variable $(_target) : TARGET_STATIC_LIBS : $(_library) ;
-    util.add-target-variable $(_target) : TARGET_LIBS : [ system.project-lib-name $(_item) ]  ;
+    util.add-target-variable $(_target) : TARGET_LIBS : [ system.project-lib-name $(_item:B) ]  ;
 
     Depends $(_target) : $(_library) ;
   }

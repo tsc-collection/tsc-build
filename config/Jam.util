@@ -157,6 +157,25 @@ rule util.split-path
   return [ util.reverse [ util.reverse-split-path $(<) ] ] ;
 }
 
+rule util.normalize-path
+{
+  # Normalizes use of '..' inside the path by removing it together with
+  # the immediatelly preceeding component. It can handle consecutive '..'
+  # properly, removing the corresponding number of preceeding components.
+  #
+  local _path _component _dotpool ;
+  for _component in [ util.reverse-split $(1) : / ] {
+    if $(_component) != .. {
+      if $(_dotpool) {
+        _dotpool = $(_dotpool[2-]) ;
+      }
+      else _path += $(_component) ;
+    }
+    else _dotpool += $(_component) ;
+  }
+  return [ util.make-path [ util.reverse $(_path) $(_dotpool) ] ] ;
+}
+
 rule util.is-absolute-path
 {
   switch $(<[1]) {
