@@ -51,12 +51,12 @@
 
 actions together action.compile-cc
 {
-  $(C++) -c $(C++ALLFLAGS) $(TARGET_FLAGS) -D$(DEFINES) -D$(TARGET_DEFINES) -I$(INCLUDES) -I$(>:D) -I$(TARGET_INCLUDES) -o $(<) $(TARGET_BINARY_SOURCE:E=$(>))
+  $(CXX) -c $(CXX_FLAGS) $(TARGET_FLAGS) -D$(DEFINES) -D$(TARGET_DEFINES) -I$(INCLUDES) -I$(>:D) -I$(TARGET_INCLUDES) -o $(<) $(TARGET_BINARY_SOURCE:E=$(>))
 }
 
 actions together action.compile-c
 {
-  $(CC) -c $(CCALLFLAGS) $(TARGET_FLAGS) -D$(DEFINES) -D$(TARGET_DEFINES) -I$(INCLUDES) -I$(>:D) -I$(TARGET_INCLUDES) -o $(<) $(TARGET_BINARY_SOURCE:E=$(>))
+  $(CC) -c $(CC_FLAGS) $(TARGET_FLAGS) -D$(DEFINES) -D$(TARGET_DEFINES) -I$(INCLUDES) -I$(>:D) -I$(TARGET_INCLUDES) -o $(<) $(TARGET_BINARY_SOURCE:E=$(>))
 }
 
 actions together action.generate-build-file
@@ -67,13 +67,13 @@ actions together action.generate-build-file
 
 actions together action.reloc
 {
-  $(LD) -r -o $(<) $(LDFLAGS) $(>)
+  $(LD) -r -o $(<) $(LD_FLAGS) $(>)
 }
 
 actions together action.shared-library
 {
   rm -f $(<:S=).[0-9]*
-  $(CC) $(DLLFLAGS) $(C++LDALLFLAGS) $(TARGET_FLAGS) $(CC_SONAME_FLAG)$(TARGET_SONAME) -L$(TARGET_LIBDIRS) -l$(TARGET_LIBS) -l$(TARGET_SYSLIBS) -o $(<) $(>)
+  $(LINKER) $(DLL_FLAGS) $(DLL_LINKER_FLAGS) $(LINKER_FLAGS) $(TARGET_FLAGS) $(DLL_SONAME_FLAG)$(TARGET_SONAME) -L$(TARGET_LIBDIRS) -l$(TARGET_LIBS) -l$(TARGET_SYSLIBS) -o $(<) $(>)
   rm -f ./so_locations
 }
 
@@ -85,12 +85,12 @@ actions together action.static-library
 
 actions together action.shared-module
 {
-  $(C++) $(DLLFLAGS) $(C++LDALLFLAGS) $(TARGET_FLAGS) -o $(<) $(>) -L$(LIBDIRS) -L$(TARGET_LIBDIRS) -l$(TARGET_LIBS) -l$(LIBS) -l$(TARGET_SYSLIBS) -l$(SYSLIBS)
+  $(LINKER) $(DLL_FLAGS) $(DLL_LINKER_FLAGS) $(LINKER_FLAGS) $(TARGET_FLAGS) -o $(<) $(>) -L$(LIBDIRS) -L$(TARGET_LIBDIRS) -l$(TARGET_LIBS) -l$(LIBS) -l$(TARGET_SYSLIBS) -l$(SYSLIBS)
 }
 
 actions action.link
 {
-  $(C++) $(C++LDALLFLAGS) $(TARGET_FLAGS) -o $(<) $(TARGET_OBJECTS) -L$(LIBDIRS) -L$(TARGET_LIBDIRS_$(>)) -L$(TARGET_LIBDIRS) -l$(TARGET_LIBS_$(>)) -l$(TARGET_LIBS) -l$(LIBS) -l$(TARGET_SYSLIBS) -l$(SYSLIBS)
+  $(LINKER) $(EXE_LINKER_FLAGS) $(LINKER_FLAGS) $(TARGET_FLAGS) -o $(<) $(TARGET_OBJECTS) -L$(LIBDIRS) -L$(TARGET_LIBDIRS_$(>)) -L$(TARGET_LIBDIRS) -l$(TARGET_LIBS_$(>)) -l$(TARGET_LIBS) -l$(LIBS) -l$(TARGET_SYSLIBS) -l$(SYSLIBS)
 }
 
 actions action.print-library-path

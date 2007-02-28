@@ -130,6 +130,7 @@ core.load-project-config Jam.project : NoCare ;
 
 core.load-config Jamrules ;
 core.load-project-config Jamrules.project : NoCare ;
+core.load-config Jam.config ;
 
 system.setup-environment ;
 system.load-top-jamfile ;
