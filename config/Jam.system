@@ -290,7 +290,7 @@ rule system.associate
 rule system.make-empty-static-library
 {
   local _library = $(1) ;
-  local _object = $(1).o ;
+  local _object = $(1).$(jam.OBJ_EXTENTION) ;
   local _source = $(1).c ;
 
   Depends $(_library) : $(_object) ;
@@ -371,7 +371,7 @@ rule system.make-in-directory-symlink
 
 rule system.reloc-object-name
 {
-  return $(1).reloc.o ;
+  return $(1).reloc.$(jam.OBJ_EXTENTION) ;
 }
 
 rule system.reloc-objects-for-libs
@@ -402,7 +402,7 @@ rule system.make-build-target
   if ! $(PRODUCT_BUILD) {
     return ;
   }
-  local _object = $(BINTOPDIR)$(jam.SEPARATOR)build.o ;
+  local _object = $(BINTOPDIR)$(jam.SEPARATOR)build.$(jam.OBJ_EXTENTION) ;
   local _source = $(BINTOPDIR)$(jam.SEPARATOR)build.$(PRODUCT_BUILD).c ;
 
   Depends $(_object) : $(_source) ;
@@ -484,7 +484,7 @@ rule system.make-single-object
   local _kind = $(1[1]:S) ;
 
   local _source = $(system.SRCDIR)$(jam.SEPARATOR)$(1[1]) ;
-  local _target = $(system.BINDIR)$(jam.SEPARATOR)$(1[1]:S=.o) ;
+  local _target = $(system.BINDIR)$(jam.SEPARATOR)$(1[1]:S=.$(jam.OBJ_EXTENTION)) ;
 
   if ! $(_kind) {
     exit Cannot determine compilation mode for $(_source) (no extention) ;
@@ -510,7 +510,7 @@ rule system.generate-cc
   local _original_cc = $(system.SRCDIR)$(jam.SEPARATOR)$(1:S=.cc) ;
 
   local _generated_cc = $(system.BINDIR)$(jam.SEPARATOR)$(1).cc ;
-  local _final_o = $(system.BINDIR)$(jam.SEPARATOR)$(1:S=.o) ;
+  local _final_o = $(system.BINDIR)$(jam.SEPARATOR)$(1:S=.$(jam.OBJ_EXTENTION)) ;
   local _merged_cc = $(system.BINDIR)$(jam.SEPARATOR)$(1:S=.cc) ;
 
   system.ensure-directory-for $(_generated_cc) ;
@@ -555,7 +555,7 @@ rule system.generate-cc.pc
   local _target = $(1:S=) ;
   local _includes ;
 
-  on $(_target:S=.o) _includes = $(TARGET_INCLUDES) ;
+  on $(_target:S=.$(jam.OBJ_EXTENTION)) _includes = $(TARGET_INCLUDES) ;
   _includes += $(INCLUDES) ;
 
   ORACLE_HOME on $(1) = $(project.ORACLE_HOME) ;
@@ -656,7 +656,7 @@ rule system.process-header-jni
 rule system.scan-for-jni.c
 {
   HDRRULE on $(system.SRCDIR)$(jam.SEPARATOR)$(1) = system.process-header-jni ;
-  OBJECT on $(system.SRCDIR)$(jam.SEPARATOR)$(1) = $(system.BINDIR)$(jam.SEPARATOR)$(1:S=.o) ;
+  OBJECT on $(system.SRCDIR)$(jam.SEPARATOR)$(1) = $(system.BINDIR)$(jam.SEPARATOR)$(1:S=.$(jam.OBJ_EXTENTION)) ;
 }
 
 rule system.scan-for-jni.cc
@@ -712,7 +712,7 @@ rule system.setup-project-libraries
 
 rule system.use-project-libraries.c
 {
-  local _target = $(system.BINDIR)$(jam.SEPARATOR)$(1:S=.o) ;
+  local _target = $(system.BINDIR)$(jam.SEPARATOR)$(1:S=.$(jam.OBJ_EXTENTION)) ;
   local _item _library ;
   for _item in $(3) {
     _library = [ system.project-lib-target-path $(2) : $(_item) ] ;
@@ -774,12 +774,12 @@ rule system.use-local-libraries
 
 rule system.use-local-libraries.cc
 {
-  util.add-target-variable $(system.BINDIR)$(jam.SEPARATOR)$(1:S=.o) : TARGET_INCLUDES : $(system.SRCDIR)$(jam.SEPARATOR)$(2) ;
+  util.add-target-variable $(system.BINDIR)$(jam.SEPARATOR)$(1:S=.$(jam.OBJ_EXTENTION)) : TARGET_INCLUDES : $(system.SRCDIR)$(jam.SEPARATOR)$(2) ;
 }
 
 rule system.ensure-system-includes.c
 {
-  util.add-target-variable $(system.BINDIR)$(jam.SEPARATOR)$(1:S=.o) : INCLUDES : $(jam.SEPARATOR)usr$(jam.SEPARATOR)include $(INCLUDES) ;
+  util.add-target-variable $(system.BINDIR)$(jam.SEPARATOR)$(1:S=.$(jam.OBJ_EXTENTION)) : INCLUDES : $(jam.SEPARATOR)usr$(jam.SEPARATOR)include $(INCLUDES) ;
 }
 
 rule system.ensure-system-includes.cc
@@ -807,7 +807,7 @@ rule system.use-product
 
 rule system.use-product.cc
 {
-  local _target = $(system.BINDIR)$(jam.SEPARATOR)$(1:S=.o) ;
+  local _target = $(system.BINDIR)$(jam.SEPARATOR)$(1:S=.$(jam.OBJ_EXTENTION)) ;
 
   util.add-target-variable $(_target) : TARGET_INCLUDES : $(5) ;
   util.add-target-variable $(_target) : TARGET_DEFINES : $(6) ;
@@ -844,7 +844,7 @@ rule system.use-defines.cpp
 
 rule system.use-defines.c
 {
-  util.add-target-variable $(system.BINDIR)$(jam.SEPARATOR)$(1:S=.o) : TARGET_DEFINES : $(2) ;
+  util.add-target-variable $(system.BINDIR)$(jam.SEPARATOR)$(1:S=.$(jam.OBJ_EXTENTION)) : TARGET_DEFINES : $(2) ;
 }
 
 rule system.use-project-includes.cc
@@ -860,7 +860,7 @@ rule system.use-project-includes.cpp
 rule system.use-project-includes.c
 {
   local _directory = [ util.make-path $(SRCTOP) $(PROJECT_OFFSET) ] ;
-  util.add-target-variable $(system.BINDIR)$(jam.SEPARATOR)$(1:S=.o) : TARGET_INCLUDES : $(_directory)$(jam.SEPARATOR)$(2) ;
+  util.add-target-variable $(system.BINDIR)$(jam.SEPARATOR)$(1:S=.$(jam.OBJ_EXTENTION)) : TARGET_INCLUDES : $(_directory)$(jam.SEPARATOR)$(2) ;
 }
 
 # Rule system.invoke prepares program execution. It sets up the environment

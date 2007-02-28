@@ -173,7 +173,7 @@ rule make-ruby-extension
   local _class_interfaces = $(system.SRCDIR)$(jam.SEPARATOR)$(2:S=.h) ;
   local _class_implementations = $(system.SRCDIR)$(jam.SEPARATOR)$(2:S=.cc) ;
   local _extension = $(system.BINDIR)$(jam.SEPARATOR)$(1).cc ;
-  local _object = $(_extension:S=.o) ;
+  local _object = $(_extension:S=.$(jam.OBJ_EXTENTION)) ;
   local _reloc = [ system.make-reloc-object $(_target) : $(_object) [ system.make-objects $(3) ] ] ;
 
   system.ensure-directory-for $(_target) ;
