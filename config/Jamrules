@@ -79,7 +79,7 @@ rule make-program
 
 rule setup-script
 {
-  local _target = $(system.SRCDIR)/$(1) ;
+  local _target = $(system.SRCDIR)$(jam.SEPARATOR)$(1) ;
 
   if $(2) {
     $(2) = $(_target) ;
@@ -98,7 +98,7 @@ rule make-cpp-test
 
 rule test-package-actions
 {
-  local _list = $(system.SRCDIR)/$(1) ;
+  local _list = $(system.SRCDIR)$(jam.SEPARATOR)$(1) ;
 
   Always $(1) ;
   NotFile $(_list) ;
@@ -110,7 +110,7 @@ rule test-package-actions
     _target = $(_file)@$(system.DOT_TARGET) ;
     Depends $(_file) : $(_target) ;
 
-    action.invoke-package-test $(_target) : $(system.SRCDIR)/$(_file) ;
+    action.invoke-package-test $(_target) : $(system.SRCDIR)$(jam.SEPARATOR)$(_file) ;
   }
 }
 
@@ -129,7 +129,7 @@ rule make-jni-module
 {
   scan-for-jni $(2) ;
 
-  local _target = $(system.BINDIR)/lib$(1).$(jam.DSO_EXTENTION) ;
+  local _target = $(system.BINDIR)$(jam.SEPARATOR)lib$(1).$(jam.DSO_EXTENTION) ;
   local _objects = [ system.make-objects $(2) ] ;
   local _reloc = [ system.make-reloc-object $(_target) : [ system.make-objects $(2) ] ] ;
 
@@ -138,8 +138,8 @@ rule make-jni-module
   system.assign-category jni : $(_target) ;
 
   util.add-target-variable $(_objects) : TARGET_INCLUDES :
-    $(project.JAVA_HOME)/include 
-    $(project.JAVA_HOME)/include/$(project.JAVA_PLATFORM) 
+    $(project.JAVA_HOME)$(jam.SEPARATOR)include 
+    $(project.JAVA_HOME)$(jam.SEPARATOR)include$(jam.SEPARATOR)$(project.JAVA_PLATFORM) 
   ;
   local _build = [ system.make-build-target ] ;
 
@@ -149,7 +149,7 @@ rule make-jni-module
 
 rule make-shared-module
 {
-  local _target = $(system.BINDIR)/$(1).$(jam.DSO_EXTENTION) ;
+  local _target = $(system.BINDIR)$(jam.SEPARATOR)$(1).$(jam.DSO_EXTENTION) ;
   local _reloc = [ system.make-reloc-object $(_target) : [ system.make-objects $(2) ] ] ;
 
   system.ensure-directory-for $(_target) ;
@@ -166,13 +166,13 @@ rule make-shared-module
 
 rule make-ruby-extension
 {
-  local _target = $(system.BINDIR)/$(1).$(jam.DSO_EXTENTION) ;
-  local _swig_base = $(system.SRCDIR)/$(1).swig ;
-  local _swig_interface = $(system.BINDIR)/$(1).swig ;
-  local _swig_wrap = $(system.BINDIR)/$(1).swig.cc ;
-  local _class_interfaces = $(system.SRCDIR)/$(2:S=.h) ;
-  local _class_implementations = $(system.SRCDIR)/$(2:S=.cc) ;
-  local _extension = $(system.BINDIR)/$(1).cc ;
+  local _target = $(system.BINDIR)$(jam.SEPARATOR)$(1).$(jam.DSO_EXTENTION) ;
+  local _swig_base = $(system.SRCDIR)$(jam.SEPARATOR)$(1).swig ;
+  local _swig_interface = $(system.BINDIR)$(jam.SEPARATOR)$(1).swig ;
+  local _swig_wrap = $(system.BINDIR)$(jam.SEPARATOR)$(1).swig.cc ;
+  local _class_interfaces = $(system.SRCDIR)$(jam.SEPARATOR)$(2:S=.h) ;
+  local _class_implementations = $(system.SRCDIR)$(jam.SEPARATOR)$(2:S=.cc) ;
+  local _extension = $(system.BINDIR)$(jam.SEPARATOR)$(1).cc ;
   local _object = $(_extension:S=.o) ;
   local _reloc = [ system.make-reloc-object $(_target) : $(_object) [ system.make-objects $(3) ] ] ;
 
@@ -236,8 +236,8 @@ rule make-merged-library
 
 rule make-ant-project
 {
-  local _config_in_src = $(system.SRCDIR)/$(1) ;
-  local _config_in_bin = $(system.BINDIR)/$(1) ;
+  local _config_in_src = $(system.SRCDIR)$(jam.SEPARATOR)$(1) ;
+  local _config_in_bin = $(system.BINDIR)$(jam.SEPARATOR)$(1) ;
 
   system.ensure-directory-for $(_config_in_bin) ;
 
@@ -263,8 +263,8 @@ rule make-ant-project
 
   SRCDIR on java = $(system.SRCDIR) ;
   BINDIR on java = $(system.BINDIR) ;
-  BINDIR_FROM_SRCDIR on java = $(CWD)/$(system.BINDIR) ;
-  GENDIR_FROM_SRCDIR on java = $(CWD)/$(system.GENDIR) ;
+  BINDIR_FROM_SRCDIR on java = $(CWD)$(jam.SEPARATOR)$(system.BINDIR) ;
+  GENDIR_FROM_SRCDIR on java = $(CWD)$(jam.SEPARATOR)$(system.GENDIR) ;
 
   system.invoke-ant ant@$(system.DOT_TARGET) : all ;
   system.invoke-ant test@$(system.DOT_TARGET) : test ;
@@ -324,10 +324,10 @@ rule use-product
 rule use-oracle
 {
   use-product $(1) $(2) $(3) $(4) $(5) $(6) $(7) $(8) $(9)
-    : $(project.ORACLE_LIBDIR:E=$(project.ORACLE_HOME)/lib)
+    : $(project.ORACLE_LIBDIR:E=$(project.ORACLE_HOME)$(jam.SEPARATOR)lib)
     : $(project.ORACLE_LIBS)
     :
-    : $(project.ORACLE_HOME)/$(project.ORACLE_INCLUDES)
+    : $(project.ORACLE_HOME)$(jam.SEPARATOR)$(project.ORACLE_INCLUDES)
     : $(project.ORACLE_DEFINES)
     : $(project.ORACLE_JAR)
   ;
@@ -353,7 +353,7 @@ rule use-java-enterprise
     :
     :
     :
-    : /usr/local/j2sdkee1.2.1/lib/j2ee.jar
+    : $(jam.SEPARATOR)usr$(jam.SEPARATOR)local$(jam.SEPARATOR)j2sdkee1.2.1$(jam.SEPARATOR)lib$(jam.SEPARATOR)j2ee.jar
   ;
 }
 
@@ -372,10 +372,10 @@ rule use-java-comm
 rule use-unit-test
 {
   use-product $(1) $(2) $(3) $(4) $(5) $(6) $(7) $(8) $(9)
-    : $(UNITTEST_DIRS)/lib
+    : $(UNITTEST_DIRS)$(jam.SEPARATOR)lib
     : $(UNITTEST_LIBS)
     :
-    : $(UNITTEST_DIRS)/include
+    : $(UNITTEST_DIRS)$(jam.SEPARATOR)include
     : $(UNITTEST_DEFINES)
     : $(UNITTEST_JARS)
     : test
@@ -385,10 +385,10 @@ rule use-unit-test
 rule use-boost
 {
   use-product $(1) 
-    : $(CONTRIB_ROOT)/boost-$(BOOST_VERSION)/lib
+    : $(CONTRIB_ROOT)$(jam.SEPARATOR)boost-$(BOOST_VERSION)$(jam.SEPARATOR)lib
     : boost_$(2)_$(BOOST_VERSION)
     :
-    : $(CONTRIB_ROOT)/boost-$(BOOST_VERSION)/include/boost-$(BOOST_VERSION)
+    : $(CONTRIB_ROOT)$(jam.SEPARATOR)boost-$(BOOST_VERSION)$(jam.SEPARATOR)include$(jam.SEPARATOR)boost-$(BOOST_VERSION)
     : $(BOOST_DEFINES)
     :
   ;
@@ -397,10 +397,10 @@ rule use-boost
 rule use-xml-parser
 {
   use-product $(1) $(2) $(3) $(4) $(5) $(6) $(7) $(8) $(9)
-    : $(XERCESC_ROOT)/lib
+    : $(XERCESC_ROOT)$(jam.SEPARATOR)lib
     : $(XERCESC_LIBS)
     :
-    : $(XERCESC_ROOT)/include
+    : $(XERCESC_ROOT)$(jam.SEPARATOR)include
     : $(XMLPARSER_DEFINES)
     :
   ;
@@ -409,10 +409,10 @@ rule use-xml-parser
 rule use-openssl
 {
   use-product $(1) $(2) $(3) $(4) $(5) $(6) $(7) $(8) $(9)
-    : $(OPENSSL_ROOT)/lib
+    : $(OPENSSL_ROOT)$(jam.SEPARATOR)lib
     : $(OPENSSL_LIBS)
     : 
-    : $(OPENSSL_ROOT)/include
+    : $(OPENSSL_ROOT)$(jam.SEPARATOR)include
   ;
 }
 
@@ -422,10 +422,10 @@ rule use-net-snmp
     use-openssl $(1) ;
   }
   use-product $(1) $(2) $(3) $(4) $(5) $(6) $(7) $(8) $(9)
-    : $(NETSNMP_ROOT)/lib
+    : $(NETSNMP_ROOT)$(jam.SEPARATOR)lib
     : $(NETSNMP_LIBS)
     : $(project.NETSNMP_SYSLIBS)
-    : $(NETSNMP_ROOT)/include/net-snmp
+    : $(NETSNMP_ROOT)$(jam.SEPARATOR)include$(jam.SEPARATOR)net-snmp
   ;
 }
 

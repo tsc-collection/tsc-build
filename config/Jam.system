@@ -83,11 +83,11 @@ rule system.figure-top-dirs
   GENTOP = $(core.TOP) gen $(system.PLATFORM) ;
   RUNTOP = $(core.TOP) run $(system.PLATFORM) ;
 
-  SRCTOPDIR = $(SRCTOP:J=/) ;
-  BINTOPDIR = $(BINTOP:J=/) ;
-  PKGTOPDIR = $(PKGTOP:J=/) ;
-  GENTOPDIR = $(GENTOP:J=/) ;
-  RUNTOPDIR = $(RUNTOP:J=/) ;
+  SRCTOPDIR = $(SRCTOP:J=$(jam.SEPARATOR)) ;
+  BINTOPDIR = $(BINTOP:J=$(jam.SEPARATOR)) ;
+  PKGTOPDIR = $(PKGTOP:J=$(jam.SEPARATOR)) ;
+  GENTOPDIR = $(GENTOP:J=$(jam.SEPARATOR)) ;
+  RUNTOPDIR = $(RUNTOP:J=$(jam.SEPARATOR)) ;
 }
 
 rule system.load-top-jamfile
@@ -128,7 +128,7 @@ rule system.load-jamfile-from
   local system.SRCDIR = [ util.make-path $(core.TOP) $(system.DOT) ] ;
   local system.BINDIR = [ util.make-path $(BINTOP) $(system.DOT[2-]) ] ;
   local system.GENDIR = [ util.make-path $(GENTOP) $(system.DOT[2-]) ] ;
-  local system.DOT_TARGET = $(system.DOT:J=/) ;
+  local system.DOT_TARGET = $(system.DOT:J=$(jam.SEPARATOR)) ;
 
   NotFile $(system.DOT_TARGET) $(system.CWD_SUBDIR_TARGETS)@$(system.DOT_TARGET) ;
   Always $(system.DOT_TARGET) $(system.CWD_SUBDIR_TARGETS)@$(system.DOT_TARGET) ;
@@ -139,7 +139,7 @@ rule system.load-jamfile-from
     Depends $(_target)@$(system.PARENT_DOT_TARGET) : $(_target)@$(system.DOT_TARGET) ;
   }
   on $(system.SRCDIR) if $(system.DIRECTORY_LOADED) != true {
-    core.load $(system.SRCDIR)/$(JAMFILE) : $(>) ;
+    core.load $(system.SRCDIR)$(jam.SEPARATOR)$(JAMFILE) : $(>) ;
     system.DIRECTORY_LOADED on $(system.SRCDIR) = true ;
   }
 }
@@ -152,7 +152,7 @@ rule system.setup-environment
   system.CWD_BINDIR = [ util.make-path $(BINTOP) $(core.CWD_FROM_TOP[2-]) ] ;
 
   system.TOP_TARGET = top ;
-  system.MAIN_TARGET = $(core.CWD_FROM_TOP:J=/:E=$(system.TOP_TARGET)) ;
+  system.MAIN_TARGET = $(core.CWD_FROM_TOP:J=$(jam.SEPARATOR):E=$(system.TOP_TARGET)) ;
   system.DOT_TARGET = $(system.TOP_TARGET) ;
 
   system.TARGET_CATEGORIES = exe jni test lib obj gen proto ant reloc ;
@@ -266,12 +266,12 @@ rule system.assign-category
 
 rule system.associate-binary-targets 
 {
-  system.associate $(system.BINDIR)/$(1) : $(system.BINDIR)/$(2) ;
+  system.associate $(system.BINDIR)$(jam.SEPARATOR)$(1) : $(system.BINDIR)$(jam.SEPARATOR)$(2) ;
 }
 
 rule system.associate-source-target 
 {
-  system.associate $(system.SRCDIR)/$(1) : $(system.BINDIR)/$(1) ;
+  system.associate $(system.SRCDIR)$(jam.SEPARATOR)$(1) : $(system.BINDIR)$(jam.SEPARATOR)$(1) ;
 }
 
 rule system.associate
@@ -309,7 +309,7 @@ rule system.make-empty-static-library
 rule system.make-shared-library
 {
   local _lib_target = [ system.project-lib-target $(1) ] ;
-  local _target = $(system.BINDIR)/$(_lib_target) ;
+  local _target = $(system.BINDIR)$(jam.SEPARATOR)$(_lib_target) ;
 
   local _target_so = $(_target:S=.$(jam.DSO_EXTENTION)) ;
   local _target_so_major = $(_target_so).$(project.LIB_MAJOR:E=0) ;
@@ -328,7 +328,7 @@ rule system.make-shared-library
 
   if $(3) {
     _lib_target = [ system.project-lib-target $(3) ] ;
-    local _target_soname = $(system.BINDIR)/$(_lib_target:S=.$(jam.DSO_EXTENTION))$(_target_so_major:S) ;
+    local _target_soname = $(system.BINDIR)$(jam.SEPARATOR)$(_lib_target:S=.$(jam.DSO_EXTENTION))$(_target_so_major:S) ;
     
     Depends $(_target) : $(_target_soname) ;
     system.make-in-directory-symlink  $(_target_soname) : $(_target_so_major) ;
@@ -346,7 +346,7 @@ rule system.make-shared-library
 rule system.make-static-library
 {
   local _lib_target = [ system.project-lib-target $(1) ] ;
-  local _target = $(system.BINDIR)/$(_lib_target) ;
+  local _target = $(system.BINDIR)$(jam.SEPARATOR)$(_lib_target) ;
 
   system.make-reloc-object $(_target) : $(2) ;
 
@@ -378,7 +378,7 @@ rule system.reloc-objects-for-libs
 {
   local _result _item ;
   for _item in $(2) {
-    local _components = [ util.reverse-split $(_item) : / ] ;
+    local _components = [ util.reverse-split $(_item) : $(jam.SEPARATOR) ] ;
     _result += [ system.reloc-object-name [ system.project-lib-target-path $(1) [ util.reverse $(_components[2-]) ] : $(_components[1]) ] ] ;
   }
   return $(_result) ;
@@ -402,8 +402,8 @@ rule system.make-build-target
   if ! $(PRODUCT_BUILD) {
     return ;
   }
-  local _object = $(BINTOPDIR)/build.o ;
-  local _source = $(BINTOPDIR)/build.$(PRODUCT_BUILD).c ;
+  local _object = $(BINTOPDIR)$(jam.SEPARATOR)build.o ;
+  local _source = $(BINTOPDIR)$(jam.SEPARATOR)build.$(PRODUCT_BUILD).c ;
 
   Depends $(_object) : $(_source) ;
 
@@ -414,7 +414,7 @@ rule system.make-build-target
 
 rule system.make-program
 {
-  local _target = $(system.BINDIR)/$(1) ;
+  local _target = $(system.BINDIR)$(jam.SEPARATOR)$(1) ;
   local _reloc = [ system.make-reloc-object $(_target) : [ system.make-objects $(2) ] ] ;
 
   system.ensure-directory-for $(_target) ;
@@ -483,8 +483,8 @@ rule system.make-single-object
 {
   local _kind = $(1[1]:S) ;
 
-  local _source = $(system.SRCDIR)/$(1[1]) ;
-  local _target = $(system.BINDIR)/$(1[1]:S=.o) ;
+  local _source = $(system.SRCDIR)$(jam.SEPARATOR)$(1[1]) ;
+  local _target = $(system.BINDIR)$(jam.SEPARATOR)$(1[1]:S=.o) ;
 
   if ! $(_kind) {
     exit Cannot determine compilation mode for $(_source) (no extention) ;
@@ -506,17 +506,17 @@ rule system.generate-cc
   if $(_processor) = $(_name) {
     exit Cannot determine generation processor for '$(1)' (no extention) ;
   }
-  local _original = $(system.SRCDIR)/$(1) ;
-  local _original_cc = $(system.SRCDIR)/$(1:S=.cc) ;
+  local _original = $(system.SRCDIR)$(jam.SEPARATOR)$(1) ;
+  local _original_cc = $(system.SRCDIR)$(jam.SEPARATOR)$(1:S=.cc) ;
 
-  local _generated_cc = $(system.BINDIR)/$(1).cc ;
-  local _final_o = $(system.BINDIR)/$(1:S=.o) ;
-  local _merged_cc = $(system.BINDIR)/$(1:S=.cc) ;
+  local _generated_cc = $(system.BINDIR)$(jam.SEPARATOR)$(1).cc ;
+  local _final_o = $(system.BINDIR)$(jam.SEPARATOR)$(1:S=.o) ;
+  local _merged_cc = $(system.BINDIR)$(jam.SEPARATOR)$(1:S=.cc) ;
 
   system.ensure-directory-for $(_generated_cc) ;
   system.assign-category gen : $(_generated_cc) $(_merged_cc) ;
 
-  Depends $(_generated_cc) : $(_original) $(system.SRCDIR)/$(2) ;
+  Depends $(_generated_cc) : $(_original) $(system.SRCDIR)$(jam.SEPARATOR)$(2) ;
   Depends $(_merged_cc) : $(_generated_cc) $(_original_cc) ;
   Depends $(_final_o) : $(_merged_cc) ;
 
@@ -603,7 +603,7 @@ rule system.mark-for-c-include-scan
 rule system.process-header 
 {
   local _includes = $(1:D) $(INCLUDES) [ util.get-target-variable $(1) : TARGET_INCLUDES ] ;
-  local _headers = $(_includes)/$(2) ;
+  local _headers = $(_includes)$(jam.SEPARATOR)$(2) ;
   local _item ;
   for _item in $(_headers) {
     if ! [ util.is-absolute-path $(_item) ] {
@@ -635,8 +635,8 @@ rule system.process-header-jni
 
       local _class_spec = $(_class:J=.) ;
       local _class_header = [ util.make-path $(_bindir) jni $(_class:J=_).h ] ;
-      local _class_class = [ util.make-path $(_bindir) $(_class:J=/).class ] ;
-      local _class_source = [ util.make-path $(_srcdir) $(_class:J=/).java ] ;
+      local _class_class = [ util.make-path $(_bindir) $(_class:J=$(jam.SEPARATOR)).class ] ;
+      local _class_source = [ util.make-path $(_srcdir) $(_class:J=$(jam.SEPARATOR)).java ] ;
 
       Includes $(1) : $(_class_header) ;
       NotFile $(_class_spec) ;
@@ -655,8 +655,8 @@ rule system.process-header-jni
 
 rule system.scan-for-jni.c
 {
-  HDRRULE on $(system.SRCDIR)/$(1) = system.process-header-jni ;
-  OBJECT on $(system.SRCDIR)/$(1) = $(system.BINDIR)/$(1:S=.o) ;
+  HDRRULE on $(system.SRCDIR)$(jam.SEPARATOR)$(1) = system.process-header-jni ;
+  OBJECT on $(system.SRCDIR)$(jam.SEPARATOR)$(1) = $(system.BINDIR)$(jam.SEPARATOR)$(1:S=.o) ;
 }
 
 rule system.scan-for-jni.cc
@@ -671,7 +671,7 @@ rule system.scan-for-jni.cpp
 
 rule system.use-project-libraries
 {
-  local _target = $(system.BINDIR)/$(1) ;
+  local _target = $(system.BINDIR)$(jam.SEPARATOR)$(1) ;
   if $(3) {
     system.setup-project-libraries $(_target) : $(2) : : $(3) ;
   }
@@ -712,7 +712,7 @@ rule system.setup-project-libraries
 
 rule system.use-project-libraries.c
 {
-  local _target = $(system.BINDIR)/$(1:S=.o) ;
+  local _target = $(system.BINDIR)$(jam.SEPARATOR)$(1:S=.o) ;
   local _item _library ;
   for _item in $(3) {
     _library = [ system.project-lib-target-path $(2) : $(_item) ] ;
@@ -732,7 +732,7 @@ rule system.use-project-libraries.cpp
 
 rule system.use-project-libraries.xml
 {
-  local _target = $(system.BINDIR)/$(1) ;
+  local _target = $(system.BINDIR)$(jam.SEPARATOR)$(1) ;
   local _item _library ;
   for _item in $(3) {
     _library = [ system.project-lib-target-path $(2) : $(_item) ] ;
@@ -743,7 +743,7 @@ rule system.use-project-libraries.xml
 
 rule system.use-project-jni-module.xml
 {
-  local _target = $(system.BINDIR)/$(1) ;
+  local _target = $(system.BINDIR)$(jam.SEPARATOR)$(1) ;
   local _item ;
   for _item in $(2) {
     local _module = [ system.project-jni-target-path $(_item) ] ;
@@ -758,11 +758,11 @@ rule system.use-project-jni-module.xml
 
 rule system.use-local-libraries
 {
-  local _target = $(system.BINDIR)/$(1) ;
+  local _target = $(system.BINDIR)$(jam.SEPARATOR)$(1) ;
   local _item _lib_target _library ;
   for _item in $(2) {
     _lib_target = [ system.project-lib-target $(_item:B) ] ;
-    _library = [ util.normalize-path $(system.BINDIR)/$(_item)/$(_lib_target) ] ;
+    _library = [ util.normalize-path $(system.BINDIR)$(jam.SEPARATOR)$(_item)$(jam.SEPARATOR)$(_lib_target) ] ;
 
     util.add-target-variable $(_target) : TARGET_LIBDIRS : $(_library:D) ;
     util.add-target-variable $(_target) : TARGET_STATIC_LIBS : $(_library) ;
@@ -774,12 +774,12 @@ rule system.use-local-libraries
 
 rule system.use-local-libraries.cc
 {
-  util.add-target-variable $(system.BINDIR)/$(1:S=.o) : TARGET_INCLUDES : $(system.SRCDIR)/$(2) ;
+  util.add-target-variable $(system.BINDIR)$(jam.SEPARATOR)$(1:S=.o) : TARGET_INCLUDES : $(system.SRCDIR)$(jam.SEPARATOR)$(2) ;
 }
 
 rule system.ensure-system-includes.c
 {
-  util.add-target-variable $(system.BINDIR)/$(1:S=.o) : INCLUDES : /usr/include $(INCLUDES) ;
+  util.add-target-variable $(system.BINDIR)$(jam.SEPARATOR)$(1:S=.o) : INCLUDES : $(jam.SEPARATOR)usr$(jam.SEPARATOR)include $(INCLUDES) ;
 }
 
 rule system.ensure-system-includes.cc
@@ -794,7 +794,7 @@ rule system.ensure-system-includes.cpp
 
 rule system.use-product
 {
-  local _target = $(system.BINDIR)/$(1) ;
+  local _target = $(system.BINDIR)$(jam.SEPARATOR)$(1) ;
 
   util.add-target-variable $(_target) : TARGET_LIBDIRS : $(2) ;
   util.add-target-variable $(_target) : TARGET_LIBS : $(3) ;
@@ -807,7 +807,7 @@ rule system.use-product
 
 rule system.use-product.cc
 {
-  local _target = $(system.BINDIR)/$(1:S=.o) ;
+  local _target = $(system.BINDIR)$(jam.SEPARATOR)$(1:S=.o) ;
 
   util.add-target-variable $(_target) : TARGET_INCLUDES : $(5) ;
   util.add-target-variable $(_target) : TARGET_DEFINES : $(6) ;
@@ -829,7 +829,7 @@ rule system.use-product.c
 
 rule system.use-product.xml
 {
-  util.add-target-variable $(system.BINDIR)/$(1) : TARGET_CLASSPATH : $(7) ;
+  util.add-target-variable $(system.BINDIR)$(jam.SEPARATOR)$(1) : TARGET_CLASSPATH : $(7) ;
 }
 
 rule system.use-defines.cc
@@ -844,7 +844,7 @@ rule system.use-defines.cpp
 
 rule system.use-defines.c
 {
-  util.add-target-variable $(system.BINDIR)/$(1:S=.o) : TARGET_DEFINES : $(2) ;
+  util.add-target-variable $(system.BINDIR)$(jam.SEPARATOR)$(1:S=.o) : TARGET_DEFINES : $(2) ;
 }
 
 rule system.use-project-includes.cc
@@ -860,7 +860,7 @@ rule system.use-project-includes.cpp
 rule system.use-project-includes.c
 {
   local _directory = [ util.make-path $(SRCTOP) $(PROJECT_OFFSET) ] ;
-  util.add-target-variable $(system.BINDIR)/$(1:S=.o) : TARGET_INCLUDES : $(_directory)/$(2) ;
+  util.add-target-variable $(system.BINDIR)$(jam.SEPARATOR)$(1:S=.o) : TARGET_INCLUDES : $(_directory)$(jam.SEPARATOR)$(2) ;
 }
 
 # Rule system.invoke prepares program execution. It sets up the environment
@@ -880,7 +880,7 @@ rule system.invoke
   Depends $(1) : $(2) ;
 
   LD_LIBRARY_PATH-$(2) on $(1) = [ system.convert-path-from-cwd $(LIBDIRS) : $(2) : TARGET_LIBDIRS ] ;
-  COMMAND-$(2) on $(1) = $(core.CWD)/$(2) ;
+  COMMAND-$(2) on $(1) = $(core.CWD)$(jam.SEPARATOR)$(2) ;
 
   ARGS-$(2) on $(1) = $(3) ;
 

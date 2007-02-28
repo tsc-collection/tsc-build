@@ -74,7 +74,7 @@ rule util.delete
 
 rule util.make-path
 {
-  return $(<:J=/) ;
+  return $(<:J=$(jam.SEPARATOR)) ;
 }
 
 rule util.join
@@ -145,7 +145,7 @@ rule util.reverse-split-path
   local _directory = $(<:D) ;
 
   if x$(_directory) != x {
-    if $(_directory) = / {
+    if $(_directory) = $(jam.SEPARATOR) {
       return $(_component) $(_directory) ;
     }
     return $(_component) [ util.reverse-split-path $(_directory) ] ;
@@ -164,7 +164,7 @@ rule util.normalize-path
   # properly, removing the corresponding number of preceeding components.
   #
   local _path _component _dotpool ;
-  for _component in [ util.reverse-split $(1) : / ] {
+  for _component in [ util.reverse-split $(1) : $(jam.SEPARATOR) ] {
     if $(_component) != .. {
       if $(_dotpool) {
         _dotpool = $(_dotpool[2-]) ;
@@ -179,7 +179,7 @@ rule util.normalize-path
 rule util.is-absolute-path
 {
   switch $(<[1]) {
-    case /* : return true ;
+    case $(jam.SEPARATOR)* : return true ;
   }
 }
 

@@ -49,6 +49,8 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 # 
 
+jam.SEPARATOR = / ;
+
 if $(core.JAMCORE_LOADED) {
   exit Multiple Jam.core loaded ;
 }
@@ -83,7 +85,7 @@ rule core.trace
 
 rule core.load
 {
-  core.LAST_LOADED_FILE = $(<:J=/) ;
+  core.LAST_LOADED_FILE = $(<:J=$(jam.SEPARATOR)) ;
   core.trace core : Loading $(core.LAST_LOADED_FILE) ;
 
   local _directive ;

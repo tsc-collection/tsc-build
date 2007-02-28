@@ -74,7 +74,7 @@ actions together action.shared-library
 {
   rm -f $(<:S=).[0-9]*
   $(LINKER) $(DLL_FLAGS) $(DLL_LINKER_FLAGS) $(LINKER_FLAGS) $(TARGET_FLAGS) $(DLL_SONAME_FLAG)$(TARGET_SONAME) -L$(TARGET_LIBDIRS) -l$(TARGET_LIBS) -l$(TARGET_SYSLIBS) -o $(<) $(>)
-  rm -f ./so_locations
+  rm -f so_locations
 }
 
 actions together action.static-library
@@ -193,7 +193,7 @@ actions together action.generate-cc-yacc
 
 actions together action.generate-cc-proc
 {
-  ORACLE_HOME=$(ORACLE_HOME) LD_LIBRARY_PATH=$(ORACLE_HOME)/lib $(PROCC) $(PROCCFLAGS) $(PROCC_INCLUDES) iname=$(>) oname=$(<) | sed -n '/[Ee]rror/,$p'
+  ORACLE_HOME=$(ORACLE_HOME) LD_LIBRARY_PATH=$(ORACLE_HOME)$(jam.SEPARATOR)lib $(PROCC) $(PROCCFLAGS) $(PROCC_INCLUDES) iname=$(>) oname=$(<) | sed -n '/[Ee]rror/,$p'
 }
 
 actions together action.merge-generated-code
@@ -213,7 +213,7 @@ actions together action.generate-cc-eruby
 
 actions action.create-jni-header
 {
-  javah -force -jni -classpath $(BINDIR)/classes -d $(<:D) $(>)
+  javah -force -jni -classpath $(BINDIR)$(jam.SEPARATOR)classes -d $(<:D) $(>)
 }
 
 actions together action.install
@@ -243,7 +243,7 @@ actions action.generate-swig-interface
 
 actions action.swig-ruby
 {
-  LD_LIBRARY_PATH=$(GCC_ROOT)/lib swig -w401 -w509 -I$(INCLUDES) -I$(TARGET_INCLUDES) -Werror -c++ -ruby -o $(1) $(2)
+  LD_LIBRARY_PATH=$(GCC_ROOT)$(jam.SEPARATOR)lib swig -w401 -w509 -I$(INCLUDES) -I$(TARGET_INCLUDES) -Werror -c++ -ruby -o $(1) $(2)
 }
 
 actions action.generate-c-includes
