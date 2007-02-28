@@ -61,7 +61,7 @@ class JamConfig
       '-s', "JAMCONFIG_LIBRARY_PREFIX=", 
       '-s', "JAMCONFIG_LIBRARY_MAJOR=1", 
 
-      '-s', "JAMCONFIG_USER=#{Etc.getpwuid.name}" 
+      '-s', "JAMCONFIG_USER=#{(Etc.getpwuid.name rescue Etc.getlogin)}" 
     ]
   end
 end

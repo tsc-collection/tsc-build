@@ -81,7 +81,7 @@ class Application < TSC::Application
       if defined? JAM_ORIGINAL
         invoke JAM_ORIGINAL
       else
-        commands = find_in_path(script_name)
+        commands = find_in_path(os.exe(script_name))
         commands.shift while commands.first == $0
 
         raise "No #{script_name.inspect} in PATH" if commands.empty?
