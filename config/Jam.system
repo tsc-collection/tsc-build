@@ -244,7 +244,7 @@ rule system.project-jni-target-path
 
 rule system.project-lib-target
 {
-  return [ util.join lib [ system.project-lib-name $(1) ] .a ] ;
+  return [ util.join lib [ system.project-lib-name $(1) ] .$(jam.LIB_EXTENTION) ] ;
 }
 
 rule system.project-lib-target-path
