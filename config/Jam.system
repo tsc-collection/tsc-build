@@ -376,10 +376,11 @@ rule system.reloc-object-name
 
 rule system.reloc-objects-for-libs
 {
-  local _result _item ;
+  local _result _reloc _item ;
   for _item in $(2) {
     local _components = [ util.reverse-split $(_item) : $(jam.SEPARATOR) ] ;
-    _result += [ system.reloc-object-name [ system.project-lib-target-path $(1) [ util.reverse $(_components[2-]) ] : $(_components[1]) ] ] ;
+    _reloc = [ system.reloc-object-name [ system.project-lib-target-path $(1) [ util.reverse $(_components[2-]) ] : $(_components[1]) ] ] ;
+    _result += [ util.get-target-variable $(_reloc) : OBJECTS ] ;
   }
   return $(_result) ;
 }
@@ -394,7 +395,9 @@ rule system.make-reloc-object
   Depends $(_reloc) : $(2) $(_static_libs) ;
   action.reloc $(_reloc) : $(2) $(_static_libs) ;
 
-  return $(_reloc) ;
+  OBJECTS on $(_reloc) = $(2) $(_static_libs) ;
+
+  return $(2) $(_static_libs) ;
 }
 
 rule system.make-build-target

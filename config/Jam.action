@@ -61,8 +61,8 @@ actions together action.compile-c
 
 actions together action.generate-build-file
 {
-  rm -f $(>[1]:S=).*.c
-  echo 'const char * const __TSC_BUILD__ = "@(#)build $(PRODUCT_BUILD) of $(PRODUCT_NAME) ($(PRODUCT_TAG)) $(PRODUCT_RELEASE) for $(PRODUCT_PLATFORM) by $(USER)";' > $(<[1])
+  $(RMF) $(>[1]:S=).*.c
+  $(ECHO) 'const char * const __TSC_BUILD__ = "@(#)build $(PRODUCT_BUILD) of $(PRODUCT_NAME) ($(PRODUCT_TAG)) $(PRODUCT_RELEASE) for $(PRODUCT_PLATFORM) by $(USER)";' > $(<[1])
 }
 
 actions together action.reloc
@@ -79,8 +79,8 @@ actions together action.shared-library
 
 actions together action.static-library
 {
-  rm -f $(<)
-  $(AR) $(<) $(>)
+  $(RMF) $(<)
+  $(AR) $(AR_TARGET_NAME_FLAG)$(<) $(>)
 }
 
 actions together action.shared-module
@@ -95,7 +95,7 @@ actions action.link
 
 actions action.print-library-path
 {
-  echo $(LD_LIBRARY_PATH)
+  $(ECHO) $(LD_LIBRARY_PATH)
 }
 
 actions action.invoke
@@ -138,7 +138,7 @@ actions together action.cleanup-for
 
 actions action.symlink
 {
-  rm -f $(<)
+  $(RMF) $(<)
   ln -s $(>) $(<) 
 }
 
@@ -149,8 +149,8 @@ actions together action.touch
 
 actions action.empty-c-source
 {
-  rm -f $(<)
-  echo '#include <stdio.h>' > $(<)
+  $(RMF) $(<)
+  $(ECHO) '#include <stdio.h>' > $(<)
 }
 
 actions together action.generate-cc-lex
@@ -208,7 +208,7 @@ actions together action.merge-generated-code
 
 actions together action.generate-cc-eruby
 {
-  echo '#line 1 "$(>)"' | cat - $(>) | (cd $(>:D) && eruby)  > $(<)
+  $(ECHO) '#line 1 "$(>)"' | cat - $(>) | (cd $(>:D) && eruby)  > $(<)
 }
 
 actions action.create-jni-header
@@ -238,7 +238,7 @@ actions action.handoff
 
 actions action.generate-swig-interface
 {
-  for i in $(CLASS_INTERFACES:D=) ; do echo '%include "'"${i}"'"'; done | cat $(2) - > $(1) 
+  for i in $(CLASS_INTERFACES:D=) ; do $(ECHO) '%include "'"${i}"'"'; done | cat $(2) - > $(1) 
 }
 
 actions action.swig-ruby
@@ -248,5 +248,5 @@ actions action.swig-ruby
 
 actions action.generate-c-includes
 {
-  for i in $(2:D=) ; do echo '#include "'"${i}"'"'; done > $(1)
+  for i in $(2:D=) ; do $(ECHO) '#include "'"${i}"'"'; done > $(1)
 }
