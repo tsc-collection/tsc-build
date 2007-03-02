@@ -83,6 +83,8 @@ rule system.figure-top-dirs
   GENTOP = $(core.TOP) gen $(system.PLATFORM) ;
   RUNTOP = $(core.TOP) run $(system.PLATFORM) ;
 
+  core.TOPDIR = $(core.TOP:J=$(jam.SEPARATOR))$(jam.SEPARATOR) ;
+
   SRCTOPDIR = $(SRCTOP:J=$(jam.SEPARATOR)) ;
   BINTOPDIR = $(BINTOP:J=$(jam.SEPARATOR)) ;
   PKGTOPDIR = $(PKGTOP:J=$(jam.SEPARATOR)) ;
@@ -340,7 +342,10 @@ rule system.make-shared-library
 
   local _build = [ system.make-build-target ] ;
   Depends $(_target_so_major) : $(_reloc) $(_build) ;
-  action.shared-library $(_target_so_major) : $(_reloc) $(_build) ;
+
+  util.clone-target-variable $(1) : $(_target_so_major) : MERGE ;
+  EXTRA_OBJECTS on $(_target_so_major) = $(_build) ;
+  action.shared-library $(_target_so_major) : $(_reloc) ;
 }
 
 rule system.make-static-library
@@ -356,6 +361,7 @@ rule system.make-static-library
 
   Depends $(_target) : $(2) ;
 
+  util.clone-target-variable $(1) : $(_target) : MERGE ;
   action.static-library $(_target) : $(2) ;
   CLEANUP_LIST on $(_target) =  $(_target:S=.$(jam.DSO_EXTENTION)) $(_target:S=.$(jam.DSO_EXTENTION).*) ;
   action.cleanup-for $(_target) ;
@@ -376,11 +382,10 @@ rule system.reloc-object-name
 
 rule system.reloc-objects-for-libs
 {
-  local _result _reloc _item ;
+  local _result _item ;
   for _item in $(2) {
     local _components = [ util.reverse-split $(_item) : $(jam.SEPARATOR) ] ;
-    _reloc = [ system.reloc-object-name [ system.project-lib-target-path $(1) [ util.reverse $(_components[2-]) ] : $(_components[1]) ] ] ;
-    _result += [ util.get-target-variable $(_reloc) : OBJECTS ] ;
+    _result += [ system.reloc-object-name [ system.project-lib-target-path $(1) [ util.reverse $(_components[2-]) ] : $(_components[1]) ] ] ;
   }
   return $(_result) ;
 }
@@ -392,10 +397,11 @@ rule system.make-reloc-object
   system.assign-category reloc : $(_reloc) ;
   local _static_libs = [ util.get-target-variable $(1) : TARGET_STATIC_LIBS ] ;
 
+  Depends $(1) : $(_reloc) ;
   Depends $(_reloc) : $(2) $(_static_libs) ;
-  action.reloc $(_reloc) : $(2) $(_static_libs) ;
 
-  OBJECTS on $(_reloc) = $(2) $(_static_libs) ;
+  CONTENT on $(_reloc) = [ util.trim-path $(core.TOP) : $(2) $(_static_libs) ] ;
+  action.reloc $(_reloc) ;
 
   return $(2) $(_static_libs) ;
 }

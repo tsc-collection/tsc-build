@@ -67,13 +67,21 @@ actions together action.generate-build-file
 
 actions together action.reloc
 {
-  $(LD) $(LD_RELOC_FLAG) $(LD_TARGET_NAME_FLAG)$(<) $(LD_FLAGS) $(>)
+  for item in $(CONTENT) ; do
+    $(ECHO) "${item}"
+  done > $(<)
 }
 
 actions together action.shared-library
 {
   $(RMF) $(<:S=).[0-9]*
-  $(LINKER) $(DLL_FLAGS) $(DLL_LINKER_FLAGS) $(LINKER_FLAGS) $(TARGET_FLAGS) $(DLL_SONAME_FLAG)$(TARGET_SONAME) -L$(TARGET_LIBDIRS) -l$(TARGET_LIBS) -l$(TARGET_SYSLIBS) $(LINKER_TARGET_NAME_FLAG)$(<) $(>)
+  if [ " $(MERGE) " = " true " ]; then
+    items=`for f in $(>) ; do cat ${f} ; done`
+    OBJECTS=`for item in ${items} ; do echo $(core.TOPDIR)${item} ; done`
+  else
+    OBJECTS=" $(>) "
+  fi
+  $(LINKER) $(DLL_FLAGS) $(DLL_LINKER_FLAGS) $(LINKER_FLAGS) $(TARGET_FLAGS) $(DLL_SONAME_FLAG)$(TARGET_SONAME) -L$(TARGET_LIBDIRS) -l$(TARGET_LIBS) -l$(TARGET_SYSLIBS) $(LINKER_TARGET_NAME_FLAG)$(<) ${OBJECTS} $(EXTRA_OBJECTS)
   $(RMF) so_locations
 }
 

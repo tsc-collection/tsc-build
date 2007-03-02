@@ -97,6 +97,18 @@ rule util.trim
   }
 }
 
+rule util.trim-path
+{
+  local _item _result ;
+  for _item in $(2) {
+    local _components = [ util.split-path $(_item) ] ;
+    local _trimmed = [ util.consume $(_components) : $(1) ] ;
+
+    _result += [ util.make-path $(_trimmed) ] ;
+  }
+  return $(_result) ;
+}
+
 rule util.repeat
 {
   local _item _result ;

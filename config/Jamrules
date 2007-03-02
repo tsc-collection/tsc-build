@@ -228,6 +228,7 @@ rule make-static-library
 rule make-merged-library
 {
   local _objects = [ system.reloc-objects-for-libs $(4) : $(2) ] ;
+  MERGE on $(1) = true ;
   if $(project.MAKE_DLL) = true {
     system.make-shared-library $(1) : $(_objects) : $(3) ;
   }
