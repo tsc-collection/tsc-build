@@ -401,6 +401,7 @@ rule system.make-reloc-object
   Depends $(_reloc) : $(2) $(_static_libs) ;
 
   CONTENT on $(_reloc) = [ util.trim-path $(core.TOP) : $(2) $(_static_libs) ] ;
+  system.ensure-directory-for $(_reloc) ;
   action.reloc $(_reloc) ;
 
   return $(2) $(_static_libs) ;
