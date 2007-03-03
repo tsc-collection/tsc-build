@@ -191,7 +191,8 @@ rule util.normalize-path
 rule util.is-absolute-path
 {
   switch $(<[1]) {
-    case $(jam.SEPARATOR)* : return true ;
+    case [/\\]* : return true ;
+    case ?\:[\\]* : return true ;
   }
 }
 
