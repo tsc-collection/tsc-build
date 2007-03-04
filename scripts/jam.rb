@@ -50,30 +50,10 @@
   SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 =end 
 
-if defined? Installation::Generator
-  class Generator < Installation::Generator
-    def create(io)
-      bindir = File.join(self.class.installation_tools, 'bin')
-      [
-        '#!' + File.join(bindir, 'ruby'),
-        "ENV['PATH'] = [ #{bindir.inspect}, *ENV.to_hash['PATH'].split(':') ].join(':')",
-        "JAM_ORIGINAL = #{original(target).inspect}",
-      ] + IO::readlines(__FILE__).slice(1..-1)
-    end
-
-    def original(target)
-      directory, file = File.split(target)
-      File.join(directory, 'original', file)
-    end
-  end
-
-  throw :generator, Generator
-end
-
-$VERBOSE = nil
-$:.concat ENV['PATH'].split(':')
+$:.concat ENV['PATH'].to_s.split(File::PATH_SEPARATOR)
 
 require 'tsc/application.rb'
+require 'tsc/path.rb'
 
 class Application < TSC::Application
   def start
@@ -155,6 +135,7 @@ class Application < TSC::Application
     if File.file? core_config_file
       jam_options = [
         '-f' + core_config_file,
+        '-sRUBY=' + (defined?(RUBY_PATH) ? RUBY_PATH : 'ruby'),
         '-score.PROJECT_OFFSET=' + project_offset,
         '-score.CWD_FROM_TOP=' + cwd_from_top.join(' '),
         '-score.CONFIG=' + config_location, 
@@ -178,6 +159,18 @@ class Application < TSC::Application
 
     puts "[#{cmdline.join(' ')}]" if verbose?
     exec *cmdline
+  end
+
+  in_generator_context do |_content|
+    directory, file = File.split(target)
+    original = File.join(directory, 'original', file)
+
+    _content << '#!' + figure_ruby_path
+    _content << '$VERBOSE = nil'
+    _content << TSC::PATH.current.front(File.dirname(figure_ruby_path)).to_ruby_eval
+    _content << 'RUBY_PATH = ' + figure_ruby_path.inspect
+    _content << 'JAM_ORIGINAL = ' +  original.inspect
+    _content << IO.readlines(__FILE__).slice(1..-1)
   end
 end
 

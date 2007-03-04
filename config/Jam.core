@@ -125,7 +125,7 @@ core.ensure-defined
 core.load-config Jam.util ;
 core.load-config Jam.system ;
 
-system.figure-top-dirs ;
+system.setup-top-dirs ;
 
 core.load-config Jam.env ;
 core.load-project-config Jam.project : NoCare ;

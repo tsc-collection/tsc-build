@@ -72,7 +72,17 @@ rule system.is-cwd-under-dot
   return [ system.is-cwd-under $(system.DOT) ] ;
 }
 
-rule system.figure-top-dirs
+rule system.setup-jamshell-inline
+{
+  JAMSHELL = $(RUBY) -r fileutils -e "include FileUtils; eval ARGV.first" % ;
+}
+
+rule system.setup-jamshell-file
+{
+  JAMSHELL = $(RUBY) -r fileutils -e "include FileUtils; load ARGV.first" % ;
+}
+
+rule system.setup-top-dirs
 {
   if $(USE_JAMCONFIG_PRODUCT_PLATFORM) {
     system.PLATFORM = $(JAMCONFIG_PRODUCT_PLATFORM) ;
