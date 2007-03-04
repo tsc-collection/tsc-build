@@ -134,5 +134,10 @@ core.load-config Jamrules ;
 core.load-project-config Jamrules.project : NoCare ;
 core.load-config Jam.config ;
 
+local _custom ;
+for _custom in [ GLOB $(core.CONFIG)/custom : Jam.* ] {
+  include $(_custom) ;
+}
+
 system.setup-environment ;
 system.load-top-jamfile ;
