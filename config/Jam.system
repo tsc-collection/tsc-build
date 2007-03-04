@@ -79,7 +79,7 @@ rule system.setup-jamshell-inline
 
 rule system.setup-jamshell-file
 {
-  JAMSHELL = $(RUBY) -r fileutils -e "include FileUtils; load ARGV.first" % ;
+  JAMSHELL = $(RUBY) -r fileutils -e 'include FileUtils; load ARGV.first' % ;
 }
 
 rule system.setup-top-dirs

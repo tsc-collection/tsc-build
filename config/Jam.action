@@ -144,17 +144,17 @@ actions action.invoke-ant
 
 actions together action.make-directory
 {
-  mkdir_p ' $(<) '.split
+  mkdir_p %w[ $(<) ]
 }
 
 actions existing together action.remove
 {
-  rm_rf ' $(>) '.split
+  rm_rf %w[ $(>) ]
 }
 
 actions together action.cleanup-for
 {
-  rm_rf ' $(CLEANUP_LIST) '.split
+  rm_rf %w[ $(CLEANUP_LIST) ]
 }
 
 actions action.symlink
