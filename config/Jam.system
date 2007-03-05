@@ -261,10 +261,10 @@ rule system.project-lib-target
 
 rule system.project-lib-reference
 {
-  switch $(jam.LIBRARY_REFERENCE) {
+  switch $(jam.LIB_REFERENCE) {
     case name : return [ system.project-lib-name $(1) ] ;
     case target : return [ system.project-lib-target $(1) ] ;
-    case * : system.error Unsupported library reference type - $(jam.LIBRARY_REFERENCE) ;
+    case * : system.error Unsupported library reference type - $(jam.LIB_REFERENCE) ;
   }
 }
 
