@@ -414,7 +414,7 @@ rule system.make-reloc-object
   system.ensure-directory-for $(_reloc) ;
   action.reloc $(_reloc) ;
 
-  return $(2) $(_static_libs) ;
+  return $(2) ;
 }
 
 rule system.make-build-target
