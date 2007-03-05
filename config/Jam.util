@@ -258,6 +258,17 @@ rule util.get-target-variable
   on $(<[1]) return $($(>)) ;
 }
 
+rule util.get-target-variables
+{
+  local _target _variable _result ;
+  for _target in $(1) {
+    for _varialbe in $(2) {
+      on $(_target) _result += $($(_variable)) ;
+    }
+  }
+  return $(_result) ;
+}
+
 rule util.clone-target-variable
 {
   local _item ;

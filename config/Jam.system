@@ -414,7 +414,7 @@ rule system.make-reloc-object
   system.ensure-directory-for $(_reloc) ;
   action.reloc $(_reloc) ;
 
-  return $(2) $(_static_libs) ;
+  return $(2) ;
 }
 
 rule system.make-build-target
@@ -453,12 +453,23 @@ rule system.make-program
     local _item ;
     for _item in [ util.combinations $(_options) ] {
       NotFile $(_item) ;
-      action.link $(_target) : $(_item) ;
+      system.link $(_target) : $(_item) ;
     }
   }
-  else action.link $(_target) ;
+  else system.link $(_target) ;
 
   return $(_target) ;
+}
+
+rule system.link
+{
+   local _libdirs = \$(LIBDIRS) \$(TARGET_LIBDIRS_\$(2)) \$(TARGET_LIBDIRS) ;
+   local _libs = $(LIBS) $(TARGET_LIBS_$(2)) $(TARGET_LIBS) $(TARGET_LIBS) $(TARGET_SYSLIBS) $(SYSLIBS) ;
+
+  T_LIBDIRS on $(1) = $(_libdirs) ;
+  T_LIBS on $(1) = $(_libs) ;
+
+  action.link $(1) : $(2) ;
 }
 
 rule system.make-objects
