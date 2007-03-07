@@ -225,6 +225,15 @@ rule make-static-library
   system.make-static-library $(1) : [ system.make-objects $(2) ] ;
 }
 
+rule make-empty-static-library
+{
+  local _lib_target = [ system.project-lib-target $(1) ] ;
+  local _target = $(system.BINDIR)$(jam.SEPARATOR)$(_lib_target) ;
+
+  system.ensure-directory-for $(_target) ;
+  system.make-empty-static-library $(_target) ;
+}
+
 rule make-merged-library
 {
   local _objects = [ system.reloc-objects-for-libs $(4) : $(2) ] ;
