@@ -64,12 +64,12 @@ rule util.replace
 rule util.delete
 {
   local _result _item ;
-  for _item in $(1) {
-    if ! ( $(_item) in $(2) ) {
-      _result += $(_item) ;
+  for _item in "$(1)" {
+    if ! ( "$(_item)" in "$(2)" ) {
+      _result += "$(_item)" ;
     }
   }
-  return $(_result) ;
+  return "$(_result)" ;
 }
 
 rule util.make-path
@@ -232,7 +232,7 @@ rule util.set-target-variable
     local _variable ;
     for _variable in $(2) {
       $(_variable) on $(_target) = ;
-      util.add-single-target-single-variable $(_target) : $(_variable) : $(3) ;
+      util.add-single-target-single-variable $(_target) : $(_variable) : "$(3)" ;
     }
   }
 }
@@ -243,14 +243,14 @@ rule util.add-target-variable
   for _target in $(1) {
     local _variable ;
     for _variable in $(2) {
-      util.add-single-target-single-variable $(_target) : $(_variable) : $(3) ;
+      util.add-single-target-single-variable $(_target) : $(_variable) : "$(3)" ;
     }
   }
 }
 
 rule util.add-single-target-single-variable
 {
-  $(2) on $(1) = [ util.delete [ util.get-target-variable $(1) : $(2) ] : $(3) ] $(3) ;
+  $(2) on $(1) = [ util.delete [ util.get-target-variable $(1) : $(2) ] : "$(3)" ] "$(3)" ;
 }
 
 rule util.get-target-variable

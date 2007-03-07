@@ -344,7 +344,7 @@ rule system.make-shared-library
   system.assign-category lib : $(_target) $(_target_so) $(_target_so_major) ;
 
   Depends $(_target) : $(_target_so) ;
-  system.make-empty-static-library $(_target) ;
+  action.touch $(_target) ;
   system.make-in-directory-symlink $(_target_so) : $(_target_so_major) ;
 
   if $(3) {
@@ -363,7 +363,13 @@ rule system.make-shared-library
   Depends $(_target_so_major) : $(_reloc) $(_build) ;
 
   util.clone-target-variable $(1) : $(_target_so_major) : MERGE ;
+  TARGET_IMPLIB on $(_target_so_major) = $(_target) ;
   EXTRA_OBJECTS on $(_target_so_major) = $(_build) ;
+
+  LIBDIRS on $(_target_so_major) = $(LIBDIRS) ;
+  SYSLIBS on $(_target_so_major) =  $(SYSLIBS) ;
+  LIBS on $(_target_so_major) =  $(LIBS) ;
+
   action.shared-library $(_target_so_major) : $(_reloc) ;
 }
 
@@ -454,6 +460,11 @@ rule system.make-program
   Depends $(_target) : $(_reloc) $(_build) ;
   TARGET_OBJECTS on $(_target) = $(_reloc) $(_build) ;
 
+  LIBDIRS on $(_target) = $(LIBDIRS) ;
+  SYSLIBS on $(_target) =  $(SYSLIBS) ;
+  LIBS on $(_target) =  $(LIBS) ;
+
+
   if $(3) {
     TARGET_FLAGS on $(_target) += $(3) ;
   }
@@ -524,6 +535,9 @@ rule system.make-single-object
   system.process-object$(_kind) $(_target) : $(_source) ;
 
   util.clone-target-variable $(_target) : $(_source) : TARGET_INCLUDES ;
+  util.set-target-variable $(_target) : INCLUDES : "$(INCLUDES)" ;
+  util.set-target-variable $(_target) : DEFINES : $(DEFINES) ;
+
   return $(_target) ;
 }
 
