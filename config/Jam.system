@@ -369,6 +369,7 @@ rule system.make-shared-library
   LIBDIRS on $(_target_so_major) = $(LIBDIRS) ;
   SYSLIBS on $(_target_so_major) =  $(SYSLIBS) ;
   LIBS on $(_target_so_major) =  $(LIBS) ;
+  TARGET_FLAGS on $(_target_so_major) = $(4) ;
 
   action.shared-library $(_target_so_major) : $(_reloc) ;
 }
@@ -450,6 +451,14 @@ rule system.make-build-target
 rule system.make-program
 {
   local _target = $(system.BINDIR)$(jam.SEPARATOR)$(1) ;
+
+  if $(jam.EXE_EXTENTION) {
+    _target_with_extention = $(_target).$(jam.EXE_EXTENTION) ;
+    system.associate $(_target_with_extention) : $(_target) ;
+
+    _target = $(_target_with_extention) ;
+  }
+
   local _reloc = [ system.make-reloc-object $(_target) : [ system.make-objects $(2) ] ] ;
 
   system.ensure-directory-for $(_target) ;
@@ -463,7 +472,6 @@ rule system.make-program
   LIBDIRS on $(_target) = $(LIBDIRS) ;
   SYSLIBS on $(_target) =  $(SYSLIBS) ;
   LIBS on $(_target) =  $(LIBS) ;
-
 
   if $(3) {
     TARGET_FLAGS on $(_target) += $(3) ;

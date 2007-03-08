@@ -217,7 +217,7 @@ rule make-library
 
 rule make-shared-library
 {
-  system.make-shared-library $(1) : [ system.make-objects $(2) ] : $(3) ;
+  system.make-shared-library $(1) : [ system.make-objects $(2) ] : $(3) : $(4) ;
 }
 
 rule make-static-library
