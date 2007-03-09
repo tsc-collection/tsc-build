@@ -74,12 +74,12 @@ rule system.is-cwd-under-dot
 
 rule system.setup-jamshell-inline
 {
-  JAMSHELL = $(RUBY) -r fileutils -e "include FileUtils; eval ARGV.first" % ;
+  JAMSHELL = $(RUBY) -W0 -r fileutils -e "include FileUtils; eval ARGV.first" % ;
 }
 
 rule system.setup-jamshell-file
 {
-  JAMSHELL = $(RUBY) -r fileutils -e 'include FileUtils; load ARGV.first' % ;
+  JAMSHELL = $(RUBY) -W0 -r fileutils -e 'include FileUtils; load ARGV.first' % ;
 }
 
 rule system.setup-top-dirs

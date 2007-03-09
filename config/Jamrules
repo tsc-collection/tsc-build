@@ -457,3 +457,33 @@ rule use-ruby
     : $(project.RUBY_DIR)
   ;
 }
+
+rule use-stemkit
+{
+  use-product $(1) 
+    : $(project.STEMKIT_LIBDIR)
+    : $(2)
+    :
+    : $(project.STEMKIT_INCLUDE)
+    : 
+    : 
+  ;
+}
+
+rule generate-simple
+{
+  local _target = $(system.BINDIR)/$(1) ;
+  local _source = $(system.SRCDIR)/$(2) ;
+
+  system.ensure-directory-for $(_target) ;
+  system.assign-category gen : $(_target) ;
+
+  Depends $(_target) : $(_source) ;
+  $(3) $(_target) : $(_source) ;
+}
+
+rule uudecode
+{
+  generate-simple $(1) : $(2) : action.uudecode ;
+}
+

@@ -280,3 +280,18 @@ actions action.generate-c-includes
 {
   for i in $(2:D=) ; do $(ECHO) '#include "'"${i}"'"'; done > $(1)
 }
+
+actions action.uudecode
+{
+  rm_f '$(<)'
+  File.open('$(<)', 'wb') { |output|
+    File.open('$(>)') { |input|
+      input.each do |line|
+        next if line =~ %r{^#}
+        next if line =~ %r{^begin}
+
+        output.write line.chomp.unpack('u').first
+      end
+    }
+  }
+}
