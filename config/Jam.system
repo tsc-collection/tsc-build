@@ -162,6 +162,7 @@ rule system.setup-environment
 
   system.CWD_SRCDIR = [ util.make-path $(core.TOP) $(core.CWD_FROM_TOP) ] ;
   system.CWD_BINDIR = [ util.make-path $(BINTOP) $(core.CWD_FROM_TOP[2-]) ] ;
+  system.CWD_GENDIR = [ util.make-path $(GENTOP) $(core.CWD_FROM_TOP[2-]) ] ;
 
   system.TOP_TARGET = top ;
   system.MAIN_TARGET = $(core.CWD_FROM_TOP:J=$(jam.SEPARATOR):E=$(system.TOP_TARGET)) ;
@@ -208,7 +209,9 @@ rule system.setup-environment
   Depends release : test@top package ;
   Depends handoff : release ;
 
-  setup-binclean-target ;
+  setup-direct-clean-target bin : $(system.CWD_BINDIR) ;
+  setup-direct-clean-target gen : $(system.CWD_GENDIR) ;
+  setup-direct-clean-target pkg : $(PKGTOPDIR) ;
 
   util.set-target-variable try : TARGET_DIRS : 
     $(system.CWD_SRCDIR) $(system.CWD_BINDIR) 
@@ -218,15 +221,15 @@ rule system.setup-environment
   action.handoff handoff ;
 }
 
-rule setup-binclean-target
+rule setup-direct-clean-target
 {
-  local _binclean_target = "directory $(system.CWD_BINDIR)" ;
+  local _clean_target = "directory $(2)" ;
 
-  NotFile binclean $(_binclean_target) ;
-  Always  binclean $(_binclean_target) ;
-  Depends binclean : $(_binclean_target) ;
+  NotFile $(1)clean $(_clean_target) ;
+  Always  $(1)clean $(_clean_target) ;
+  Depends $(1)clean : $(_clean_target) ;
 
-  action.remove $(_binclean_target) : $(system.CWD_BINDIR)  ;
+  action.remove $(_clean_target) : $(2)  ;
 }
 
 rule system.project-lib-name
@@ -320,6 +323,8 @@ rule system.make-empty-static-library
   system.assign-category gen : $(_source) ;
   system.assign-category obj : $(_object) ;
   system.assign-category lib : $(_library) ;
+
+  system.ensure-directory-for $(_source) ;
 
   action.empty-c-source $(_source) ;
   action.compile-c $(_object) : $(_source) ;
