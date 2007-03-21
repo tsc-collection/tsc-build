@@ -476,7 +476,9 @@ rule system.make-program
 
   LIBDIRS on $(_target) = $(LIBDIRS) ;
   SYSLIBS on $(_target) =  $(SYSLIBS) ;
+  STATIC_LIBS on $(_target) =  $(STATIC_LIBS) ;
   LIBS on $(_target) =  $(LIBS) ;
+  LINKER on $(_target) = $(LINKER) ;
 
   if $(3) {
     TARGET_FLAGS on $(_target) += $(3) ;
