@@ -268,17 +268,30 @@ actions action.handoff
 
 actions action.generate-swig-interface
 {
-  for i in $(CLASS_INTERFACES:D=) ; do $(ECHO) '%include "'"${i}"'"'; done | cat $(2) - > $(1) 
+
+  File.open('$(1)', 'wb') { |output|
+    %w[ $(2) ].each do |input|
+      output.puts IO.readlines(input)
+    end
+
+    %w[ $(CLASS_INTERFACES:D=) ].each do |item|
+      output.puts %Q{%include #{item.inspect}}
+    end
+  }
 }
 
 actions action.swig-ruby
 {
-  LD_LIBRARY_PATH=$(GCC_ROOT)$(jam.SEPARATOR)lib swig -w401 -w509 -I$(INCLUDES) -I$(TARGET_INCLUDES) -Werror -c++ -ruby -o $(1) $(2)
+  exec *[ 'swig', '-w401', '-w509', '-w314', '-w801', '-Werror', '-c++', '-ruby', '-o', '$(1)', '-I$(INCLUDES)', '-I$(TARGET_INCLUDES)', '$(2)' ]
 }
 
 actions action.generate-c-includes
 {
-  for i in $(2:D=) ; do $(ECHO) '#include "'"${i}"'"'; done > $(1)
+  File.open('$(1)', 'wb') { |output|
+    %w[ $(2:D=) ].each do |input|
+      output.puts %Q{#include #{input.inspect}}
+    end
+  }
 }
 
 actions action.uudecode
