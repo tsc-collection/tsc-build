@@ -624,12 +624,14 @@ rule system.generate-cc.pc
 
 rule system.ensure-directory-for
 {
-  local _target = $(1[1]) ;
-  local _target_directories = $(_target:D) $(2) ;
+  local _target ;
+  for _target in $(1) {
+    local _target_directories = $(_target:D) $(2) ;
 
-  Depends $(_target) : $(_target_directories) ;
-  NoUpdate $(_target_directories) ;
-  action.make-directory $(_target_directories) ;
+    Depends $(_target) : $(_target_directories) ;
+    NoUpdate $(_target_directories) ;
+    action.make-directory $(_target_directories) ;
+  }
 }
 
 rule system.process-object.c

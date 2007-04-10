@@ -176,7 +176,7 @@ rule make-ruby-extension
   local _object = $(_extension:S=.$(jam.OBJ_EXTENTION)) ;
   local _reloc = [ system.make-reloc-object $(_target) : $(_object) [ system.make-objects $(3) ] ] ;
 
-  system.ensure-directory-for $(_target) ;
+  system.ensure-directory-for $(_target) $(_swig_interface) $(_swig_wrap) ;
   system.associate-binary-targets $(1).$(jam.DSO_EXTENTION) : $(1) ;
   system.assign-category exe : $(_target) ;
 

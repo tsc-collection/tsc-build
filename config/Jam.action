@@ -282,7 +282,7 @@ actions action.generate-swig-interface
 
 actions action.swig-ruby
 {
-  exec *[ 'swig', '-w401', '-w509', '-w314', '-w801', '-Werror', '-c++', '-ruby', '-o', '$(1)', '-I$(INCLUDES)', '-I$(TARGET_INCLUDES)', '$(2)' ]
+  exec *[ 'swig', '-w362', '-w401', '-w509', '-w314', '-w801', '-Werror', '-c++', '-ruby', '-o', '$(1)', '-I$(INCLUDES)', '-I$(TARGET_INCLUDES)', '$(2)' ]
 }
 
 actions action.generate-c-includes
