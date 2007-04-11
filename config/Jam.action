@@ -117,6 +117,7 @@ actions action.invoke
   ENV['SHLIB_PATH'] = '$(LD_LIBRARY_PATH-$(>))'
   ENV['JAM_SRCDIR'] = '$(SRCDIR)'
 
+  mkdir_p '$(BINDIR)'
   cd '$(BINDIR)' do
     exec %q[ $(RUNEXEC) $(COMMAND-$(>)) $(RUNARGS) $(ARGS-$(>)) ]
   end
