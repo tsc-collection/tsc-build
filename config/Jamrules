@@ -86,6 +86,7 @@ rule setup-script
   }
   system.associate-source-target $(1) ;
   system.invoke run@$(system.DOT_TARGET) : $(_target) ;
+  system.invoke test@$(system.DOT_TARGET) : $(_target) : test ;
   system.setup-program-targets-in-cwd $(_target) ;
 }
 
