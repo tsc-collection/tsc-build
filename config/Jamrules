@@ -185,6 +185,7 @@ rule make-ruby-extension
 
   local _build = [ system.make-build-target ] ;
   Depends $(_target) : $(_reloc) $(_build) ;
+  LINKER on $(_target) = $(LINKER) ;
   action.shared-module $(_target) : $(_reloc) $(_build) ;
 
   Depends $(_reloc) : $(_object) ;

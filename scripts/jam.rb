@@ -136,6 +136,7 @@ class Application < TSC::Application
       jam_options = [
         '-f' + core_config_file,
         '-sRUBY=' + (defined?(RUBY_PATH) ? RUBY_PATH : 'ruby'),
+        '-sRUBY_PLATFORM=' + RUBY_PLATFORM,
         '-score.PROJECT_OFFSET=' + project_offset,
         '-score.CWD_FROM_TOP=' + cwd_from_top.join(' '),
         '-score.CONFIG=' + config_location, 

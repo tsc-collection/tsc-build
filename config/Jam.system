@@ -217,8 +217,13 @@ rule system.setup-environment
     $(system.CWD_SRCDIR) $(system.CWD_BINDIR) 
   ;
   action.install try ;
-  action.package package ;
+  system.make-package package ;
   action.handoff handoff ;
+}
+
+rule system.make-package
+{
+  action.package $(1) ;
 }
 
 rule setup-direct-clean-target
@@ -375,6 +380,7 @@ rule system.make-shared-library
   SYSLIBS on $(_target_so_major) =  $(SYSLIBS) ;
   LIBS on $(_target_so_major) =  $(LIBS) ;
   TARGET_FLAGS on $(_target_so_major) = $(4) ;
+  LINKER on $(_target_so_major) = $(LINKER) ;
 
   action.shared-library $(_target_so_major) : $(_reloc) ;
 }
