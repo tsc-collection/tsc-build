@@ -345,6 +345,11 @@ rule system.make-shared-library
   local _target_so = $(_target:S=.$(jam.DSO_EXTENTION)) ;
   local _target_so_major = $(_target_so).$(project.LIB_MAJOR:E=0) ;
 
+  if $(project.DO_NOT_USE_LIBRARY_MAJOR) = true {
+    _target_so_major = $(_target_so) ;
+  }
+  else system.make-in-directory-symlink $(_target_so) : $(_target_so_major) ;
+
   local _reloc = [ system.make-reloc-object $(_target) : $(2) ] ;
 
   system.associate-binary-targets $(_target_so_major:D=) : $(1) ;
@@ -355,7 +360,6 @@ rule system.make-shared-library
 
   Depends $(_target) : $(_target_so) ;
   action.touch $(_target) ;
-  system.make-in-directory-symlink $(_target_so) : $(_target_so_major) ;
 
   if $(3) {
     _lib_target = [ system.project-lib-target $(3) ] ;
