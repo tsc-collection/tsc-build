@@ -173,6 +173,7 @@ rule make-ruby-extension
   local _swig_wrap = $(system.BINDIR)$(jam.SEPARATOR)$(1).swig.cc ;
   local _class_interfaces = $(system.SRCDIR)$(jam.SEPARATOR)$(2:S=.h) ;
   local _class_implementations = $(system.SRCDIR)$(jam.SEPARATOR)$(2:S=.cc) ;
+  local _class_objects = $(system.BINDIR)$(jam.SEPARATOR)$(2:S=.o) ;
   local _extension = $(system.BINDIR)$(jam.SEPARATOR)$(1).cc ;
   local _object = $(_extension:S=.$(jam.OBJ_EXTENTION)) ;
   local _reloc = [ system.make-reloc-object $(_target) : $(_object) [ system.make-objects $(3) ] ] ;
@@ -201,6 +202,7 @@ rule make-ruby-extension
   action.swig-ruby $(_swig_wrap) : $(_swig_interface) ;
   action.generate-c-includes $(_extension) : $(_class_interfaces) $(_swig_wrap) $(_class_implementations) ;
 
+  util.clone-target-variable $(_class_objects) : $(_object) : TARGET_INCLUDES TARGET_DEFINES ;
   util.add-target-variable $(_object) : TARGET_INCLUDES : $(project.RUBY_DIR) $(system.BINDIR) $(system.SRCDIR) ;
   action.compile-cc $(_object) : $(_extension) ;
 

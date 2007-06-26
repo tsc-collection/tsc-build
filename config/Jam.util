@@ -271,9 +271,15 @@ rule util.get-target-variables
 
 rule util.clone-target-variable
 {
-  local _item ;
-  for _item in $(3) {
-    on $(1[1]) $(_item) on $(2[1]) = $($(_item)) ;
+  local _item _source _target _value ;
+
+  for _source in $(1) {
+    for _target in $(2) {
+      for _item in $(3) {
+        on $(_source) _value = $($(_item)) ;
+        util.add-single-target-single-variable $(_target) : $(_item) : $(_value) ;
+      }
+    }
   }
 }
 
