@@ -81,10 +81,8 @@ rule setup-script
 {
   local _target = $(system.SRCDIR)$(jam.SEPARATOR)$(1) ;
 
-  if $(2) {
-    $(2) = $(_target) ;
-  }
-  system.associate-source-target $(1) ;
+  system.associate $(_target) : $(system.BINDIR)$(jam.SEPARATOR)$(2:E=$(1)) ;
+
   system.invoke run@$(system.DOT_TARGET) : $(_target) ;
   system.invoke test@$(system.DOT_TARGET) : $(_target) : test ;
   system.setup-program-targets-in-cwd $(_target) ;

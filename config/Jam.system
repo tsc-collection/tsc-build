@@ -298,11 +298,6 @@ rule system.associate-binary-targets
   system.associate $(system.BINDIR)$(jam.SEPARATOR)$(1) : $(system.BINDIR)$(jam.SEPARATOR)$(2) ;
 }
 
-rule system.associate-source-target 
-{
-  system.associate $(system.SRCDIR)$(jam.SEPARATOR)$(1) : $(system.BINDIR)$(jam.SEPARATOR)$(1) ;
-}
-
 rule system.associate
 {
   local _target = $(1[1]) ;
