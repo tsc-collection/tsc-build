@@ -339,6 +339,7 @@ rule system.make-shared-library
 
   local _target_so = $(_target:S=.$(jam.DSO_EXTENTION)) ;
   local _target_so_major = $(_target_so).$(project.LIB_MAJOR:E=0) ;
+  local _target_export = $(_target:S=.exp) ;
 
   if $(project.DO_NOT_USE_LIBRARY_MAJOR) = true {
     _target_so_major = $(_target_so) ;
@@ -352,9 +353,14 @@ rule system.make-shared-library
 
   system.ensure-directory-for $(_target) ;
   system.assign-category lib : $(_target) $(_target_so) $(_target_so_major) ;
+  system.assign-category gen : $(_target_export) ;
 
-  Depends $(_target) : $(_target_so) ;
-  action.touch $(_target) ;
+  Depends $(_target_export) : $(_target_so) ;
+  Depends $(_target) : $(_target_export) ;
+
+  LIBRARY_EXPORTS on $(_target) = $(_target_export) ;
+  action.shared-library-exports $(_target_export) : $(_target_so) ;
+  action.import-library $(_target) : $(_target_so) ;
 
   if $(3) {
     _lib_target = [ system.project-lib-target $(3) ] ;

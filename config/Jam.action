@@ -84,6 +84,17 @@ actions together action.shared-library
   rm_f 'so_locations'
 }
 
+actions action.shared-library-exports
+{
+  File.open( '$(<)' , 'w').puts IO.popen('pexports $(>) ').readlines
+}
+
+actions action.import-library
+{
+  system *[ 'dlltool', '--input-def', '$(LIBRARY_EXPORTS)', '--output-lib',
+  '$(<)', '--dllname', '$(>:D=)' ]
+}
+
 # See the above note.
 #
 actions together action.static-library
@@ -115,6 +126,7 @@ actions action.invoke
   }
   ENV['LD_LIBRARY_PATH'] = '$(LD_LIBRARY_PATH-$(>))'
   ENV['SHLIB_PATH'] = '$(LD_LIBRARY_PATH-$(>))'
+  ENV['PATH'] = ENV['PATH'] + ':' + '$(LD_LIBRARY_PATH-$(>))'
   ENV['JAM_SRCDIR'] = '$(SRCDIR)'
 
   mkdir_p '$(BINDIR)'
