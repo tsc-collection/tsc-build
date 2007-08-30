@@ -205,7 +205,10 @@ rule system.setup-environment
     Depends $(_target) : $(_target)@$(system.MAIN_TARGET) ;
   }
   Depends try : all ;
-  Depends package : top ;
+
+  if $(jam.NO_PACKAGE_DEPEND) != true {
+    Depends package : top ;
+  }
   Depends release : test@top package ;
   Depends handoff : release ;
 
