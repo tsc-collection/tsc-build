@@ -83,8 +83,8 @@ rule setup-script
 
   system.associate $(_target) : $(system.BINDIR)$(jam.SEPARATOR)$(2:E=$(1)) ;
 
-  system.invoke run@$(system.DOT_TARGET) : $(_target) ;
-  system.invoke test@$(system.DOT_TARGET) : $(_target) : test ;
+  system.invoke run@$(system.DOT_TARGET) : $(_target) : $(3) : $(4) ;
+  system.invoke test@$(system.DOT_TARGET) : $(_target) : test $(3) : $(4) ;
   system.setup-program-targets-in-cwd $(_target) ;
 }
 
