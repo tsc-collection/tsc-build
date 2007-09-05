@@ -185,7 +185,7 @@ rule make-ruby-extension
   local _build = [ system.make-build-target ] ;
   Depends $(_target) : $(_reloc) $(_build) ;
   LINKER on $(_target) = $(LINKER) ;
-  util.add-target-variable $(_target) : TARGET_LIBDIRS : $(project.RUBY_LIBDIR) ;
+  util.add-target-variable $(_target) : TARGET_LIBDIRS : $(project.RUBY_LIBDIR:E=$(project.RUBY_DIR)) ;
   util.add-target-variable $(_target) : TARGET_LIBS : $(project.RUBY_LIB) ;
   action.shared-module $(_target) : $(_reloc) $(_build) ;
 
@@ -203,7 +203,7 @@ rule make-ruby-extension
   action.generate-c-includes $(_extension) : $(_class_interfaces) $(_swig_wrap) $(_class_implementations) ;
 
   util.clone-target-variable $(_class_objects) : $(_object) : TARGET_INCLUDES TARGET_DEFINES ;
-  util.add-target-variable $(_object) : TARGET_INCLUDES : $(project.RUBY_INCLUDE) $(system.BINDIR) $(system.SRCDIR) ;
+  util.add-target-variable $(_object) : TARGET_INCLUDES : $(project.RUBY_INCLUDE:E=$(project.RUBY_DIR)) $(system.BINDIR) $(system.SRCDIR) ;
   action.compile-cc $(_object) : $(_extension) ;
 
   system.assign-category gen : $(_swig_interface) $(_swig_wrap) $(_extension) ;

@@ -88,17 +88,12 @@ actions together action.shared-library
 
 actions action.shared-library-exports
 {
-  File.open( '$(<)' , 'w') { |_output|
-    IO.popen('pexports $(>) ') { |_input|
-      _output.puts _input.readlines
-    }
-    raise "Command failed" unless $?.success?
-  }
+  touch ' $(<) '.split
 }
 
 actions action.import-library
 {
-  exec *[ 'dlltool', '--input-def', '$(LIBRARY_EXPORTS)', '--output-lib', '$(<)', '--dllname', '$(>:D=)' ]
+  touch ' $(<) '.split
 }
 
 # See the above note.
