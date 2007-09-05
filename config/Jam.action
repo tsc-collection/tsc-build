@@ -81,18 +81,24 @@ actions together action.shared-library
 {
   rm_f Dir[ '$(<:S=).[0-9]*'.gsub('\\', '/') ]
   system *[ '$(LINKER)', '$(DLL_FLAGS)', '$(DLL_LINKER_FLAGS)', '$(LINKER_FLAGS)', '$(TARGET_FLAGS)', '$(DLL_SONAME_FLAG)$(TARGET_SONAME)', '$(LINKER_IMPLIB_NAME_FLAG)$(TARGET_IMPLIB)', '$(LINKER_LIBDIR_FLAG)$(LIBDIRS)', '$(LINKER_LIBDIR_FLAG)$(TARGET_LIBDIRS)', '$(LINKER_LIB_FLAG)$(LIBS)', '$(LINKER_LIB_FLAG)$(SYSLIBS)', '$(LINKER_LIB_FLAG)$(TARGET_LIBS)', '$(LINKER_LIB_FLAG)$(TARGET_SYSLIBS)', '$(LINKER_TARGET_NAME_FLAG_STANDALONE)', '$(LINKER_TARGET_NAME_FLAG_ATTACHED)$(<)', '$(EXTRA_OBJECTS)', *%w[ $(>) ].map { |item| %w[ $(MERGE) ].empty? ? item : IO.readlines(item).map { |object| ' $(core.TOPDIR) '.strip + object.chomp } }.flatten ] or raise 'Command failed'
-  rm_f 'so_locations'
+  status = $?
+  rm_f "so_locations"
+  raise "Command failed" unless status.success?
 }
 
 actions action.shared-library-exports
 {
-  File.open( '$(<)' , 'w').puts IO.popen('pexports $(>) ').readlines
+  File.open( '$(<)' , 'w') { |_output|
+    IO.popen('pexports $(>) ') { |_input|
+      _output.puts _input.readlines
+    }
+    raise "Command failed" unless $?.success?
+  }
 }
 
 actions action.import-library
 {
-  system *[ 'dlltool', '--input-def', '$(LIBRARY_EXPORTS)', '--output-lib',
-  '$(<)', '--dllname', '$(>:D=)' ]
+  exec *[ 'dlltool', '--input-def', '$(LIBRARY_EXPORTS)', '--output-lib', '$(<)', '--dllname', '$(>:D=)' ]
 }
 
 # See the above note.
