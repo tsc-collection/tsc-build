@@ -1,0 +1,75 @@
+Software Build Framework TSC-BUILD
+
+ABSTRACT
+========
+
+tsc-build is a set of Jam configuration files that provide ability to build
+large software projects (compile, link, test, package, etc.)
+
+JAM' is an open source tool that manages age dependencies between different 
+files launching defined actions to bring out-of-date files back in sync. It is
+much like make(1) utility, providing way better facilities for describing
+project dependencies defining necessary actions. 
+
+tsc-build uses JAM language to define rules that are used to describe a
+software project. These rules are used in Jamfile-s accross project folders,
+each of those describing things to perform in that particular folder. Jamfiles
+are liked together by means of a special rule 'make-subdir' (or
+'make-subdirs') that must mention all sub-folders to descend to. 
+
+On every invocaton the whole tree of Jamfiles is loaded starting from the
+project root.  This provides an opportunity for jam to "see" the whole
+project, making it possible to maintain accurate dependencies even between
+sibling folders.  Besides, no actual folder changing is necessary, [almost]''
+everything is perfomed relative to the current folder, even if rebuild is
+needed in others.
+
+PROJECT STRUCTURE
+=================
+
+A project must be rooted in 'src' folder, this is one of the hard-coded
+assumtions among a handful. All projects artifacts are created in folders
+parallel to 'src', with the precise matching of folder structure beneath:
+
+  bin 
+    Here go all compilation and linking artifacts, such as object files,
+    executables, libraries, shared modules, etc.
+
+  gen
+    Here all generated code is created. Examples include header files with
+    macro definitions figured from the environment, protocol libraries
+    generated from the language independent info, etc.
+
+Here's a sample project structure
+
+src
+  +- Jamfile
+  +- lib
+  |   +- Jamfile
+  |   +- util
+  |   |   +- Jamfile
+  |   +- adt
+  |       +- Jamfile
+  |
+  +- [config]
+         +- Jam.project
+         +- Jamrules
+         +- jam-config.rb
+
+A project can also have optional folder 'config' in its root folder that will
+hold configuration files with the projects specific settings (compile options,
+project rules, etc.)
+
+STANDARD RULES
+==============
+
+===
+'
+  Stands for (J)ust (A)nother (M)ake. Can be downloaded at
+  http://www.perforce.com/jam
+
+''
+  In actions that invoke the built project executables, folder change is
+  perfomed to the foleder containing exectutable itself, thus making it
+  possible for the launched executable to create temporary files in a
+  guaranteed location.

@@ -1,0 +1,448 @@
+PROJECT HIERARCHY
+=================
+
+make-subdir folder [ ... ] ;
+make-subdirs folder [ ... ] ;
+
+
+use-project-library target_name : library_name [ ... ] ;
+use-project-libraries target_name : library_name [ ... ] ;
+
+use-top-library target_name : library_name [ ... ] ;
+use-top-libraries target_name : library_name [ ... ] ;
+
+use-local-library target_name : library_name [ ... ] ;
+use-local-libraries target_name : library_name [ ... ] ;
+
+use-project-jni-module target_name : jni_module_name [ ... ] ;
+use-project-jni-modules target_name : jni_module_name [ ... ] ;
+
+rule inject
+{
+  local _product = $(2) ;
+  local _version = $(3) ;
+
+  util.foreach $(1) : system.load-jamfile-from : : $(core.TOP) .. .. $(_product) $(_version) ;
+}
+
+rule make-program
+{
+  local _target = [ system.make-program $(1) : $(2) : $(3) ] ;
+
+  system.invoke run@$(system.DOT_TARGET) : $(_target) ;
+  system.setup-program-targets-in-cwd $(_target) ;
+  system.setup-try-libs-for $(_target) ;
+}
+
+rule setup-script
+{
+  local _target = $(system.SRCDIR)$(jam.SEPARATOR)$(1) ;
+
+  if $(2) {
+    $(2) = $(_target) ;
+  }
+  system.associate-source-target $(1) ;
+  system.invoke run@$(system.DOT_TARGET) : $(_target) ;
+  system.invoke test@$(system.DOT_TARGET) : $(_target) : test ;
+  system.setup-program-targets-in-cwd $(_target) ;
+}
+
+rule make-cpp-test
+{
+  local _target = [ system.make-program $(1) : $(2) : $(3) ] ;
+  system.invoke test@$(system.DOT_TARGET) : $(_target) : : $(system.SRCDIR) ;
+  system.setup-program-targets-in-cwd $(_target) ;
+}
+
+rule test-package-actions
+{
+  local _list = $(system.SRCDIR)$(jam.SEPARATOR)$(1) ;
+
+  Always $(1) ;
+  NotFile $(_list) ;
+
+  action.invoke-package-test test@$(system.DOT_TARGET) : $(_list) ;
+
+  local _file _target ;
+  for _file  in $(1) {
+    _target = $(_file)@$(system.DOT_TARGET) ;
+    Depends $(_file) : $(_target) ;
+
+    action.invoke-package-test $(_target) : $(system.SRCDIR)$(jam.SEPARATOR)$(_file) ;
+  }
+}
+
+rule invoke-for
+{
+  local _target ;
+  for _target in $(1) {
+    system.invoke $(_target)@$(system.DOT_TARGET) : $(2) : $(3) ;
+    if [ system.is-cwd-under-dot ] && $(system.MAIN_TARGET) != $(system.DOT_TARGET) {
+      Depends $(_target)@$(system.MAIN_TARGET) : $(_target)@$(system.DOT_TARGET) ;
+    }
+  }
+}
+
+rule make-jni-module
+{
+  scan-for-jni $(2) ;
+
+  local _target = $(system.BINDIR)$(jam.SEPARATOR)lib$(1).$(jam.DSO_EXTENTION) ;
+  local _objects = [ system.make-objects $(2) ] ;
+  local _reloc = [ system.make-reloc-object $(_target) : [ system.make-objects $(2) ] ] ;
+
+  system.ensure-directory-for $(_target) ;
+  system.associate-binary-targets lib$(1).$(jam.DSO_EXTENTION) : $(1) ;
+  system.assign-category jni : $(_target) ;
+
+  util.add-target-variable $(_objects) : TARGET_INCLUDES :
+    $(project.JAVA_HOME)$(jam.SEPARATOR)include 
+    $(project.JAVA_HOME)$(jam.SEPARATOR)include$(jam.SEPARATOR)$(project.JAVA_PLATFORM) 
+  ;
+  local _build = [ system.make-build-target ] ;
+
+  Depends $(_target) : $(_reloc) $(_build) ;
+  action.shared-module $(_target) : $(_reloc) $(_build) ;
+}
+
+rule make-shared-module
+{
+  local _target = $(system.BINDIR)$(jam.SEPARATOR)$(1).$(jam.DSO_EXTENTION) ;
+  local _reloc = [ system.make-reloc-object $(_target) : [ system.make-objects $(2) ] ] ;
+
+  system.ensure-directory-for $(_target) ;
+  system.associate-binary-targets $(1).$(jam.DSO_EXTENTION) : $(1) ;
+  system.assign-category exe : $(_target) ;
+
+  local _build = [ system.make-build-target ] ;
+
+  Depends $(_target) : $(_reloc) $(_build) ;
+  action.shared-module $(_target) : $(_reloc) $(_build) ;
+
+  system.setup-try-libs-for $(_target) ;
+}
+
+rule make-ruby-extension
+{
+  local _target = $(system.BINDIR)$(jam.SEPARATOR)$(1).$(jam.DSO_EXTENTION) ;
+  local _swig_base = $(system.SRCDIR)$(jam.SEPARATOR)$(1).swig ;
+  local _swig_interface = $(system.BINDIR)$(jam.SEPARATOR)$(1).swig ;
+  local _swig_wrap = $(system.BINDIR)$(jam.SEPARATOR)$(1).swig.cc ;
+  local _class_interfaces = $(system.SRCDIR)$(jam.SEPARATOR)$(2:S=.h) ;
+  local _class_implementations = $(system.SRCDIR)$(jam.SEPARATOR)$(2:S=.cc) ;
+  local _extension = $(system.BINDIR)$(jam.SEPARATOR)$(1).cc ;
+  local _object = $(_extension:S=.$(jam.OBJ_EXTENTION)) ;
+  local _reloc = [ system.make-reloc-object $(_target) : $(_object) [ system.make-objects $(3) ] ] ;
+
+  system.ensure-directory-for $(_target) $(_swig_interface) $(_swig_wrap) ;
+  system.associate-binary-targets $(1).$(jam.DSO_EXTENTION) : $(1) ;
+  system.assign-category exe : $(_target) ;
+
+  util.foreach $(_class_interfaces) $(_class_implementations) $(_swig_base) : system.mark-for-c-include-scan ;
+
+  local _build = [ system.make-build-target ] ;
+  Depends $(_target) : $(_reloc) $(_build) ;
+  LINKER on $(_target) = $(LINKER) ;
+  action.shared-module $(_target) : $(_reloc) $(_build) ;
+
+  Depends $(_reloc) : $(_object) ;
+  Depends $(_object) : $(_extension) ;
+  Depends $(_extension) : $(_swig_wrap) $(_class_implementations) ;
+  Depends $(_swig_wrap) : $(_swig_interface) $(_class_implementations) $(_class_interfaces) ;
+  Depends $(_swig_interface) : $(_swig_base) $(_class_interfaces) ;
+
+  util.set-target-variable $(_swig_interface) : CLASS_INTERFACES : $(_class_interfaces) ;
+  util.add-target-variable $(_swig_wrap) : TARGET_INCLUDES : $(system.SRCDIR) ;
+
+  action.generate-swig-interface $(_swig_interface) : $(_swig_base) ;
+  action.swig-ruby $(_swig_wrap) : $(_swig_interface) ;
+  action.generate-c-includes $(_extension) : $(_class_interfaces) $(_swig_wrap) $(_class_implementations) ;
+
+  util.add-target-variable $(_object) : TARGET_INCLUDES : $(project.RUBY_DIR) $(system.BINDIR) $(system.SRCDIR) ;
+  action.compile-cc $(_object) : $(_extension) ;
+
+  system.assign-category gen : $(_swig_interface) $(_swig_wrap) $(_extension) ;
+  system.assign-category obj $(_object) ;
+}
+
+rule make-library
+{
+  local _objects = [ system.make-objects $(2) ] ;
+  if $(project.MAKE_DLL) = true {
+    system.make-shared-library $(1) : $(_objects) : $(3) ;
+  }
+  else system.make-static-library $(1) : $(_objects) ;
+}
+
+rule make-shared-library
+{
+  system.make-shared-library $(1) : [ system.make-objects $(2) ] : $(3) : $(4) ;
+}
+
+rule make-static-library
+{
+  system.make-static-library $(1) : [ system.make-objects $(2) ] ;
+}
+
+rule make-empty-static-library
+{
+  local _lib_target = [ system.project-lib-target $(1) ] ;
+  local _target = $(system.BINDIR)$(jam.SEPARATOR)$(_lib_target) ;
+
+  system.ensure-directory-for $(_target) ;
+  system.make-empty-static-library $(_target) ;
+}
+
+rule make-merged-library
+{
+  local _objects = [ system.reloc-objects-for-libs $(4) : $(2) ] ;
+  MERGE on $(1) = true ;
+  if $(project.MAKE_DLL) = true {
+    system.make-shared-library $(1) : $(_objects) : $(3) ;
+  }
+  else system.make-static-library $(1) : $(_objects) ;
+}
+
+rule make-ant-project
+{
+  local _config_in_src = $(system.SRCDIR)$(jam.SEPARATOR)$(1) ;
+  local _config_in_bin = $(system.BINDIR)$(jam.SEPARATOR)$(1) ;
+
+  system.ensure-directory-for $(_config_in_bin) ;
+
+  Depends java : ant@$(system.DOT_TARGET) ;
+  Depends java-test : test@$(system.DOT_TARGET) ;
+
+  local _jni_libs = [ util.get-target-variable $(_config_in_bin) : JNI_LIBS ] ;
+  if $(_jni_libs) { 
+    Depends test@$(system.DOT_TARGET) : $(_jni_libs) ;
+  }
+  if [ system.is-cwd-under-dot ] && $(system.MAIN_TARGET) != $(system.DOT_TARGET) {
+    Depends ant@$(system.MAIN_TARGET) : ant@$(system.DOT_TARGET) ;
+    Depends test@$(system.MAIN_TARGET) : test@$(system.DOT_TARGET) ;
+    Depends clean-ant@$(system.MAIN_TARGET) : clean-ant@$(system.DOT_TARGET) ;
+
+    util.set-target-variable try : TARGET_DIRS : 
+      $(system.SRCDIR) $(system.BINDIR) 
+    ;
+  }
+  ANT_BUILD_FILE on java = $(1) ;
+  LD_LIBRARY_PATH on java = [ system.convert-path-from-cwd $(LIBDIRS) : $(_config_in_bin) : TARGET_LIBDIRS ] ;
+  CLASSPATH on java = [ system.convert-path-from-cwd $(CLASSPATH) : $(_config_in_bin) : TARGET_CLASSPATH ] ;
+
+  SRCDIR on java = $(system.SRCDIR) ;
+  BINDIR on java = $(system.BINDIR) ;
+  BINDIR_FROM_SRCDIR on java = $(CWD)$(jam.SEPARATOR)$(system.BINDIR) ;
+  GENDIR_FROM_SRCDIR on java = $(CWD)$(jam.SEPARATOR)$(system.GENDIR) ;
+
+  system.invoke-ant ant@$(system.DOT_TARGET) : all ;
+  system.invoke-ant test@$(system.DOT_TARGET) : test ;
+  system.invoke-ant clean-ant@$(system.DOT_TARGET) : clean ;
+}
+
+rule generate-cc
+{
+  util.foreach $(1) : system.generate-cc : $(2) ;
+}
+
+rule use-project-libraries
+{
+  util.foreach-kind $(1) : system.use-project-libraries : lib : $(2) : $(3) : $(4) : $(5) : $(6) : $(7) : $(8) ;
+}
+
+rule use-top-libraries
+{
+  util.foreach-kind $(1) : system.use-project-libraries : : $(2) : $(3) : $(4) : $(5) : $(6) : $(7) : $(8) ;
+}
+
+rule ensure-system-includes
+{
+  util.foreach-kind $(1) : system.ensure-system-includes : : $(2) : $(3) : $(4) : $(5) : $(6) : $(7) : $(8) ;
+}
+
+rule scan-for-jni
+{
+  util.foreach-kind $(1) : system.scan-for-jni : $(2) ;
+}
+
+rule use-project-jni-modules
+{
+  util.foreach-kind $(1) : system.use-project-jni-module : $(2) ;
+}
+
+rule use-local-libraries
+{
+  util.foreach-kind $(1) : system.use-local-libraries : $(2) ;
+}
+
+rule use-defines
+{
+  util.foreach-kind $(1) : system.use-defines : $(2) ;
+}
+
+rule use-project-includes
+{
+  util.foreach-kind $(1) : system.use-project-includes : $(2) ;
+}
+
+rule use-product
+{
+  util.foreach-kind $(1) : system.use-product : $(2) : $(3) : $(4) : $(5) : $(6) : $(7) : $(8) : $(9) ;
+}
+
+rule use-oracle
+{
+  use-product $(1) $(2) $(3) $(4) $(5) $(6) $(7) $(8) $(9)
+    : $(project.ORACLE_LIBDIR:E=$(project.ORACLE_HOME)$(jam.SEPARATOR)lib)
+    : $(project.ORACLE_LIBS)
+    :
+    : $(project.ORACLE_HOME)$(jam.SEPARATOR)$(project.ORACLE_INCLUDES)
+    : $(project.ORACLE_DEFINES)
+    : $(project.ORACLE_JAR)
+  ;
+}
+
+rule use-pgsql 
+{
+  use-product $(1) $(2) $(3) $(4) $(5) $(6) $(7) $(8) $(9)
+    : $(PGSQL_LIBDIRS)
+    : $(PGSQL_LIBS)
+    :
+    : $(PGSQL_INCLUDES)
+    :
+    : $(PGSQL_JARS) 
+  ;
+}
+
+rule use-java-enterprise
+{
+  use-product $(1) $(2) $(3) $(4) $(5) $(6) $(7) $(8) $(9)
+    :
+    :
+    :
+    :
+    :
+    : $(jam.SEPARATOR)usr$(jam.SEPARATOR)local$(jam.SEPARATOR)j2sdkee1.2.1$(jam.SEPARATOR)lib$(jam.SEPARATOR)j2ee.jar
+  ;
+}
+
+rule use-java-comm
+{
+  use-product $(1) $(2) $(3) $(4) $(5) $(6) $(7) $(8) $(9)
+    : $(project.JAVACOMM_LIBDIR)
+    :
+    :
+    :
+    :
+    : $(project.JAVACOMM_JAR)
+  ;
+}
+
+rule use-unit-test
+{
+  use-product $(1) $(2) $(3) $(4) $(5) $(6) $(7) $(8) $(9)
+    : $(UNITTEST_DIRS)$(jam.SEPARATOR)lib
+    : $(UNITTEST_LIBS)
+    :
+    : $(UNITTEST_DIRS)$(jam.SEPARATOR)include
+    : $(UNITTEST_DEFINES)
+    : $(UNITTEST_JARS)
+    : test
+  ;
+}
+
+rule use-boost
+{
+  use-product $(1) 
+    : $(CONTRIB_ROOT)$(jam.SEPARATOR)boost-$(BOOST_VERSION)$(jam.SEPARATOR)lib
+    : boost_$(2)_$(BOOST_VERSION)
+    :
+    : $(CONTRIB_ROOT)$(jam.SEPARATOR)boost-$(BOOST_VERSION)$(jam.SEPARATOR)include$(jam.SEPARATOR)boost-$(BOOST_VERSION)
+    : $(BOOST_DEFINES)
+    :
+  ;
+}
+
+rule use-xml-parser
+{
+  use-product $(1) $(2) $(3) $(4) $(5) $(6) $(7) $(8) $(9)
+    : $(XERCESC_ROOT)$(jam.SEPARATOR)lib
+    : $(XERCESC_LIBS)
+    :
+    : $(XERCESC_ROOT)$(jam.SEPARATOR)include
+    : $(XMLPARSER_DEFINES)
+    :
+  ;
+}
+
+rule use-openssl
+{
+  use-product $(1) $(2) $(3) $(4) $(5) $(6) $(7) $(8) $(9)
+    : $(OPENSSL_ROOT)$(jam.SEPARATOR)lib
+    : $(OPENSSL_LIBS)
+    : 
+    : $(OPENSSL_ROOT)$(jam.SEPARATOR)include
+  ;
+}
+
+rule use-net-snmp
+{
+  if $(NETSNMP_USES_OPENSSL) = yes {
+    use-openssl $(1) ;
+  }
+  use-product $(1) $(2) $(3) $(4) $(5) $(6) $(7) $(8) $(9)
+    : $(NETSNMP_ROOT)$(jam.SEPARATOR)lib
+    : $(NETSNMP_LIBS)
+    : $(project.NETSNMP_SYSLIBS)
+    : $(NETSNMP_ROOT)$(jam.SEPARATOR)include$(jam.SEPARATOR)net-snmp
+  ;
+}
+
+rule use-curses
+{
+  use-product $(1) $(2) $(3) $(4) $(5) $(6) $(7) $(8) $(9)
+    :
+    :
+    : $(project.CURSES_LIBS) 
+  ;
+}
+
+rule use-ruby
+{
+  use-product $(1) $(2) $(3) $(4) $(5) $(6) $(7) $(8) $(9)
+    : $(project.RUBY_DIR)
+    : ruby 
+    :
+    : $(project.RUBY_DIR)
+  ;
+}
+
+rule use-stemkit
+{
+  use-product $(1) 
+    : $(project.STEMKIT_LIBDIR)
+    : $(2)
+    :
+    : $(project.STEMKIT_INCLUDE)
+    : 
+    : 
+  ;
+}
+
+rule generate-simple
+{
+  local _target = $(system.BINDIR)/$(1) ;
+  local _source = $(system.SRCDIR)/$(2) ;
+
+  system.ensure-directory-for $(_target) ;
+  system.assign-category gen : $(_target) ;
+
+  Depends $(_target) : $(_source) ;
+  $(3) $(_target) : $(_source) ;
+}
+
+rule uudecode
+{
+  generate-simple $(1) : $(2) : action.uudecode ;
+}
+
