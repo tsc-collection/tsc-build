@@ -250,6 +250,11 @@ rule system.project-lib-dir
   return $(BINTOP) $(PROJECT_OFFSET) $(1) [ util.split $(2) : . ] ;
 }
 
+rule system.project-include-dir
+{
+  return $(SRCTOP) $(PROJECT_OFFSET) include [ util.split $(1) : . ] ;
+}
+
 rule system.project-jni-dir
 {
   return $(BINTOP) $(PROJECT_OFFSET) jni $(1) ;
@@ -787,10 +792,9 @@ rule system.setup-project-libraries
 rule system.use-project-libraries.c
 {
   local _target = $(system.BINDIR)$(jam.SEPARATOR)$(1:S=.$(jam.OBJ_EXTENTION)) ;
-  local _item _library ;
+  local _item ;
   for _item in $(3) {
-    _library = [ system.project-lib-target-path $(2) : $(_item) ] ;
-    Depends $(_target) : $(_library) ;
+    util.add-target-variable $(_target) : TARGET_INCLUDES : [ util.make-path [ system.project-include-dir $(_item) ] ] ;
   }
 }
 
