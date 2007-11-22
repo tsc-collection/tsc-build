@@ -413,6 +413,8 @@ rule system.make-static-library
 
   util.clone-target-variable $(1) : $(_target) : MERGE ;
   action.static-library $(_target) : $(2) ;
+  action.ranlib $(_target) ;
+
   CLEANUP_LIST on $(_target) =  $(_target:S=.$(jam.DSO_EXTENTION)) $(_target:S=.$(jam.DSO_EXTENTION).*) ;
   action.cleanup-for $(_target) ;
 }

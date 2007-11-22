@@ -119,6 +119,11 @@ actions together action.static-library
   exec *[ '$(AR)', '$(AR_TARGET_NAME_FLAG)$(<)', *%w[ $(>) ].map { |item| %w[ $(MERGE) ].empty? ? item : IO.readlines(item).map { |object| ' $(core.TOPDIR) '.strip + object.chomp } }.flatten ]
 }
 
+actions action.ranlib
+{
+  exec *[ '$(RANLIB)', '$(<)' ]
+}
+
 actions together action.shared-module
 {
   path_prefix = ' $(COMPILE_PATH_PREFIX) '.strip
