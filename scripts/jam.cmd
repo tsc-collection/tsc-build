@@ -1,0 +1,1 @@
+@ruby -S jam.rb %*
