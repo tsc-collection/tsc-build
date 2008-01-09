@@ -136,37 +136,35 @@ rule util.foreach-kind
 
 rule util.reverse-split
 {
-  local _result = [ Match "^(.*)[$(>)](.*)$" : $(<) ] ;
-  if ! $(_result) {
-    return $(<) ;
+  local _result = [ Match "^(.*)[$(>)](.*)$" : "$(<)" ] ;
+  if ! "$(_result)" {
+    return "$(<)" ;
   }
-  if ! $(_result[1]) {
-    return $(_result[2]) $(>) ;
+  if ! "$(_result[1])" {
+    return "$(_result[2])" "$(>)" ;
   }
-  return $(_result[2]) [ util.reverse-split $(_result[1]) : $(>) ] ;
+  return "$(_result[2])" [ util.reverse-split "$(_result[1])" : "$(>)" ] ;
 }
 
 rule util.split
 {
-  return [ util.reverse [ util.reverse-split $(<) : $(>) ] ] ;
+  return [ util.reverse [ util.reverse-split "$(<)" : "$(>)" ] ] ;
 }
 
 rule util.reverse-split-path
 {
-  local _component = $(<:D=) ;
-  local _directory = $(<:D) ;
+  local _component = "$(<:D=)" ;
+  local _directory = "$(<:D)" ;
 
-  if x$(_directory) != x {
-    if $(_directory) = $(jam.SEPARATOR) {
-      return $(_component) $(_directory) ;
-    }
-    return $(_component) [ util.reverse-split-path $(_directory) ] ;
+  if "$(_directory)" = "$(<)" {
+    return "$(_directory)" ;
   }
+  return "$(_component)" [ util.reverse-split-path "$(_directory)" ] ;
 }
 
 rule util.split-path
 {
-  return [ util.reverse [ util.reverse-split-path $(<) ] ] ;
+  return [ util.reverse [ util.reverse-split-path "$(<)" ] ] ;
 }
 
 rule util.normalize-path
@@ -190,9 +188,9 @@ rule util.normalize-path
 
 rule util.is-absolute-path
 {
-  switch $(<[1]) {
+  switch "$(<[1])" {
     case [/\\]* : return true ;
-    case ?\:[\\]* : return true ;
+    case ?\:[/\\]* : return true ;
   }
 }
 
