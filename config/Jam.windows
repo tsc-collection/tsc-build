@@ -110,12 +110,32 @@ rule mswin.setup-visual-studio7
   SYSLIBS = $(_syslibs).lib ;
 }
 
+rule mswin.mks-toolkit-root
+{
+  core.ensure-defined mswin.MKS_TOOLKIT_ROOT ;
+  return $(mswin.MKS_TOOLKIT_ROOT) ;
+}
+
+rule mswin.mks-toolkit-includes
+{
+  return [ util.make-path [ mswin.mks-toolkit-root ] "include" ] ;
+}
+
+rule mswin.mks-toolkit-libdirs
+{
+  return [ util.make-path [ mswin.mks-toolkit-root ] "lib" ] ;
+}
+
+rule mswin.mks-toolkit-defines
+{
+  return __NUTC__ ;
+}
+
 rule mswin.setup-mks-toolkit8
 {
-  local MKSROOT = [ util.split-path $(1) ] ;
+  mswin.MKS_TOOLKIT_ROOT = [ util.split-path $(1) ] ;
 
-  INCLUDES += [ util.make-path "$(MKSROOT)" include ] ;
-  LIBDIRS += [ util.make-path "$(MKSROOT)" lib ] ;
-
-  DEFINES += __NUTC__ ;
+  INCLUDES += [ mswin.mks-toolkit-includes ] ;
+  LIBDIRS += [ mswin.mks-toolkit-libdirs ] ;
+  DEFINES += [ mswin.mks-toolkit-defines ] ;
 }
