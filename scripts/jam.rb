@@ -54,6 +54,7 @@ $:.concat ENV['PATH'].to_s.split(File::PATH_SEPARATOR)
 
 require 'tsc/application.rb'
 require 'tsc/path.rb'
+require 'rubygems'
 
 class Application < TSC::Application
   def start

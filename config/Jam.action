@@ -51,20 +51,16 @@
 
 actions together action.compile-cc
 {
-  path_prefix = ' $(COMPILE_PATH_PREFIX) '.strip
-  unless path_prefix.empty?
-    ENV['PATH'] = path_prefix + ':' + ENV['PATH']
-  end
+  path_list = [ '$(COMPILE_PATH_LIST)', ]
+  ENV['PATH'] = [ path_list, ENV['PATH'] ].flatten.compact.join(File::PATH_SEPARATOR) unless path_list.empty?
 
   exec *[ '$(CXX)', '$(CXX_COMPILE_ONLY_FLAG)', '$(CXX_FLAGS)', '$(TARGET_FLAGS)', '$(CXX_DEFINE_FLAG)$(DEFINES)', '$(CXX_DEFINE_FLAG)$(TARGET_DEFINES)', '$(CXX_INCLUDE_FLAG)$(INCLUDES)', '$(CXX_INCLUDE_FLAG)$(>:D)', '$(CXX_INCLUDE_FLAG)$(TARGET_INCLUDES)', '$(CXX_TARGET_NAME_FLAG_STANDALONE)', '$(CXX_TARGET_NAME_FLAG_ATTACHED)$(<)', '$(TARGET_BINARY_SOURCE:E=$(>))' ]
 }
 
 actions together action.compile-c
 {
-  path_prefix = ' $(COMPILE_PATH_PREFIX) '.strip
-  unless path_prefix.empty?
-    ENV['PATH'] = path_prefix + ':' + ENV['PATH']
-  end
+  path_list = [ '$(COMPILE_PATH_LIST)', ]
+  ENV['PATH'] = [ path_list, ENV['PATH'] ].flatten.compact.join(File::PATH_SEPARATOR) unless path_list.empty?
 
   exec *[ '$(CC)', '$(CC_COMPILE_ONLY_FLAG)', '$(CC_FLAGS)', '$(TARGET_FLAGS)', '$(CC_DEFINE_FLAG)$(DEFINES)', '$(CC_DEFINE_FLAG)$(TARGET_DEFINES)', '$(CC_INCLUDE_FLAG)$(INCLUDES)', '$(CC_INCLUDE_FLAG)$(>:D)', '$(CC_INCLUDE_FLAG)$(TARGET_INCLUDES)', '$(CC_TARGET_NAME_FLAG_STANDALONE)', '$(CC_TARGET_NAME_FLAG_ATTACHED)$(<)', '$(TARGET_BINARY_SOURCE:E=$(>))' ]
 }
@@ -89,10 +85,8 @@ actions together action.reloc
 #
 actions together action.shared-library
 {
-  path_prefix = ' $(COMPILE_PATH_PREFIX) '.strip
-  unless path_prefix.empty?
-    ENV['PATH'] = path_prefix + ':' + ENV['PATH']
-  end
+  path_list = [ '$(COMPILE_PATH_LIST)', ]
+  ENV['PATH'] = [ path_list, ENV['PATH'] ].flatten.compact.join(File::PATH_SEPARATOR) unless path_list.empty?
 
   rm_f Dir[ '$(<:S=).[0-9]*'.gsub('\\', '/') ]
   system *[ '$(LINKER)', '$(DLL_FLAGS)', '$(DLL_LINKER_FLAGS)', '$(LINKER_FLAGS)', '$(TARGET_FLAGS)', '$(DLL_SONAME_FLAG)$(TARGET_SONAME)', '$(LINKER_IMPLIB_NAME_FLAG)$(TARGET_IMPLIB)', '$(LINKER_LIBDIR_FLAG)$(LIBDIRS)', '$(LINKER_LIBDIR_FLAG)$(TARGET_LIBDIRS)', '$(LINKER_LIB_FLAG)$(LIBS)', '$(LINKER_LIB_FLAG)$(SYSLIBS)', '$(LINKER_LIB_FLAG)$(TARGET_LIBS)', '$(LINKER_LIB_FLAG)$(TARGET_SYSLIBS)', '$(LINKER_TARGET_NAME_FLAG_STANDALONE)', '$(LINKER_TARGET_NAME_FLAG_ATTACHED)$(<)', '$(EXTRA_OBJECTS)', *%w[ $(>) ].map { |item| %w[ $(MERGE) ].empty? ? item : IO.readlines(item).map { |object| ' $(core.TOPDIR) '.strip + object.chomp } }.flatten ] or raise 'Command failed'
@@ -115,6 +109,9 @@ actions action.import-library
 #
 actions together action.static-library
 {
+  path_list = [ '$(COMPILE_PATH_LIST)', ]
+  ENV['PATH'] = [ path_list, ENV['PATH'] ].flatten.compact.join(File::PATH_SEPARATOR) unless path_list.empty?
+
   rm_f [ '$(<)', ]
   exec *[ '$(AR)', '$(AR_TARGET_NAME_FLAG)$(<)', *%w[ $(>) ].map { |item| %w[ $(MERGE) ].empty? ? item : IO.readlines(item).map { |object| ' $(core.TOPDIR) '.strip + object.chomp } }.flatten ]
 }
@@ -126,20 +123,16 @@ actions action.ranlib
 
 actions together action.shared-module
 {
-  path_prefix = ' $(COMPILE_PATH_PREFIX) '.strip
-  unless path_prefix.empty?
-    ENV['PATH'] = path_prefix + ':' + ENV['PATH']
-  end
+  path_list = [ '$(COMPILE_PATH_LIST)', ]
+  ENV['PATH'] = [ path_list, ENV['PATH'] ].flatten.compact.join(File::PATH_SEPARATOR) unless path_list.empty?
 
   exec *[ '$(LINKER)', '$(DLL_FLAGS)', '$(DLL_LINKER_FLAGS)', '$(LINKER_FLAGS)', '$(TARGET_FLAGS)', '$(LINKER_TARGET_NAME_FLAG_STANDALONE)', '$(LINKER_TARGET_NAME_FLAG_ATTACHED)$(<)', '$(>)', '$(EXTRA_OBJECTS)', '$(LINKER_LIBDIR_FLAG)$(LIBDIRS)', '$(LINKER_LIBDIR_FLAG)$(TARGET_LIBDIRS)', '$(LINKER_LIB_FLAG)$(TARGET_LIBS)', '$(LINKER_LIB_FLAG)$(LIBS)', '$(LINKER_LIB_FLAG)$(TARGET_SYSLIBS)', '$(LINKER_LIB_FLAG)$(SYSLIBS)', ]
 }
 
 actions action.link
 {
-  path_prefix = ' $(COMPILE_PATH_PREFIX) '.strip
-  unless path_prefix.empty?
-    ENV['PATH'] = path_prefix + ':' + ENV['PATH']
-  end
+  path_list = [ '$(COMPILE_PATH_LIST)', ]
+  ENV['PATH'] = [ path_list, ENV['PATH'] ].flatten.compact.join(File::PATH_SEPARATOR) unless path_list.empty?
 
   exec *[ '$(LINKER)', '$(EXE_LINKER_FLAGS)', '$(LINKER_FLAGS)', '$(TARGET_FLAGS)', '$(LINKER_TARGET_NAME_FLAG_STANDALONE)', '$(LINKER_TARGET_NAME_FLAG_ATTACHED)$(<)', '$(TARGET_OBJECTS)', '$(LINKER_LIBDIR_FLAG)$(LIBDIRS)', '$(LINKER_LIBDIR_FLAG)$(TARGET_LIBDIRS_$(>))', '$(LINKER_LIBDIR_FLAG)$(TARGET_LIBDIRS)', '$(LINKER_LIB_FLAG)$(TARGET_LIBS_$(>))', '$(LINKER_LIB_FLAG)$(TARGET_LIBS)', '$(HACK_DOUBLE_LIBS)$(LINKER_LIB_FLAG)$(TARGET_LIBS)', '$(LINKER_LIB_FLAG)$(LIBS)', '$(LINKER_LIB_FLAG)$(TARGET_SYSLIBS)', '$(LINKER_LIB_FLAG)$(SYSLIBS)', '$(STATIC_LIBS)',  ]
 }

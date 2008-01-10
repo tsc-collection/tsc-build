@@ -1,0 +1,146 @@
+
+jam.SEPARATOR = \\ ;
+jam.PATH_SEPARATOR = \; ;
+
+system.setup-top-dirs ;
+system.setup-jamshell-file ;
+
+jam.OBJ_EXTENTION = obj ;
+jam.DSO_EXTENTION = dll ;
+jam.LIB_EXTENTION = lib ;
+jam.EXE_EXTENTION = exe ;
+
+jam.LIB_PREFIX = ;
+jam.LIB_REFERENCE = target ;
+
+rule mswin.setup-visual-studio8
+{
+  local VCROOT = [ util.split-path "$(1)" ] ;
+
+  COMPILE_PATH_LIST += 
+    [ util.make-path "$(VCROOT)" VC BIN ]
+    [ util.make-path "$(VCROOT)" Common7 IDE ]
+    [ util.make-path "$(VCROOT)" Common7 Tools ]
+    [ util.make-path "$(VCROOT)" Common7 Tools bin ]
+    [ util.make-path "$(VCROOT)" VC PlatformSDK bin ]
+    [ util.make-path "$(VCROOT)" SDK v2.0 bin ]
+  ;
+
+  COMPILER = CL /nologo ; 
+
+  CC = $(COMPILER) ;
+  CXX = $(COMPILER) ;
+  LINKER = LINK /NOLOGO /INCREMENTAL:NO ;
+  EXE_LINKER_FLAGS = /SUBSYSTEM:CONSOLE ;
+  AR = LIB /NOLOGO ;
+  AR_TARGET_NAME_FLAG = /OUT: ;
+  
+  DLL_FLAGS = /DLL ;
+  CC_INCLUDE_FLAG = /I ;
+  CC_DEFINE_FLAG = /D ;
+  LINKER_LIB_FLAG = "" ;
+  LINKER_LIBDIR_FLAG = /LIBPATH: ;
+  CC_COMPILE_ONLY_FLAG = /c ;
+  CC_TARGET_NAME_FLAG = /Fo ;
+  LINKER_TARGET_NAME_FLAG = /OUT: ;
+  LINKER_IMPLIB_NAME_FLAG = /IMPLIB: ;
+
+  USE_ATTACHED_TARGET_NAME_FLAG = true ;
+
+  C++FLAGS =  /TP /MT /O2 /EHsc /FD ;
+  CCFLAGS =  /TC /O2 /MT /W3 /FD /EHsc ;
+  CCOFLAGS = ;
+  CCDFLAGS = ;
+
+  DEFINES += WIN32 NDEBUG _LIB _MBCS ;
+
+  INCLUDES += [ util.make-path "$(VCROOT)" VC ATLMFC INCLUDE ] ;
+  INCLUDES += [ util.make-path "$(VCROOT)" VC INCLUDE ] ;
+  INCLUDES += [ util.make-path "$(VCROOT)" VC PlatformSDK include prerelease ] ;
+  INCLUDES += [ util.make-path "$(VCROOT)" VC PlatformSDK include ] ;
+  INCLUDES += [ util.make-path "$(VCROOT)" SDK v2.0 include ] ;
+
+  LIBDIRS += [ util.make-path "$(VCROOT)" VC ATLMFC LIB ] ;
+  LIBDIRS += [ util.make-path "$(VCROOT)" VC LIB ] ;
+  LIBDIRS += [ util.make-path "$(VCROOT)" VC PlatformSDK lib prerelease ] ;
+  LIBDIRS += [ util.make-path "$(VCROOT)" VC PlatformSDK lib ] ;
+  LIBDIRS += [ util.make-path "$(VCROOT)" SDK v2.0 lib ] ;
+
+  local _syslibs = 
+    kernel32 user32 gdi32 winspool comdlg32 advapi32 shell32
+    netapi32 ole32 oleaut32 uuid
+  ;
+  SYSLIBS = $(_syslibs).lib ;
+}
+
+rule mswin.setup-visual-studio7
+{
+  local VCROOT = [ util.split-path "$(1)" ] ;
+
+  COMPILE_PATH_LIST += 
+    [ util.make-path "$(VCROOT)" VC BIN ]
+    [ util.make-path "$(VCROOT)" Common7 IDE ]
+    [ util.make-path "$(VCROOT)" Common7 Tools ]
+    [ util.make-path "$(VCROOT)" Common7 Tools bin ]
+    [ util.make-path "$(VCROOT)" VC PlatformSDK bin ]
+    [ util.make-path "$(VCROOT)" SDK v2.0 bin ]
+  ;
+
+  COMPILER = CL /nologo ; 
+
+  CC = $(COMPILER) ;
+  CXX = $(COMPILER) ;
+  LINKER = LINK /NOLOGO /INCREMENTAL:NO ;
+  EXE_LINKER_FLAGS = /SUBSYSTEM:CONSOLE ;
+  AR = LIB /NOLOGO ;
+  AR_TARGET_NAME_FLAG = /OUT: ;
+  
+  DLL_FLAGS = /DLL ;
+  CC_INCLUDE_FLAG = /I ;
+  CC_DEFINE_FLAG = /D ;
+  LINKER_LIB_FLAG = "" ;
+  LINKER_LIBDIR_FLAG = /LIBPATH: ;
+  CC_COMPILE_ONLY_FLAG = /c ;
+  CC_TARGET_NAME_FLAG = /Fo ;
+  LINKER_TARGET_NAME_FLAG = /OUT: ;
+  LINKER_IMPLIB_NAME_FLAG = /IMPLIB: ;
+
+  USE_ATTACHED_TARGET_NAME_FLAG = true ;
+
+  C++FLAGS =  /TP /MT /O2 /EHsc /FD ;
+  CCFLAGS =  /TC /O2 /MT /W3 /FD /EHsc ;
+  CCOFLAGS = ;
+  CCDFLAGS = ;
+
+  DEFINES += WIN32 NDEBUG _LIB _MBCS ;
+
+  INCLUDES += [ util.make-path "$(VCROOT)" VC7 ATLMFC INCLUDE ] ;
+  INCLUDES += [ util.make-path "$(VCROOT)" VC7 INCLUDE ] ;
+  INCLUDES += [ util.make-path "$(VCROOT)" VC7 PlatformSDK include prerelease ] ;
+  INCLUDES += [ util.make-path "$(VCROOT)" VC7 PlatformSDK include ] ;
+  INCLUDES += [ util.make-path "$(VCROOT)" SDK v1.1 include ] ;
+  INCLUDES += [ util.make-path "$(VCROOT)" SDK v1.1 include ] ;
+
+  LIBDIRS += [ util.make-path "$(VCROOT)" VC7 ATLMFC LIB ] ;
+  LIBDIRS += [ util.make-path "$(VCROOT)" VC7 LIB ] ;
+  LIBDIRS += [ util.make-path "$(VCROOT)" VC7 PlatformSDK lib prerelease ] ;
+  LIBDIRS += [ util.make-path "$(VCROOT)" VC7 PlatformSDK lib ] ;
+  LIBDIRS += [ util.make-path "$(VCROOT)" SDK v1.1 lib ] ;
+  LIBDIRS += [ util.make-path "$(VCROOT)" SDK v1.1 Lib ] ;
+
+  local _syslibs = 
+    kernel32 user32 gdi32 winspool comdlg32 advapi32 shell32
+    netapi32 ole32 oleaut32 uuid
+  ;
+  SYSLIBS = $(_syslibs).lib ;
+}
+
+rule mswin.setup-mks-toolkit8
+{
+  local MKSROOT = [ util.split-path $(1) ] ;
+
+  INCLUDES += [ util.make-path "$(MKSROOT)" include ] ;
+  LIBDIRS += [ util.make-path "$(MKSROOT)" lib ] ;
+
+  DEFINES += __NUTC__ ;
+}
