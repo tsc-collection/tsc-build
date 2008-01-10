@@ -13,19 +13,8 @@ jam.EXE_EXTENTION = exe ;
 jam.LIB_PREFIX = ;
 jam.LIB_REFERENCE = target ;
 
-rule mswin.setup-visual-studio8
+rule mswin.setup-visual-studio-compile-options
 {
-  local VCROOT = [ util.split-path "$(1)" ] ;
-
-  COMPILE_PATH_LIST += 
-    [ util.make-path "$(VCROOT)" VC BIN ]
-    [ util.make-path "$(VCROOT)" Common7 IDE ]
-    [ util.make-path "$(VCROOT)" Common7 Tools ]
-    [ util.make-path "$(VCROOT)" Common7 Tools bin ]
-    [ util.make-path "$(VCROOT)" VC PlatformSDK bin ]
-    [ util.make-path "$(VCROOT)" SDK v2.0 bin ]
-  ;
-
   COMPILER = CL /nologo ; 
 
   CC = $(COMPILER) ;
@@ -53,6 +42,21 @@ rule mswin.setup-visual-studio8
   CCDFLAGS = ;
 
   DEFINES += WIN32 NDEBUG _LIB _MBCS ;
+}
+
+rule mswin.setup-visual-studio8
+{
+  mswin.setup-visual-studio-compile-options ;
+  local VCROOT = [ util.split-path "$(1)" ] ;
+
+  COMPILE_PATH_LIST += 
+    [ util.make-path "$(VCROOT)" VC BIN ]
+    [ util.make-path "$(VCROOT)" Common7 IDE ]
+    [ util.make-path "$(VCROOT)" Common7 Tools ]
+    [ util.make-path "$(VCROOT)" Common7 Tools bin ]
+    [ util.make-path "$(VCROOT)" VC PlatformSDK bin ]
+    [ util.make-path "$(VCROOT)" SDK v2.0 bin ]
+  ;
 
   INCLUDES += [ util.make-path "$(VCROOT)" VC ATLMFC INCLUDE ] ;
   INCLUDES += [ util.make-path "$(VCROOT)" VC INCLUDE ] ;
@@ -75,50 +79,22 @@ rule mswin.setup-visual-studio8
 
 rule mswin.setup-visual-studio7
 {
+  mswin.setup-visual-studio-compile-options ;
   local VCROOT = [ util.split-path "$(1)" ] ;
 
   COMPILE_PATH_LIST += 
-    [ util.make-path "$(VCROOT)" VC BIN ]
+    [ util.make-path "$(VCROOT)" VC7 BIN ]
     [ util.make-path "$(VCROOT)" Common7 IDE ]
     [ util.make-path "$(VCROOT)" Common7 Tools ]
     [ util.make-path "$(VCROOT)" Common7 Tools bin ]
-    [ util.make-path "$(VCROOT)" VC PlatformSDK bin ]
-    [ util.make-path "$(VCROOT)" SDK v2.0 bin ]
+    [ util.make-path "$(VCROOT)" VC7 PlatformSDK bin ]
+    [ util.make-path "$(VCROOT)" SDK v1.1 bin ]
   ;
-
-  COMPILER = CL /nologo ; 
-
-  CC = $(COMPILER) ;
-  CXX = $(COMPILER) ;
-  LINKER = LINK /NOLOGO /INCREMENTAL:NO ;
-  EXE_LINKER_FLAGS = /SUBSYSTEM:CONSOLE ;
-  AR = LIB /NOLOGO ;
-  AR_TARGET_NAME_FLAG = /OUT: ;
-  
-  DLL_FLAGS = /DLL ;
-  CC_INCLUDE_FLAG = /I ;
-  CC_DEFINE_FLAG = /D ;
-  LINKER_LIB_FLAG = "" ;
-  LINKER_LIBDIR_FLAG = /LIBPATH: ;
-  CC_COMPILE_ONLY_FLAG = /c ;
-  CC_TARGET_NAME_FLAG = /Fo ;
-  LINKER_TARGET_NAME_FLAG = /OUT: ;
-  LINKER_IMPLIB_NAME_FLAG = /IMPLIB: ;
-
-  USE_ATTACHED_TARGET_NAME_FLAG = true ;
-
-  C++FLAGS =  /TP /MT /O2 /EHsc /FD ;
-  CCFLAGS =  /TC /O2 /MT /W3 /FD /EHsc ;
-  CCOFLAGS = ;
-  CCDFLAGS = ;
-
-  DEFINES += WIN32 NDEBUG _LIB _MBCS ;
 
   INCLUDES += [ util.make-path "$(VCROOT)" VC7 ATLMFC INCLUDE ] ;
   INCLUDES += [ util.make-path "$(VCROOT)" VC7 INCLUDE ] ;
   INCLUDES += [ util.make-path "$(VCROOT)" VC7 PlatformSDK include prerelease ] ;
   INCLUDES += [ util.make-path "$(VCROOT)" VC7 PlatformSDK include ] ;
-  INCLUDES += [ util.make-path "$(VCROOT)" SDK v1.1 include ] ;
   INCLUDES += [ util.make-path "$(VCROOT)" SDK v1.1 include ] ;
 
   LIBDIRS += [ util.make-path "$(VCROOT)" VC7 ATLMFC LIB ] ;
@@ -126,7 +102,6 @@ rule mswin.setup-visual-studio7
   LIBDIRS += [ util.make-path "$(VCROOT)" VC7 PlatformSDK lib prerelease ] ;
   LIBDIRS += [ util.make-path "$(VCROOT)" VC7 PlatformSDK lib ] ;
   LIBDIRS += [ util.make-path "$(VCROOT)" SDK v1.1 lib ] ;
-  LIBDIRS += [ util.make-path "$(VCROOT)" SDK v1.1 Lib ] ;
 
   local _syslibs = 
     kernel32 user32 gdi32 winspool comdlg32 advapi32 shell32
