@@ -132,7 +132,7 @@ rule system.load-jamfile-from
 
   local _top = $(3) ;
   if $(_top) {
-    INCLUDES += [ util.make-path $(_top) src $(PROJECT_OFFSET) include ] ;
+    INCLUDES += [ util.make-path $(_top) src include ] ;
   }
   else _top = $(core.TOP) ;
   local core.TOP = $(_top) ;
@@ -247,17 +247,17 @@ rule system.project-lib-name
 
 rule system.project-lib-dir
 {
-  return $(BINTOP) $(PROJECT_OFFSET) $(1) [ util.split $(2) : . ] ;
+  return $(BINTOP) $(1) [ util.split $(2) : . ] ;
 }
 
 rule system.project-include-dir
 {
-  return $(SRCTOP) $(PROJECT_OFFSET) include [ util.split $(1) : . ] ;
+  return $(SRCTOP) include [ util.split $(1) : . ] ;
 }
 
 rule system.project-jni-dir
 {
-  return $(BINTOP) $(PROJECT_OFFSET) jni $(1) ;
+  return $(BINTOP) jni $(1) ;
 }
 
 rule system.project-jni-target
@@ -613,7 +613,7 @@ rule system.generate-cc
 
 rule system.generate-cc.l
 {
-  FLEX_SKELETON on $(1) = [ util.make-path $(SRCTOP) $(PROJECT_OFFSET) lib yacc++ skeleton.flex ] ;
+  FLEX_SKELETON on $(1) = [ util.make-path $(SRCTOP) lib yacc++ skeleton.flex ] ;
   CLASS_NAME on $(1) = $(2:D=:B) ;
   action.generate-cc-lex $(1) : $(2) ;
 }
@@ -939,7 +939,7 @@ rule system.use-project-includes.cpp
 
 rule system.use-project-includes.c
 {
-  local _directory = [ util.make-path $(SRCTOP) $(PROJECT_OFFSET) ] ;
+  local _directory = [ util.make-path $(SRCTOP) ] ;
   util.add-target-variable $(system.BINDIR)$(jam.SEPARATOR)$(1:S=.$(jam.OBJ_EXTENTION)) : TARGET_INCLUDES : $(_directory)$(jam.SEPARATOR)$(2) ;
 }
 
