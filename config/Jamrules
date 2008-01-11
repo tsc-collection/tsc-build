@@ -60,14 +60,6 @@ rule make-subdirs
   util.foreach $(1) : system.load-jamfile-from ;
 }
 
-rule inject
-{
-  local _product = $(2) ;
-  local _version = $(3) ;
-
-  util.foreach $(1) : system.load-jamfile-from : : $(core.TOP) .. .. $(_product) $(_version) ;
-}
-
 rule make-program
 {
   local _target = [ system.make-program $(1) : $(2) : $(3) ] ;

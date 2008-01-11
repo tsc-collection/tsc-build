@@ -127,13 +127,6 @@ rule system.load-jamfile-from
   local system.PARENT_DOT_TARGET = $(system.DOT_TARGET) ;
   local system.DOT = $(system.DOT) $(<) ;
 
-  local _top = $(3) ;
-  if $(_top) {
-    INCLUDES += [ util.make-path $(_top) src include ] ;
-  }
-  else _top = $(core.TOP) ;
-  local core.TOP = $(_top) ;
-
   local system.SRCDIR = [ util.make-path $(core.TOP) $(system.DOT) ] ;
   local system.BINDIR = [ util.make-path $(BINTOP) $(system.DOT[2-]) ] ;
   local system.GENDIR = [ util.make-path $(GENTOP) $(system.DOT[2-]) ] ;
