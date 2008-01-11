@@ -82,13 +82,22 @@ rule system.setup-jamshell-file
   JAMSHELL = $(RUBY) -W0 -r fileutils -e 'include FileUtils; load ARGV.first' % ;
 }
 
+rule system.setup-artifact-offsets
+{
+  if $(2) {
+    system.ARTIFACT_OFFSETS = $(2) ;
+  }
+  system.ARTIFACT_OFFSETS = $(1) $(system.ARTIFACT_OFFSETS) $(3) ;
+  system.setup-top-dirs ;
+}
+
 rule system.setup-top-dirs
 {
-  system.SRCTOP = $(core.TOP) src ;
-  system.BINTOP = $(core.TOP) bin ;
-  system.PKGTOP = $(core.TOP) pkg ;
-  system.GENTOP = $(core.TOP) gen ;
-  system.RUNTOP = $(core.TOP) run ;
+  system.SRCTOP = $(core.TOP) src $(core.PROJECT_OFFSET) ; 
+  system.BINTOP = $(core.TOP) bin $(system.ARTIFACT_OFFSETS) $(core.PROJECT_OFFSET) ;
+  system.PKGTOP = $(core.TOP) pkg $(system.ARTIFACT_OFFSETS) $(core.PROJECT_OFFSET) ;
+  system.GENTOP = $(core.TOP) gen $(system.ARTIFACT_OFFSETS) $(core.PROJECT_OFFSET) ;
+  system.RUNTOP = $(core.TOP) run $(system.ARTIFACT_OFFSETS) $(core.PROJECT_OFFSET) ;
 
   core.TOPDIR = $(core.TOP:J=$(jam.SEPARATOR))$(jam.SEPARATOR) ;
 
@@ -131,8 +140,8 @@ rule system.load-jamfile-from
   local system.DOT = $(system.DOT) $(<) ;
 
   local system.SRCDIR = [ util.make-path $(core.TOP) $(system.DOT) ] ;
-  local system.BINDIR = [ util.make-path $(system.BINTOP) $(system.DOT[2-]) ] ;
-  local system.GENDIR = [ util.make-path $(system.GENTOP) $(system.DOT[2-]) ] ;
+  local system.BINDIR = [ util.make-path $(core.TOP) bin $(system.ARTIFACT_OFFSETS) $(system.DOT[2-]) ] ;
+  local system.GENDIR = [ util.make-path $(core.TOP) gen $(system.ARTIFACT_OFFSETS) $(system.DOT[2-]) ] ;
   local system.DOT_TARGET = $(system.DOT:J=$(jam.SEPARATOR)) ;
 
   NotFile $(system.DOT_TARGET) $(system.CWD_SUBDIR_TARGETS)@$(system.DOT_TARGET) ;
