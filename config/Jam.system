@@ -84,19 +84,22 @@ rule system.setup-jamshell-file
 
 rule system.setup-top-dirs
 {
-  SRCTOP = $(core.TOP) src ;
-  BINTOP = $(core.TOP) bin ;
-  PKGTOP = $(core.TOP) pkg ;
-  GENTOP = $(core.TOP) gen ;
-  RUNTOP = $(core.TOP) run ;
+  system.SRCTOP = $(core.TOP) src ;
+  system.BINTOP = $(core.TOP) bin ;
+  system.PKGTOP = $(core.TOP) pkg ;
+  system.GENTOP = $(core.TOP) gen ;
+  system.RUNTOP = $(core.TOP) run ;
 
   core.TOPDIR = $(core.TOP:J=$(jam.SEPARATOR))$(jam.SEPARATOR) ;
 
-  SRCTOPDIR = $(SRCTOP:J=$(jam.SEPARATOR)) ;
-  BINTOPDIR = $(BINTOP:J=$(jam.SEPARATOR)) ;
-  PKGTOPDIR = $(PKGTOP:J=$(jam.SEPARATOR)) ;
-  GENTOPDIR = $(GENTOP:J=$(jam.SEPARATOR)) ;
-  RUNTOPDIR = $(RUNTOP:J=$(jam.SEPARATOR)) ;
+  local _item ;
+  for _item in SRC BIN PKG GEN RUN {
+    system.$(_item)TOPDIR = [ util.make-path $(system.$(_item)TOP) ] ;
+
+    # Deprecated compatibility settings
+    $(_item)TOP = $(system.$(_item)TOP) ;
+    $(_item)TOPDIR = $(system.$(_item)TOPDIR) ;
+  }
 }
 
 rule system.load-top-jamfile
@@ -128,8 +131,8 @@ rule system.load-jamfile-from
   local system.DOT = $(system.DOT) $(<) ;
 
   local system.SRCDIR = [ util.make-path $(core.TOP) $(system.DOT) ] ;
-  local system.BINDIR = [ util.make-path $(BINTOP) $(system.DOT[2-]) ] ;
-  local system.GENDIR = [ util.make-path $(GENTOP) $(system.DOT[2-]) ] ;
+  local system.BINDIR = [ util.make-path $(system.BINTOP) $(system.DOT[2-]) ] ;
+  local system.GENDIR = [ util.make-path $(system.GENTOP) $(system.DOT[2-]) ] ;
   local system.DOT_TARGET = $(system.DOT:J=$(jam.SEPARATOR)) ;
 
   NotFile $(system.DOT_TARGET) $(system.CWD_SUBDIR_TARGETS)@$(system.DOT_TARGET) ;
@@ -151,8 +154,8 @@ rule system.setup-environment
   core.trace system : system.setup-environment ;
 
   system.CWD_SRCDIR = [ util.make-path $(core.TOP) $(core.CWD_FROM_TOP) ] ;
-  system.CWD_BINDIR = [ util.make-path $(BINTOP) $(core.CWD_FROM_TOP[2-]) ] ;
-  system.CWD_GENDIR = [ util.make-path $(GENTOP) $(core.CWD_FROM_TOP[2-]) ] ;
+  system.CWD_BINDIR = [ util.make-path $(system.BINTOP) $(core.CWD_FROM_TOP[2-]) ] ;
+  system.CWD_GENDIR = [ util.make-path $(system.GENTOP) $(core.CWD_FROM_TOP[2-]) ] ;
 
   system.TOP_TARGET = top ;
   system.MAIN_TARGET = $(core.CWD_FROM_TOP:J=$(jam.SEPARATOR):E=$(system.TOP_TARGET)) ;
@@ -204,7 +207,7 @@ rule system.setup-environment
 
   setup-direct-clean-target bin : $(system.CWD_BINDIR) ;
   setup-direct-clean-target gen : $(system.CWD_GENDIR) ;
-  setup-direct-clean-target pkg : $(PKGTOPDIR) ;
+  setup-direct-clean-target pkg : $(system.PKGTOPDIR) ;
 
   util.set-target-variable try : TARGET_DIRS : 
     $(system.CWD_SRCDIR) $(system.CWD_BINDIR) 
@@ -237,17 +240,17 @@ rule system.project-lib-name
 
 rule system.project-lib-dir
 {
-  return $(BINTOP) $(1) [ util.split $(2) : . ] ;
+  return $(system.BINTOP) $(1) [ util.split $(2) : . ] ;
 }
 
 rule system.project-include-dir
 {
-  return $(SRCTOP) include [ util.split $(1) : . ] ;
+  return $(system.SRCTOP) include [ util.split $(1) : . ] ;
 }
 
 rule system.project-jni-dir
 {
-  return $(BINTOP) jni $(1) ;
+  return $(system.BINTOP) jni $(1) ;
 }
 
 rule system.project-jni-target
@@ -454,8 +457,8 @@ rule system.make-build-target
   if ! $(PRODUCT_BUILD) {
     return ;
   }
-  local _object = $(BINTOPDIR)$(jam.SEPARATOR)build.$(jam.OBJ_EXTENTION) ;
-  local _source = $(BINTOPDIR)$(jam.SEPARATOR)build.$(PRODUCT_BUILD).c ;
+  local _object = [ util.make-path $(system.BINTOP) build.$(jam.OBJ_EXTENTION) ] ;
+  local _source = [ util.make-path $(system.BINTOP) build.$(PRODUCT_BUILD).c ] ;
 
   Depends $(_object) : $(_source) ;
 
@@ -603,7 +606,7 @@ rule system.generate-cc
 
 rule system.generate-cc.l
 {
-  FLEX_SKELETON on $(1) = [ util.make-path $(SRCTOP) lib yacc++ skeleton.flex ] ;
+  FLEX_SKELETON on $(1) = [ util.make-path $(system.SRCTOP) lib yacc++ skeleton.flex ] ;
   CLASS_NAME on $(1) = $(2:D=:B) ;
   action.generate-cc-lex $(1) : $(2) ;
 }
@@ -929,7 +932,7 @@ rule system.use-project-includes.cpp
 
 rule system.use-project-includes.c
 {
-  local _directory = [ util.make-path $(SRCTOP) ] ;
+  local _directory = [ util.make-path $(system.SRCTOP) ] ;
   util.add-target-variable $(system.BINDIR)$(jam.SEPARATOR)$(1:S=.$(jam.OBJ_EXTENTION)) : TARGET_INCLUDES : $(_directory)$(jam.SEPARATOR)$(2) ;
 }
 

@@ -49,7 +49,8 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 # 
 
-jam.SEPARATOR = / ;
+jam.SEPARATOR = "/" ;
+jam.PATH_SEPARATOR = ":" ;
 
 if $(core.JAMCORE_LOADED) {
   exit Multiple Jam.core loaded ;
@@ -102,7 +103,7 @@ rule core.load-config
 
 rule core.load-project-config
 {
-  core.load $(SRCTOP) config $(<) : $(>) ;
+  core.load $(system.SRCTOP) config $(<) : $(>) ;
 }
 
 core.unset-if-empty 

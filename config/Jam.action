@@ -277,7 +277,7 @@ actions together action.install
     key, value = item.split('=')
     ENV[key] = value
   }
-  exec %q[ $(INSTALL_LAUNCHER) distributor --source $(SRCTOPDIR) --binary $(BINTOPDIR) -i -r$(project.DISTRIB_ENV) -m$(project.DISTRIB_MODE) -p$(project.LIB_PREFIX) -l$(project.LIB_MAJOR) -P$(PRODUCT_ID) -V$(PRODUCT_RELEASE) -B$(PRODUCT_BUILD) -T$(PRODUCT_TAG) -E$(jam.DSO_EXTENTION) $(project.DISTRIB_PRODINFO) $(TARGET_DIRS) ]
+  exec %q[ $(INSTALL_LAUNCHER) distributor --source $(system.SRCTOPDIR) --binary $(system.BINTOPDIR) -i -r$(project.DISTRIB_ENV) -m$(project.DISTRIB_MODE) -p$(project.LIB_PREFIX) -l$(project.LIB_MAJOR) -P$(PRODUCT_ID) -V$(PRODUCT_RELEASE) -B$(PRODUCT_BUILD) -T$(PRODUCT_TAG) -E$(jam.DSO_EXTENTION) $(project.DISTRIB_PRODINFO) $(TARGET_DIRS) ]
 }
 
 actions together action.invoke-package-test
@@ -295,7 +295,7 @@ actions action.package
     key, value = item.split('=')
     ENV[key] = value
   }
-  exec %q[ distributor --source $(SRCTOPDIR) --binary $(BINTOPDIR) --output $(PKGTOPDIR) -m$(project.DISTRIB_MODE) -p$(project.LIB_PREFIX) -l$(project.LIB_MAJOR) -P$(PRODUCT_ID) -V$(PRODUCT_RELEASE) -B$(PRODUCT_BUILD) -T$(PRODUCT_TAG) -E$(jam.DSO_EXTENTION) $(project.DISTRIB_PRODINFO) $(jam.PACKAGES) ]
+  exec %q[ distributor --source $(system.SRCTOPDIR) --binary $(system.BINTOPDIR) --output $(system.PKGTOPDIR) -m$(project.DISTRIB_MODE) -p$(project.LIB_PREFIX) -l$(project.LIB_MAJOR) -P$(PRODUCT_ID) -V$(PRODUCT_RELEASE) -B$(PRODUCT_BUILD) -T$(PRODUCT_TAG) -E$(jam.DSO_EXTENTION) $(project.DISTRIB_PRODINFO) $(jam.PACKAGES) ]
 }
 
 actions action.handoff
