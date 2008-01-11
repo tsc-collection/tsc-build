@@ -2,7 +2,6 @@
 jam.SEPARATOR = \\ ;
 jam.PATH_SEPARATOR = \; ;
 
-system.setup-top-dirs ;
 system.setup-jamshell-file ;
 
 jam.OBJ_EXTENTION = obj ;
