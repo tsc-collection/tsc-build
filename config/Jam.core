@@ -102,7 +102,7 @@ rule core.load-config
 
 rule core.load-project-config
 {
-  core.load $(core.TOP) src $(core.PROJECT_OFFSET) config $(<) : $(>) ;
+  core.load $(SRCTOP) config $(<) : $(>) ;
 }
 
 core.unset-if-empty 
