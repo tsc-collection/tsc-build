@@ -41,7 +41,7 @@ rule mswin.setup-visual-studio-compile-options
   CCOFLAGS = ;
   CCDFLAGS = ;
 
-  DEFINES += WIN32 NDEBUG _LIB _MBCS ;
+  DEFINES += WIN32 NDEBUG _MBCS ;
 }
 
 rule mswin.setup-visual-studio8
