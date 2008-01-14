@@ -72,6 +72,14 @@ rule util.delete
   return "$(_result)" ;
 }
 
+rule util.delete-from
+{
+  local _item ;
+  for _item in $(1) {
+    $(_item) = [ util.delete $($(_item)) : "$(2)" ] ;
+  }
+}
+
 rule util.make-path
 {
   return $(<:J=$(jam.SEPARATOR)) ;

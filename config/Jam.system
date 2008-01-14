@@ -502,6 +502,7 @@ rule system.make-program
   STATIC_LIBS on $(_target) =  $(STATIC_LIBS) ;
   LIBS on $(_target) =  $(LIBS) ;
   LINKER on $(_target) = $(LINKER) ;
+  EXE_LINKER_FLAGS on $(_target) = $(EXE_LINKER_FLAGS) ;
 
   if $(3) {
     TARGET_FLAGS on $(_target) += $(3) ;
