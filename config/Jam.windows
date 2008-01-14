@@ -6,6 +6,7 @@ system.setup-top-dirs ;
 system.setup-jamshell-file ;
 
 jam.OBJ_EXTENTION = obj ;
+jam.RES_EXTENTION = res ;
 jam.DSO_EXTENTION = dll ;
 jam.LIB_EXTENTION = lib ;
 jam.EXE_EXTENTION = exe ;
@@ -23,6 +24,9 @@ rule mswin.setup-visual-studio-compile-options
   EXE_LINKER_FLAGS = /SUBSYSTEM:CONSOLE ;
   AR = LIB /NOLOGO ;
   AR_TARGET_NAME_FLAG = /OUT: ;
+
+  RC = RC ;
+  RC_FLAGS = /l0x409 ;
   
   DLL_FLAGS = /DLL ;
   CC_INCLUDE_FLAG = /I ;

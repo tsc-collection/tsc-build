@@ -559,14 +559,13 @@ rule system.setup-program-targets-in-cwd
 
 rule system.make-single-object
 {
-  local _kind = $(1[1]:S) ;
-
-  local _source = $(system.SRCDIR)$(jam.SEPARATOR)$(1[1]) ;
-  local _target = $(system.BINDIR)$(jam.SEPARATOR)$(1[1]:S=.$(jam.OBJ_EXTENTION)) ;
+  local _kind = $(1:S) ;
+  local _source = [ util.make-path $(system.SRCDIR) $(1) ] ;
 
   if ! $(_kind) {
     exit Cannot determine compilation mode for $(_source) (no extention) ;
   }
+  local _target = [ system.target-for$(_kind) $(1) ] ;
   system.ensure-directory-for $(_target) ;
 
   Depends $(_target) : $(_source) ;
@@ -657,6 +656,21 @@ rule system.ensure-directory-for
   }
 }
 
+rule system.target-for.c
+{
+  return [ util.make-path $(system.BINDIR) $(1:S=.$(jam.OBJ_EXTENTION)) ] ;
+}
+
+rule system.target-for.cc
+{
+  return [ system.target-for.c $(1) ] ;
+}
+
+rule system.target-for.cpp
+{
+  return [ system.target-for.cc $(1) ] ;
+}
+
 rule system.process-object.c
 {
   system.mark-for-c-include-scan $(2) ;
@@ -672,6 +686,17 @@ rule system.process-object.cc
 rule system.process-object.cpp
 {
   system.process-object.cc $(1) : $(2) : $(3) ;
+}
+
+rule system.target-for.rc
+{
+  return [ util.make-path $(system.BINDIR) $(1:S=.$(jam.RES_EXTENTION)) ] ;
+}
+
+rule system.process-object.rc
+{
+  system.mark-for-c-include-scan $(2) ;
+  action.compile-resource $(1) : $(2) ;
 }
 
 rule system.mark-for-c-include-scan

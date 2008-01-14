@@ -65,6 +65,14 @@ actions together action.compile-c
   exec *[ '$(CC)', '$(CC_COMPILE_ONLY_FLAG)', '$(CC_FLAGS)', '$(TARGET_FLAGS)', '$(CC_DEFINE_FLAG)$(DEFINES)', '$(CC_DEFINE_FLAG)$(TARGET_DEFINES)', '$(CC_INCLUDE_FLAG)$(INCLUDES)', '$(CC_INCLUDE_FLAG)$(>:D)', '$(CC_INCLUDE_FLAG)$(TARGET_INCLUDES)', '$(CC_TARGET_NAME_FLAG_STANDALONE)', '$(CC_TARGET_NAME_FLAG_ATTACHED)$(<)', '$(TARGET_BINARY_SOURCE:E=$(>))' ]
 }
 
+actions together action.compile-resource
+{
+  path_list = [ '$(COMPILE_PATH_LIST)', ]
+  ENV['PATH'] = [ path_list, ENV['PATH'] ].flatten.compact.join(File::PATH_SEPARATOR) unless path_list.empty?
+
+  exec *[ '$(RC)', '$(RC_FLAGS)', '$(TARGET_FLAGS)', '$(CC_DEFINE_FLAG)$(DEFINES)', '$(CC_DEFINE_FLAG)$(TARGET_DEFINES)', '$(CC_INCLUDE_FLAG)$(INCLUDES)', '$(CC_INCLUDE_FLAG)$(>:D)', '$(CC_INCLUDE_FLAG)$(TARGET_INCLUDES)', '$(CC_TARGET_NAME_FLAG_STANDALONE)', '$(CC_TARGET_NAME_FLAG_ATTACHED)$(<)', '$(TARGET_BINARY_SOURCE:E=$(>))' ]
+}
+
 actions together action.generate-build-file
 {
   rm_f Dir['$(>[1]:S=).*.c'.gsub('\\', '/')]
