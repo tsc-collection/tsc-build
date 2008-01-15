@@ -254,7 +254,7 @@ rule system.project-lib-dir
 
 rule system.project-include-dir
 {
-  return $(system.SRCTOP) include [ util.split $(1) : . ] ;
+  return $(system.SRCTOP) $(2) [ util.split $(1) : . ] ;
 }
 
 rule system.project-jni-dir
@@ -390,6 +390,7 @@ rule system.make-shared-library
   util.clone-target-variable $(1) : $(_target_so_major) : MERGE ;
   TARGET_IMPLIB on $(_target_so_major) = $(_target) ;
   EXTRA_OBJECTS on $(_target_so_major) = $(_build) ;
+  TARGET_OBJECTS on $(_target_so_major) = $(_reloc) ;
 
   LIBDIRS on $(_target_so_major) = $(LIBDIRS) ;
   SYSLIBS on $(_target_so_major) =  $(SYSLIBS) ;
@@ -397,7 +398,8 @@ rule system.make-shared-library
   TARGET_FLAGS on $(_target_so_major) = $(4) ;
   LINKER on $(_target_so_major) = $(LINKER) ;
 
-  action.shared-library $(_target_so_major) : $(_reloc) ;
+  action.shared-library $(_target_so_major) ;
+  return $(_target_so_major) ;
 }
 
 rule system.make-static-library
@@ -495,7 +497,8 @@ rule system.make-program
   local _build = [ system.make-build-target ] ;
 
   Depends $(_target) : $(_reloc) $(_build) ;
-  TARGET_OBJECTS on $(_target) = $(_reloc) $(_build) ;
+  TARGET_OBJECTS on $(_target) = $(_reloc) ;
+  EXTRA_OBJECTS on $(_target) = $(_build) ;
 
   LIBDIRS on $(_target) = $(LIBDIRS) ;
   SYSLIBS on $(_target) =  $(SYSLIBS) ;
@@ -782,18 +785,22 @@ rule system.scan-for-jni.cpp
 rule system.use-project-libraries
 {
   local _target = $(system.BINDIR)$(jam.SEPARATOR)$(1) ;
-  if $(3) {
-    system.setup-project-libraries $(_target) : $(2) : : $(3) ;
+  local _offset = $(3) ;
+  
+  _offset ?= $(2) ;
+
+  if $(4) {
+    system.setup-project-libraries $(_target) : $(_offset) : : $(4) ;
   }
   local _parameter _option _suffix ;
-  for _parameter in 4 5 6 7 8 9 {
+  for _parameter in 5 6 7 8 9 {
     _option = $($(_parameter)) ;
     if ! $(_option) {
       break ;
     }
     TARGET_OPTIONS on $(_target) += I ;
     on $(_target) _suffix = $(TARGET_OPTIONS) ;
-    system.setup-project-libraries $(_target) : $(2) : $(_suffix:J=) : $(_option) ;
+    system.setup-project-libraries $(_target) : $(_offset) : $(_suffix:J=) : $(_option) ;
   }
 }
 
@@ -822,29 +829,33 @@ rule system.setup-project-libraries
 
 rule system.use-project-libraries.c
 {
-  local _target = $(system.BINDIR)$(jam.SEPARATOR)$(1:S=.$(jam.OBJ_EXTENTION)) ;
+  local _target = [ system.target-for.c $(1) ] ;
+  local _offset = $(2) ;
+
+  _offset ?= $(3) ;
+
   local _item ;
-  for _item in $(3) {
-    util.add-target-variable $(_target) : TARGET_INCLUDES : [ util.make-path [ system.project-include-dir $(_item) ] ] ;
+  for _item in $(4) {
+    util.add-target-variable $(_target) : TARGET_INCLUDES : [ util.make-path [ system.project-include-dir $(_item) : $(_offset) ] ] ;
   }
 }
 
 rule system.use-project-libraries.cc
 {
-  system.use-project-libraries.c $(1) : $(2) : $(3) ;
+  system.use-project-libraries.c $(1) : $(2) : $(3) : $(4) : $(5) : $(6) : $(7) : $(8) : $(9) ;
 }
 
 rule system.use-project-libraries.cpp
 {
-  system.use-project-libraries.c $(1) : $(2) : $(3) ;
+  system.use-project-libraries.c $(1) : $(2) : $(3) : $(4) : $(5) : $(6) : $(7) : $(8) : $(9) ;
 }
 
 rule system.use-project-libraries.xml
 {
   local _target = $(system.BINDIR)$(jam.SEPARATOR)$(1) ;
   local _item _library ;
-  for _item in $(3) {
-    _library = [ system.project-lib-target-path $(2) : $(_item) ] ;
+  for _item in $(4) {
+    _library = [ system.project-lib-target-path $(3) : $(_item) ] ;
     util.add-target-variable $(_target) : TARGET_LIBDIRS : $(_library:D) ;
     Depends $(_target) : $(_library) ;
   }

@@ -45,7 +45,7 @@ rule mswin.setup-visual-studio-compile-options
   CCOFLAGS = ;
   CCDFLAGS = ;
 
-  DEFINES += WIN32 NDEBUG _MBCS ;
+  DEFINES += WIN32 _MBCS _CONSOLE ;
 }
 
 rule mswin.setup-visual-studio8
@@ -142,4 +142,49 @@ rule mswin.setup-mks-toolkit8
   INCLUDES += [ mswin.mks-toolkit-includes ] ;
   LIBDIRS += [ mswin.mks-toolkit-libdirs ] ;
   DEFINES += [ mswin.mks-toolkit-defines ] ;
+}
+
+rule mswin.make-console-program
+{
+  local _program = [ make-program $(1) : $(2) : $(3) ] ;
+  util.set-target-variable $(_program) : EXE_LINKER_FLAGS : /SUBSYSTEM:CONSOLE ;
+
+  local _objects = [ util.get-target-variable $(_program) : TARGET_OBJECTS ] ;
+  util.cleanup-target-variable $(_objects) : DEFINES TARGET_DEFINES : _WINDOWS ;
+  util.add-target-variable $(_objects) : TARGET_DEFINES : _CONSOLE ;
+}
+
+rule mswin.make-gui-program
+{
+  local _program = [ make-program $(1) : $(2) : $(3) ] ;
+  util.set-target-variable $(_program) : EXE_LINKER_FLAGS : /SUBSYSTEM:WINDOWS ;
+
+  local _objects = [ util.get-target-variable $(_program) : TARGET_OBJECTS ] ;
+  util.cleanup-target-variable $(_objects) : DEFINES TARGET_DEFINES : _CONSOLE ;
+  util.add-target-variable $(_objects) : TARGET_DEFINES : _WINDOWS ;
+}
+
+rule mswin.make-dll 
+{
+  local _dll = [ make-shared-library $(1) : $(2) ] ;
+
+  local _item ;
+  for _item in $(3) {
+    local _definition = [ util.make-path $(system.SRCDIR) $(_item) ] ;
+    Depends $(_dll) : $(_definition) ;
+    util.add-target-variable $(_dll) : TARGET_FLAGS : /DEF:$(_definition) ;
+  }
+  local _objects = [ util.get-target-variable $(_dll) : TARGET_OBJECTS ] ;
+  util.cleanup-target-variable $(_objects) : DEFINES TARGET_DEFINES : _CONSOLE ;
+  util.add-target-variable $(_objects) : TARGET_DEFINES : _WINDOWS $(4) $(1:U)_EXPORTS ;
+}
+
+rule mswin.make-user-dll
+{
+  mswin.make-dll $(1) : $(2) : $(3) : _USRDLL _WINDLL ;
+}
+
+rule mswin.make-system-dll
+{
+  mswin.make-dll $(1) : $(2) : $(3) : _WINDLL ;
 }

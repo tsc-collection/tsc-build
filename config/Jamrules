@@ -67,6 +67,8 @@ rule make-program
   system.invoke run@$(system.DOT_TARGET) : $(_target) ;
   system.setup-program-targets-in-cwd $(_target) ;
   system.setup-try-libs-for $(_target) ;
+
+  return $(_target) ;
 }
 
 rule setup-script
@@ -213,12 +215,12 @@ rule make-library
 
 rule make-shared-library
 {
-  system.make-shared-library $(1) : [ system.make-objects $(2) ] : $(3) : $(4) ;
+  return [ system.make-shared-library $(1) : [ system.make-objects $(2) ] : $(3) : $(4) ] ;
 }
 
 rule make-static-library
 {
-  system.make-static-library $(1) : [ system.make-objects $(2) ] ;
+  return [ system.make-static-library $(1) : [ system.make-objects $(2) ] ] ;
 }
 
 rule make-empty-static-library
@@ -284,12 +286,12 @@ rule generate-cc
 
 rule use-project-libraries
 {
-  util.foreach-kind $(1) : system.use-project-libraries : lib : $(2) : $(3) : $(4) : $(5) : $(6) : $(7) : $(8) ;
+  util.foreach-kind $(1) : system.use-project-libraries : include : lib : $(2) : $(3) : $(4) : $(5) : $(6) : $(7) : $(8) ;
 }
 
 rule use-top-libraries
 {
-  util.foreach-kind $(1) : system.use-project-libraries : : $(2) : $(3) : $(4) : $(5) : $(6) : $(7) : $(8) ;
+  util.foreach-kind $(1) : system.use-project-libraries : : : $(2) : $(3) : $(4) : $(5) : $(6) : $(7) : $(8) ;
 }
 
 rule ensure-system-includes

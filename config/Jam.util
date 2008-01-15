@@ -231,14 +231,26 @@ rule util.combinations
   }
 }
 
+rule util.cleanup-target-variable
+{
+  local _target ;
+  for _target in "$(1)" {
+    local _variable ;
+    for _variable in "$(2)" {
+      local _result = [ util.delete [ util.get-target-variable $(_target) : $(_variable) ] : $(3) ] ;
+      "$(_varialbe)" on "$(_target)" = "$(_result)" ;
+    }
+  }
+}
+
 rule util.set-target-variable
 {
   local _target ;
-  for _target in $(1) {
+  for _target in "$(1)" {
     local _variable ;
-    for _variable in $(2) {
-      $(_variable) on $(_target) = ;
-      util.add-single-target-single-variable $(_target) : $(_variable) : "$(3)" ;
+    for _variable in "$(2)" {
+      "$(_variable)" on "$(_target)" = ;
+      util.add-single-target-single-variable "$(_target)" : "$(_variable)" : "$(3)" ;
     }
   }
 }
