@@ -573,6 +573,7 @@ rule system.make-single-object
   system.process-object$(_kind) $(_target) : $(_source) ;
 
   util.clone-target-variable $(_target) : $(_source) : TARGET_INCLUDES ;
+  util.add-target-variable $(_target) : TARGET_INCLUDES : $(system.SRCDIR) ;
   util.set-target-variable $(_target) : INCLUDES : "$(INCLUDES)" ;
   util.set-target-variable $(_target) : DEFINES : $(DEFINES) ;
 
@@ -659,7 +660,7 @@ rule system.ensure-directory-for
 
 rule system.target-for.c
 {
-  return [ util.make-path $(system.BINDIR) $(1:S=.$(jam.OBJ_EXTENTION)) ] ;
+  return [ util.make-path $(system.BINDIR) $(1:D=:S=.$(jam.OBJ_EXTENTION)) ] ;
 }
 
 rule system.target-for.cc
@@ -952,7 +953,8 @@ rule system.use-defines.cpp
 
 rule system.use-defines.c
 {
-  util.add-target-variable $(system.BINDIR)$(jam.SEPARATOR)$(1:S=.$(jam.OBJ_EXTENTION)) : TARGET_DEFINES : $(2) ;
+  local _target = [ system.target-for.c $(1) ] ;
+  util.add-target-variable $(_target) : TARGET_DEFINES : $(2) ;
 }
 
 rule system.use-project-includes.cc
