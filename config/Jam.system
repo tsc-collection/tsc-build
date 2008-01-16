@@ -244,7 +244,7 @@ rule setup-direct-clean-target
 
 rule system.project-lib-name
 {
-  return [ util.join $(project.LIB_PREFIX) $(1) ] ;
+  return [ util.join $(project.LIB_PREFIX) $(1:D=) ] ;
 }
 
 rule system.project-lib-dir
@@ -927,14 +927,7 @@ rule system.use-product
 
 rule system.use-product.cc
 {
-  local _target = $(system.BINDIR)$(jam.SEPARATOR)$(1:S=.$(jam.OBJ_EXTENTION)) ;
-
-  util.add-target-variable $(_target) : TARGET_INCLUDES : $(5) ;
-  util.add-target-variable $(_target) : TARGET_DEFINES : $(6) ;
-
-  if $(8) {
-    system.assign-category $(8) : $(_target) ;
-  }
+  system.use-product.c $(1) : : : : $(5) : $(6) : $(7) : $(8) : $(9) ;
 }
 
 rule system.use-product.cpp
@@ -944,7 +937,14 @@ rule system.use-product.cpp
 
 rule system.use-product.c
 {
-  system.use-product.cc $(1) : : : : $(5) : $(6) : $(7) : $(8) : $(9) ;
+  local _target = [ system.target-for.cc $(1) ] ;
+
+  util.add-target-variable $(_target) : TARGET_INCLUDES : $(5) ;
+  util.add-target-variable $(_target) : TARGET_DEFINES : $(6) ;
+
+  if $(8) {
+    system.assign-category $(8) : $(_target) ;
+  }
 }
 
 rule system.use-product.xml
@@ -980,8 +980,12 @@ rule system.use-project-includes.cpp
 
 rule system.use-project-includes.c
 {
-  local _directory = [ util.make-path $(system.SRCTOP) ] ;
-  util.add-target-variable $(system.BINDIR)$(jam.SEPARATOR)$(1:S=.$(jam.OBJ_EXTENTION)) : TARGET_INCLUDES : $(_directory)$(jam.SEPARATOR)$(2) ;
+  local _offset = "$(2:E=include)" ;
+
+  util.add-target-variable [ system.target-for.c "$(1)" ] : TARGET_INCLUDES : 
+    [ util.make-path "$(system.GENTOP)" $(_offset) ] 
+    [ util.make-path "$(system.SRCTOP)" $(_offset) ] 
+  ;
 }
 
 # Rule system.invoke prepares program execution. It sets up the environment
