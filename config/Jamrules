@@ -53,6 +53,7 @@ rule use-project-library { use-project-libraries $(1) : $(2) ; }
 rule use-top-library { use-top-libraries $(1) : $(2) ; }
 rule use-project-jni-module { use-project-jni-modules $(1) : $(2) ; }
 rule use-local-library { use-local-libraries $(1) : $(2) ; }
+rule use-local-include { use-local-includes $(1) : $(2) ; }
 rule make-subdir { make-subdirs $(1) ; }
 
 rule make-subdirs
@@ -323,6 +324,12 @@ rule use-project-includes
 {
   util.foreach-kind $(1) : system.use-project-includes : $(2) ;
 }
+
+rule use-local-includes
+{
+  util.foreach-kind $(1) : system.use-local-includes : $(2) ;
+}
+
 
 rule use-product
 {
