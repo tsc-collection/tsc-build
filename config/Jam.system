@@ -980,12 +980,13 @@ rule system.use-project-includes.cpp
 
 rule system.use-project-includes.c
 {
-  local _offset = "$(2:E=include)" ;
-
-  util.add-target-variable [ system.target-for.c "$(1)" ] : TARGET_INCLUDES : 
-    [ util.make-path "$(system.GENTOP)" $(_offset) ] 
-    [ util.make-path "$(system.SRCTOP)" $(_offset) ] 
-  ;
+  local _offset ;
+  for _offset in "$(2:E=include)" {
+    util.add-target-variable [ system.target-for.c "$(1)" ] : TARGET_INCLUDES : 
+      [ util.make-path "$(system.GENTOP)" $(_offset) ] 
+      [ util.make-path "$(system.SRCTOP)" $(_offset) ] 
+    ;
+  }
 }
 
 # Rule system.invoke prepares program execution. It sets up the environment
