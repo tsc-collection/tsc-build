@@ -968,19 +968,19 @@ rule system.use-defines.c
   util.add-target-variable $(_target) : TARGET_DEFINES : $(2) ;
 }
 
-rule system.use-project-includes.cc
+rule system.use-top-includes.cc
 {
-  system.use-project-includes.c $(1) : $(2) ;
+  system.use-top-includes.c "$(1)" : "$(2)" ;
 }
 
-rule system.use-project-includes.cpp
+rule system.use-top-includes.cpp
 {
-  system.use-project-includes.c $(1) : $(2) ;
+  system.use-top-includes.c "$(1)" : "$(2)" ;
 }
 
-rule system.use-project-includes.c
+rule system.use-top-includes.c
 {
-  local _offset = "$(2:E=include)" ;
+  local _offset = "$(2)" ;
   util.add-target-variable [ system.target-for.c "$(1)" ] : TARGET_INCLUDES : 
     [ util.make-path "$(system.GENTOP)" $(_offset) ] 
     [ util.make-path "$(system.SRCTOP)" $(_offset) ] 

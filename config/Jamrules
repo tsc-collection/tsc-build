@@ -320,14 +320,24 @@ rule use-defines
   util.foreach-kind $(1) : system.use-defines : $(2) ;
 }
 
+rule use-top-includes
+{
+  util.foreach-kind "$(1)" : system.use-top-includes : "$(2)" ;
+}
+
 rule use-project-includes
 {
-  util.foreach-kind $(1) : system.use-project-includes : $(2) ;
+  # Deprecated, use 'use-top-includes' instead (only one location per
+  # invocation, with directory components separated by whitespace).
+  local _item ;
+  for _item in "$(2:E=include)" {
+    use-top-includes "$(1)" : "$(_item)" ;
+  }
 }
 
 rule use-local-includes
 {
-  util.foreach-kind $(1) : system.use-local-includes : $(2) ;
+  util.foreach-kind "$(1)" : system.use-local-includes : "$(2)" ;
 }
 
 
