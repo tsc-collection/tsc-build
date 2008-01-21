@@ -118,7 +118,7 @@ main ()
 	  {
 	    echo "See details in ${LOGFILE}@${HOST}\n\n"
 	    exec 5>&- 6>&-
-	    tail -100 "${LOGFILE}" | sed 's/$//g'
+	    tail -100 "${LOGFILE}"
 	  } | {
 	    MAIL_PROGRAM=mailx
 	    type "${MAIL_PROGRAM}" || {
