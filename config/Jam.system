@@ -716,11 +716,18 @@ rule system.mark-for-c-include-scan
 rule system.process-header 
 {
   local _includes = $(1:D) $(INCLUDES) [ util.get-target-variable $(1) : TARGET_INCLUDES ] ;
-  local _headers = $(_includes)$(jam.SEPARATOR)$(2) ;
+  local _headers ;
   local _item ;
-  for _item in $(_headers) {
+  for _item in $(_includes)$(jam.SEPARATOR)$(2) {
     if ! [ util.is-absolute-path $(_item) ] {
-      util.clone-target-variable $(1) : $(_item) : HDRRULE HDRSCAN TARGET_INCLUDES ;
+      _item = [ util.split $(_item) : "/\\" ] ;
+      _item = $(_item:J=$(jam.SEPARATOR)) ;
+
+      on $(_item) if ! $(HEADER_PROCESSED) {
+        util.clone-target-variable $(1) : $(_item) : HDRRULE HDRSCAN TARGET_INCLUDES ;
+        HEADER_PROCESSED on $(_item) = true ;
+      }
+      _headers += $(_item) ;
     }
   }
   NoCare $(_headers) ;
@@ -768,8 +775,10 @@ rule system.process-header-jni
 
 rule system.scan-for-jni.c
 {
-  HDRRULE on $(system.SRCDIR)$(jam.SEPARATOR)$(1) = system.process-header-jni ;
-  OBJECT on $(system.SRCDIR)$(jam.SEPARATOR)$(1) = $(system.BINDIR)$(jam.SEPARATOR)$(1:S=.$(jam.OBJ_EXTENTION)) ;
+  local _source = $(system.SRCDIR)$(jam.SEPARATOR)$(1) ;
+
+  HDRRULE on $(_soruce) = system.process-header-jni ;
+  OBJECT on $(_soruce) = [ target-for.c $(1) ] ;
 }
 
 rule system.scan-for-jni.cc
