@@ -41,8 +41,8 @@ rule mswin.setup-visual-studio-compile-options
   USE_ATTACHED_TARGET_NAME_FLAG = true ;
   USE_GLOBAL_INCLUDES_AFTER = true ;
 
-  C++FLAGS = /TP /MT /EHsc /FD ;
-  CCFLAGS =  /TC /MT /EHsc /FD /W3 ;
+  C++FLAGS = /TP /MT /EHsc ;
+  CCFLAGS =  /TC /MT ;
   CCOFLAGS = ;
   CCDFLAGS = ;
 
