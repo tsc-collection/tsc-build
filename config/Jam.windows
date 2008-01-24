@@ -19,7 +19,8 @@ rule mswin.setup-visual-studio-compile-options
 
   CC = $(COMPILER) ;
   CXX = $(COMPILER) ;
-  LINKER = LINK /NOLOGO /INCREMENTAL:NO ;
+  LINKER = LINK /INCREMENTAL:NO ;
+  LINKER_FLAGS = /NOLOGO ;
   EXE_LINKER_FLAGS = /SUBSYSTEM:CONSOLE ;
   AR = LIB /NOLOGO ;
   AR_TARGET_NAME_FLAG = /OUT: ;
@@ -41,12 +42,11 @@ rule mswin.setup-visual-studio-compile-options
   USE_ATTACHED_TARGET_NAME_FLAG = true ;
   USE_GLOBAL_INCLUDES_AFTER = true ;
 
-  C++FLAGS = /TP /MD /EHsc ;
-  CCFLAGS =  /TC /MD ;
+  C++FLAGS = /TP /EHsc ;
+  CCFLAGS =  /TC ;
   CCOFLAGS = ;
   CCDFLAGS = ;
 
-  LINKER_FLAGS = /NODEFAULTLIB:LIBCMT.LIB ;
   DEFINES += WIN32 _MBCS _CONSOLE ;
 }
 
