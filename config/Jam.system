@@ -277,15 +277,6 @@ rule system.project-lib-target
   return [ util.join $(jam.LIB_PREFIX) [ system.project-lib-name $(1) ] .$(jam.LIB_EXTENTION) ] ;
 }
 
-rule system.project-lib-reference
-{
-  switch $(jam.LIB_REFERENCE) {
-    case name : return [ system.project-lib-name $(1) ] ;
-    case target : return [ system.project-lib-target $(1) ] ;
-    case * : system.error Unsupported library reference type - $(jam.LIB_REFERENCE) ;
-  }
-}
-
 rule system.project-lib-target-path
 {
   return [ util.make-path [ system.project-lib-dir $(1) : $(2) ] [ system.project-lib-target $(2) ] ] ;
@@ -827,7 +818,7 @@ rule system.setup-project-libraries
     _libs = [ util.get-target-variable $(_library) : TARGET_LIBS ] ;
     _syslibs = [ util.get-target-variable $(_library) : TARGET_SYSLIBS ] ;
     
-    util.add-target-variable $(1) : $(_v_LIBS) : [ system.project-lib-reference $(_item) ] $(_libs) ;
+    util.add-target-variable $(1) : $(_v_LIBS) : [ system.project-lib-name $(_item) ] $(_libs) ;
     util.add-target-variable $(1) : $(_v_SYSLIBS) : $(_syslibs) ;
     util.add-target-variable $(1) : $(_v_STATIC_LIBS) : $(_library) ;
     util.add-target-variable $(1) : $(_v_LIBDIRS) : $(_library:D) $(_libdirs) ;
@@ -895,7 +886,7 @@ rule system.use-local-libraries
 
     util.add-target-variable $(_target) : TARGET_LIBDIRS : $(_library:D) ;
     util.add-target-variable $(_target) : TARGET_STATIC_LIBS : $(_library) ;
-    util.add-target-variable $(_target) : TARGET_LIBS : [ system.project-lib-reference $(_item:B) ]  ;
+    util.add-target-variable $(_target) : TARGET_LIBS : [ system.project-lib-name $(_item:B) ]  ;
 
     Depends $(_target) : $(_library) ;
   }

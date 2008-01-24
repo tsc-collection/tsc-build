@@ -12,7 +12,6 @@ jam.LIB_EXTENTION = lib ;
 jam.EXE_EXTENTION = exe ;
 
 jam.LIB_PREFIX = ;
-jam.LIB_REFERENCE = target ;
 
 rule mswin.setup-visual-studio-compile-options
 {
@@ -32,6 +31,7 @@ rule mswin.setup-visual-studio-compile-options
   CC_INCLUDE_FLAG = /I ;
   CC_DEFINE_FLAG = /D ;
   LINKER_LIB_FLAG = "" ;
+  LINKER_LIB_SUFFIX = ".lib" ;
   LINKER_LIBDIR_FLAG = /LIBPATH: ;
   CC_COMPILE_ONLY_FLAG = /c ;
   CC_TARGET_NAME_FLAG = /Fo ;
@@ -41,11 +41,12 @@ rule mswin.setup-visual-studio-compile-options
   USE_ATTACHED_TARGET_NAME_FLAG = true ;
   USE_GLOBAL_INCLUDES_AFTER = true ;
 
-  C++FLAGS = /TP /MT /EHsc ;
-  CCFLAGS =  /TC /MT ;
+  C++FLAGS = /TP /MD /EHsc ;
+  CCFLAGS =  /TC /MD ;
   CCOFLAGS = ;
   CCDFLAGS = ;
 
+  LINKER_FLAGS = /NODEFAULTLIB:LIBCMT.LIB ;
   DEFINES += WIN32 _MBCS _CONSOLE ;
 }
 
@@ -74,12 +75,6 @@ rule mswin.setup-visual-studio8
   LIBDIRS += [ util.make-path "$(VCROOT)" VC PlatformSDK lib prerelease ] ;
   LIBDIRS += [ util.make-path "$(VCROOT)" VC PlatformSDK lib ] ;
   LIBDIRS += [ util.make-path "$(VCROOT)" SDK v2.0 lib ] ;
-
-  local _syslibs = 
-    wsock32 kernel32 user32 gdi32 winspool comdlg32 advapi32 shell32
-    netapi32 ole32 oleaut32 uuid
-  ;
-  SYSLIBS = $(_syslibs).lib ;
 }
 
 rule mswin.setup-visual-studio7
@@ -107,12 +102,6 @@ rule mswin.setup-visual-studio7
   LIBDIRS += [ util.make-path "$(VCROOT)" VC7 PlatformSDK lib prerelease ] ;
   LIBDIRS += [ util.make-path "$(VCROOT)" VC7 PlatformSDK lib ] ;
   LIBDIRS += [ util.make-path "$(VCROOT)" SDK v1.1 lib ] ;
-
-  local _syslibs = 
-    wsock32 kernel32 user32 gdi32 winspool comdlg32 advapi32 shell32
-    netapi32 ole32 oleaut32 uuid
-  ;
-  SYSLIBS = $(_syslibs).lib ;
 }
 
 rule mswin.mks-toolkit-root
