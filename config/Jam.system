@@ -387,6 +387,7 @@ rule system.make-shared-library
   SYSLIBS on $(_target_so_major) =  $(SYSLIBS) ;
   LIBS on $(_target_so_major) =  $(LIBS) ;
   TARGET_FLAGS on $(_target_so_major) = $(4) ;
+  LINKER_FLAGS on $(_target_so_major) = $(LINKER_FLAGS) ;
   LINKER on $(_target_so_major) = $(LINKER) ;
 
   action.shared-library $(_target_so_major) ;
@@ -496,6 +497,7 @@ rule system.make-program
   STATIC_LIBS on $(_target) =  $(STATIC_LIBS) ;
   LIBS on $(_target) =  $(LIBS) ;
   LINKER on $(_target) = $(LINKER) ;
+  LINKER_FLAGS on $(_target) = $(LINKER_FLAGS) ;
   EXE_LINKER_FLAGS on $(_target) = $(EXE_LINKER_FLAGS) ;
 
   if $(3) {
@@ -568,6 +570,7 @@ rule system.make-single-object
 
   util.clone-target-variable $(_target) : $(_source) : TARGET_INCLUDES ;
   util.add-target-variable $(_target) : TARGET_INCLUDES : $(system.SRCDIR) ;
+
   util.set-target-variable $(_target) : INCLUDES : "$(INCLUDES)" ;
   util.set-target-variable $(_target) : DEFINES : $(DEFINES) ;
 
@@ -669,12 +672,16 @@ rule system.target-for.cpp
 
 rule system.process-object.c
 {
+  util.set-target-variable $(1) : CC_FLAGS : "$(CC_FLAGS)" ;
+
   system.mark-for-c-include-scan $(2) ;
   action.compile-c $(1) : $(2) ;
 }
 
 rule system.process-object.cc
 {
+  util.set-target-variable $(1) : CXX_FLAGS : "$(CXX_FLAGS)" ;
+
   system.mark-for-c-include-scan $(2) ;
   action.compile-cc $(1) : $(2) ;
 }
