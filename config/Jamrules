@@ -198,6 +198,7 @@ rule make-ruby-extension
   action.generate-c-includes $(_extension) : $(_class_interfaces) $(_swig_wrap) $(_class_implementations) ;
 
   util.clone-target-variable $(_class_objects) : $(_object) : TARGET_INCLUDES TARGET_DEFINES ;
+  util.clone-target-variable $(_swig_wrap) : $(_object) : TARGET_INCLUDES TARGET_DEFINES ;
   util.add-target-variable $(_object) : TARGET_INCLUDES : $(project.RUBY_INCLUDE:E=$(project.RUBY_DIR)) $(system.BINDIR) $(system.SRCDIR) ;
   action.compile-cc $(_object) : $(_extension) ;
 

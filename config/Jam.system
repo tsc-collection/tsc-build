@@ -660,6 +660,11 @@ rule system.target-for.c
   return [ util.make-path $(system.BINDIR) $(1:D=:S=.$(jam.OBJ_EXTENTION)) ] ;
 }
 
+rule system.target-for.swig
+{
+  return [ util.make-path $(system.BINDIR) $(1:D=).cc ] ;
+}
+
 rule system.target-for.cc
 {
   return [ system.target-for.c $(1) ] ;
@@ -940,6 +945,18 @@ rule system.use-product.cc
 rule system.use-product.cpp
 {
   system.use-product.cc $(1) : $(2) : $(3) : $(4) : $(5) : $(6) : $(7) : $(8) : $(9) ;
+}
+
+rule system.use-product.swig
+{
+  local _target = [ system.target-for.swig $(1) ] ;
+
+  util.add-target-variable $(_target) : TARGET_INCLUDES : $(5) ;
+  util.add-target-variable $(_target) : TARGET_DEFINES : $(6) ;
+
+  if $(8) {
+    system.assign-category $(8) : $(_target) ;
+  }
 }
 
 rule system.use-product.c
