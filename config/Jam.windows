@@ -178,3 +178,5 @@ rule mswin.make-system-dll
 {
   mswin.make-dll $(1) : $(2) : $(3) : _WINDLL ;
 }
+
+core.load-config Jam.action.windows ;

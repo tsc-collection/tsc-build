@@ -391,6 +391,8 @@ rule system.make-shared-library
   LINKER on $(_target_so_major) = $(LINKER) ;
 
   action.shared-library $(_target_so_major) ;
+  action.polish-dll $(_target) ;
+
   return $(_target_so_major) ;
 }
 
@@ -512,6 +514,7 @@ rule system.make-program
     }
   }
   else action.link $(_target) ;
+  action.polish-program $(_target) ;
 
   return $(_target) ;
 }
