@@ -61,5 +61,5 @@ actions action.polish-program
   path_list = [ '$(COMPILE_PATH_LIST)', ]
   ENV['PATH'] = [ path_list, ENV['PATH'] ].flatten.compact.join(File::PATH_SEPARATOR) unless path_list.empty?
 
-  exec *[ 'mt', '-nologo', '-manifest', '$(<).manifest', '-outputresource:$(<);1' ]
+  exec *[ 'mt', '-nologo', '-manifest', '$(<).manifest', '-outputresource:$(<);1' ] if File.exist? '$(<).manifest'
 }
