@@ -90,6 +90,26 @@ rule make-cpp-test
   system.setup-program-targets-in-cwd $(_target) ;
 }
 
+rule run-ruby-tests
+{
+  local _list = $(system.SRCDIR)$(jam.SEPARATOR)$(1) ;
+
+  Always $(1) ;
+  NotFile $(_list) ;
+
+  util.set-target-variable test@$(system.DOT_TARGET) : LOADPATH : $(system.SRCDIR) ;
+  action.invoke-ruby-test test@$(system.DOT_TARGET) : $(_list) ;
+
+  local _file _target ;
+  for _file  in $(1) {
+    _target = $(_file)@$(system.DOT_TARGET) ;
+    Depends $(_file) : $(_target) ;
+
+    util.set-target-variable $(_target) : LOADPATH : $(system.SRCDIR) ;
+    action.invoke-ruby-test $(_target) : $(system.SRCDIR)$(jam.SEPARATOR)$(_file) ;
+  }
+}
+
 rule test-package-actions
 {
   local _list = $(system.SRCDIR)$(jam.SEPARATOR)$(1) ;
