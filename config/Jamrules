@@ -92,21 +92,21 @@ rule make-cpp-test
 
 rule run-ruby-tests
 {
-  local _list = $(system.SRCDIR)$(jam.SEPARATOR)$(1) ;
-
-  Always $(1) ;
-  NotFile $(_list) ;
-
-  util.set-target-variable test@$(system.DOT_TARGET) : LOADPATH : $(system.SRCDIR) ;
-  action.invoke-ruby-test test@$(system.DOT_TARGET) : $(_list) ;
-
   local _file _target ;
   for _file  in $(1) {
+    Always $(_file) ;
+
     _target = $(_file)@$(system.DOT_TARGET) ;
+    _source = $(system.SRCDIR)$(jam.SEPARATOR)$(_file) ;
+
+    Depends $(_target) : $(_source) ;
+    Depends test@$(system.DOT_TARGET) : $(_target) ;
     Depends $(_file) : $(_target) ;
 
     util.set-target-variable $(_target) : LOADPATH : $(system.SRCDIR) ;
-    action.invoke-ruby-test $(_target) : $(system.SRCDIR)$(jam.SEPARATOR)$(_file) ;
+    util.set-target-variable $(_target) : COMMAND_LINE : $(2) ;
+
+    action.invoke-ruby $(_target) : $(_source) ;
   }
 }
 

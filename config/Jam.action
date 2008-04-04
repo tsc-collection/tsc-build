@@ -307,20 +307,13 @@ actions together action.invoke-package-test
   exec %q[ $(INSTALL_LAUNCHER) distributor -t -r$(2) -- $(UNIT_TEST_ARGS) ]
 }
 
-actions together action.invoke-ruby-test
+actions together action.invoke-ruby
 {
   %w[ $(system.ENV_EXPORT_LIST) ].each { |item|
     key, value = item.split('=')
     ENV[key] = value
   }
-  require 'rubygems'
-
-  $:.concat ENV['PATH'].split(':')
-  $: << '$(LOADPATH)' 
-
-  %w[ $(2) ].each { |item|
-    require item
-  }
+  exec %Q[ $(RUBY) -I#{ENV['PATH']} -I$(LOADPATH) -rubygems $(2:1) $(COMMAND_LINE) ]
 }
 
 actions action.package
