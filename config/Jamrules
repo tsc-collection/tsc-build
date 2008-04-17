@@ -80,6 +80,7 @@ rule setup-script
 
   system.invoke run@$(system.DOT_TARGET) : $(_target) : $(3) : $(4) ;
   system.invoke test@$(system.DOT_TARGET) : $(_target) : test $(3) : $(4) ;
+  system.invoke specs@$(system.DOT_TARGET) : $(_target) : specs $(3) : $(4) ;
   system.setup-program-targets-in-cwd $(_target) ;
 }
 
@@ -97,16 +98,41 @@ rule run-ruby-tests
     Always $(_file) ;
 
     _target = $(_file)@$(system.DOT_TARGET) ;
-    _source = $(system.SRCDIR)$(jam.SEPARATOR)$(_file) ;
+    _source = [ util.make-path $(system.SRCDIR) $(_file) ] ;
 
     Depends $(_target) : $(_source) ;
     Depends test@$(system.DOT_TARGET) : $(_target) ;
     Depends $(_file) : $(_target) ;
 
     util.set-target-variable $(_target) : LOADPATH : $(system.SRCDIR) ;
-    util.set-target-variable $(_target) : COMMAND_LINE : $(2) ;
+    util.set-target-variable $(_target) : ARGUMENTS : $(2) ;
 
     action.invoke-ruby $(_target) : $(_source) ;
+  }
+}
+
+rule run-ruby-specs
+{
+  local _file _target ;
+  for _file  in $(1) {
+    Always $(_file) ;
+
+    _target = $(_file)@$(system.DOT_TARGET) ;
+    _source = [ util.make-path $(system.SRCDIR) $(_file) ] ;
+
+    Depends specs-$(_target) : $(_source) ;
+    Depends test-$(_target) : $(_source) ;
+
+    Depends specs@$(system.DOT_TARGET) : specs-$(_target) ;
+    Depends test@$(system.DOT_TARGET) : test-$(_target) ;
+
+    Depends $(_file) : specs-$(_target) ;
+
+    util.set-target-variable specs-$(_target) test-$(_target) : LOADPATH : $(_source) [ util.make-path $(system.SRCDIR) : $(2) ] ;
+    util.set-target-variable specs-$(_target) : ARGUMENTS : --color -fs ;
+
+    action.invoke-ruby-specs specs-$(_target) : $(_source) ;
+    action.invoke-ruby-specs test-$(_target) : $(_source) ;
   }
 }
 

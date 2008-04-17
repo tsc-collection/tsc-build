@@ -74,12 +74,12 @@ rule system.is-cwd-under-dot
 
 rule system.setup-jamshell-inline
 {
-  JAMSHELL = $(RUBY) -W0 -r fileutils -e "include FileUtils; eval ARGV.first" % ;
+  JAMSHELL = $(RUBY) -W0 -I$(PATH) -r fileutils -e "include FileUtils; eval ARGV.first" % ;
 }
 
 rule system.setup-jamshell-file
 {
-  JAMSHELL = $(RUBY) -W0 -r fileutils -e 'include FileUtils; load ARGV.first' % ;
+  JAMSHELL = $(RUBY) -W0 -I$(PATH) -r fileutils -e 'include FileUtils; load ARGV.first' % ;
 }
 
 rule system.setup-artifact-offsets
@@ -170,7 +170,7 @@ rule system.setup-environment
   system.MAIN_TARGET = $(core.CWD_FROM_TOP:J=$(jam.SEPARATOR):E=$(system.TOP_TARGET)) ;
   system.DOT_TARGET = $(system.TOP_TARGET) ;
 
-  system.TARGET_CATEGORIES = exe jni test lib obj gen proto ant reloc ;
+  system.TARGET_CATEGORIES = exe jni test specs lib obj gen proto ant reloc ;
 
   system.CWD_SUBDIR_TARGETS = $(system.TARGET_CATEGORIES) clean-$(system.TARGET_CATEGORIES) ;
   system.CWD_NOT_SUBDIR_TARGETS = run try-libs ;

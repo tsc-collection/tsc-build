@@ -313,7 +313,17 @@ actions together action.invoke-ruby
     key, value = item.split('=')
     ENV[key] = value
   }
-  exec %Q[ $(RUBY) -I#{ENV['PATH']} -I$(LOADPATH) -rubygems $(2:1) $(COMMAND_LINE) ]
+  exec %Q[ $(RUBY) -I$(PATH) -I$(LOADPATH) -rubygems $(2:1) $(ARGUMENTS) ]
+}
+
+actions together action.invoke-ruby-specs
+{
+  %w[ $(system.ENV_EXPORT_LIST) ].each { |item|
+    key, value = item.split('=')
+    ENV[key] = value
+  }
+  require 'sk/file-locator.rb'
+  exec %Q[ $(RUBY) -I$(LOADPATH) -I$(PATH) -rubygems -S spec --require sk/spec/config $(ARGUMENTS) $(RUNARGS) #{SK::FileLocator.new("$(2)").find_bottom_up("*[_-]spec.rb").join(' ')} ]
 }
 
 actions action.package

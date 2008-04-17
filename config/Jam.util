@@ -82,7 +82,16 @@ rule util.delete-from
 
 rule util.make-path
 {
-  return $(<:J=$(jam.SEPARATOR)) ;
+  if $(2) {
+    local _item ;
+    local _result ;
+
+    for _item in $(2) {
+      _result += [ util.make-path $(1) $(_item) ] ;
+    }
+    return $(_result) ;
+  }
+  else return $(1:J=$(jam.SEPARATOR)) ;
 }
 
 rule util.join
