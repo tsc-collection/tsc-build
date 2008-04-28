@@ -74,12 +74,12 @@ rule system.is-cwd-under-dot
 
 rule system.setup-jamshell-inline
 {
-  JAMSHELL = $(RUBY) -W0 -I$(PATH) -r fileutils -e "include FileUtils; eval ARGV.first" % ;
+  JAMSHELL = $(RUBY) -W0 -e "$:.concat ENV['PATH'].split(File::PATH_SEPARATOR); require 'tsc/application'; TSC::Application.new.start { require 'fileutils'; include FileUtils; eval ARGV.first }" % ;
 }
 
 rule system.setup-jamshell-file
 {
-  JAMSHELL = $(RUBY) -W0 -I$(PATH) -r fileutils -e 'include FileUtils; load ARGV.first' % ;
+  JAMSHELL = $(RUBY) -W0 -r fileutils -e 'include FileUtils; load ARGV.first' % ;
 }
 
 rule system.setup-artifact-offsets
