@@ -220,7 +220,7 @@ rule make-swig-java
   local _reloc = [ system.make-reloc-object $(_target) : $(_object) [ system.make-objects $(4) ] ] ;
   local _build = [ system.make-build-target ] ;
 
-  system.ensure-directory-for $(_target) $(_extension) $(_java_target) $(_java_target) ;
+  system.ensure-directory-for $(_target) $(_extension) $(_java_target) ;
 
   system.associate-binary-targets $(1).$(jam.DSO_EXTENTION) : $(1) ;
   system.mark-for-c-include-scan $(_source) ;

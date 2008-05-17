@@ -356,6 +356,8 @@ actions action.generate-swig-interface
 
 actions action.swig-java
 {
+  rm_rf '$(JAVA_LOCATION)'
+  mkdir_p '$(JAVA_LOCATION)'
   exec *[ '$(SWIG:E=swig)', '-w362', '-w401', '-w509', '-w314', '-w801', '-Werror', '-c++', '-module', '$(MODULE)', '-java', '-package', '$(PACKAGE)', '-outdir', '$(JAVA_LOCATION)', '-o', '$(1)', '-I$(INCLUDES)', '-I$(TARGET_INCLUDES)', '$(2)' ]
 }
 
