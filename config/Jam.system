@@ -964,7 +964,7 @@ rule system.use-product.swig
 
 rule system.use-product.c
 {
-  local _target = [ system.target-for.cc $(1) ] ;
+  local _target = [ system.target-for.c $(1) ] ;
 
   util.add-target-variable $(_target) : TARGET_INCLUDES : $(5) ;
   util.add-target-variable $(_target) : TARGET_DEFINES : $(6) ;
