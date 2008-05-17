@@ -950,6 +950,17 @@ rule system.use-product.cpp
   system.use-product.cc $(1) : $(2) : $(3) : $(4) : $(5) : $(6) : $(7) : $(8) : $(9) ;
 }
 
+rule system.use-product.conf
+{
+  local _target = [ util.make-path $(system.SRCDIR) $(1) ] ;
+
+  util.add-target-variable $(_target) : TARGET_LIBDIRS : $(2) ;
+  util.add-target-variable $(_target) : TARGET_LIBS : $(3) ;
+  util.add-target-variable $(_target) : TARGET_SYSLIBS : $(4) ;
+  util.add-target-variable $(_target) : TARGET_INCLUDES : $(5) ;
+  util.add-target-variable $(_target) : TARGET_DEFINES : $(6) ;
+}
+
 rule system.use-product.swig
 {
   local _target = [ system.target-for.swig $(1) ] ;

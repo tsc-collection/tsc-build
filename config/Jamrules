@@ -209,7 +209,7 @@ rule make-swig-ruby
   local _target = [ util.make-path $(system.BINDIR) $(1).$(jam.DSO_EXTENTION) ] ;
   local _source = [ util.make-path $(system.SRCDIR) $(2) ] ;
 
-  local _extension = [ target-for $(2) ] ;
+  local _extension = [ util.make-path $(system.BINDIR) $(1).swig.cc ] ;
   local _object = $(_extension:S=.$(jam.OBJ_EXTENTION)) ;
   local _reloc = [ system.make-reloc-object $(_target) : $(_object) [ system.make-objects $(3) ] ] ;
   local _build = [ system.make-build-target ] ;
@@ -229,7 +229,7 @@ rule make-swig-ruby
   LINKER on $(_target) = $(LINKER) ;
   util.add-target-variable $(_target) : TARGET_LIBDIRS : $(project.RUBY_LIBDIR:E=$(project.RUBY_DIR)) ;
   util.add-target-variable $(_target) : TARGET_LIBS : $(project.RUBY_LIB) ;
-  util.clone-target-variable $(_extension) : $(_object) : TARGET_INCLUDES TARGET_DEFINES ;
+  util.clone-target-variable $(_source) : $(_object) : TARGET_INCLUDES TARGET_DEFINES ;
   util.add-target-variable $(_object) : TARGET_INCLUDES : $(project.RUBY_INCLUDE:E=$(project.RUBY_DIR)) $(system.BINDIR) $(system.SRCDIR) ;
 
   action.swig-ruby $(_extension) : $(_source) ;
@@ -417,12 +417,6 @@ rule use-project-includes
 rule use-local-includes
 {
   util.foreach-kind "$(1)" : system.use-local-includes : "$(2)" ;
-}
-
-
-rule target-for
-{
-  util.foreach-kind $(1) : system.target-for : $(2) : $(3) : $(4) : $(5) : $(6) : $(7) : $(8) : $(9) ;
 }
 
 rule use-product
