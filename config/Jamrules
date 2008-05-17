@@ -223,7 +223,6 @@ rule make-swig-ruby
   system.assign-category obj : $(_object) ;
 
   Depends $(_target) : $(_reloc) $(_build) ;
-  Depends $(_reloc) : $(_object) ;
   Depends $(_object) : $(_extension) ;
   Depends $(_extension) : $(_source) ;
 
@@ -264,7 +263,6 @@ rule make-ruby-extension
   util.add-target-variable $(_target) : TARGET_LIBS : $(project.RUBY_LIB) ;
   action.shared-module $(_target) : $(_reloc) $(_build) ;
 
-  Depends $(_reloc) : $(_object) ;
   Depends $(_object) : $(_extension) ;
   Depends $(_extension) : $(_swig_wrap) $(_class_implementations) ;
   Depends $(_swig_wrap) : $(_swig_interface) $(_class_implementations) $(_class_interfaces) ;
