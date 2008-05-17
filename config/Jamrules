@@ -204,6 +204,40 @@ rule make-shared-module
   system.setup-try-libs-for $(_target) ;
 }
 
+rule make-swig-java
+{
+  local _target = [ util.make-path $(system.BINDIR) $(1).$(jam.DSO_EXTENTION) ] ;
+  local _source = [ util.make-path $(system.SRCDIR) $(2) ] ;
+
+  local _extension = [ util.make-path $(system.BINDIR) $(1).swig.cc ] ;
+  local _object = $(_extension:S=.$(jam.OBJ_EXTENTION)) ;
+  local _reloc = [ system.make-reloc-object $(_target) : $(_object) [ system.make-objects $(4) ] ] ;
+  local _build = [ system.make-build-target ] ;
+
+  system.ensure-directory-for $(_target) $(_extension) ;
+  system.associate-binary-targets $(1).$(jam.DSO_EXTENTION) : $(1) ;
+  system.mark-for-c-include-scan $(_source) ;
+
+  system.assign-category exe : $(_target) ;
+  system.assign-category gen : $(_extension) ;
+  system.assign-category obj : $(_object) ;
+
+  Depends $(_target) : $(_reloc) $(_build) ;
+  Depends $(_object) : $(_extension) ;
+  Depends $(_extension) : $(_source) ;
+
+  LINKER on $(_target) = $(LINKER) ;
+  util.add-target-variable $(_target) : TARGET_LIBDIRS : ;
+  util.add-target-variable $(_target) : TARGET_LIBS : ;
+  util.clone-target-variable $(_source) : $(_object) : TARGET_INCLUDES TARGET_DEFINES ;
+  util.add-target-variable $(_object) : TARGET_INCLUDES : $(system.BINDIR) $(system.SRCDIR) ;
+
+  util.set-target-variable $(_extension) : PACKAGE : $(3) ;
+  action.swig-java $(_extension) : $(_source) ;
+  action.compile-cc $(_object) : $(_extension) ;
+  action.shared-module $(_target) : $(_reloc) $(_build) ;
+}
+
 rule make-swig-ruby
 {
   local _target = [ util.make-path $(system.BINDIR) $(1).$(jam.DSO_EXTENTION) ] ;
