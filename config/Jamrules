@@ -206,15 +206,22 @@ rule make-shared-module
 
 rule make-swig-java
 {
+  local _package = $(3) ;
+  if ! $(_package) {
+    system.error make-swig-java : Package for "$(1)" is not spefified ;
+  }
   local _target = [ util.make-path $(system.BINDIR) $(1).$(jam.DSO_EXTENTION) ] ;
   local _source = [ util.make-path $(system.SRCDIR) $(2) ] ;
+  local _java_location  = [ util.make-path $(system.BINDIR) [ util.split $(_package) : . ] ] ;
+  local _java_target  = [ util.make-path $(_java_location) $(1).java ] ;
 
   local _extension = [ util.make-path $(system.BINDIR) $(1).swig.cc ] ;
   local _object = $(_extension:S=.$(jam.OBJ_EXTENTION)) ;
   local _reloc = [ system.make-reloc-object $(_target) : $(_object) [ system.make-objects $(4) ] ] ;
   local _build = [ system.make-build-target ] ;
 
-  system.ensure-directory-for $(_target) $(_extension) ;
+  system.ensure-directory-for $(_target) $(_extension) $(_java_target) $(_java_target) ;
+
   system.associate-binary-targets $(1).$(jam.DSO_EXTENTION) : $(1) ;
   system.mark-for-c-include-scan $(_source) ;
 
@@ -224,7 +231,7 @@ rule make-swig-java
 
   Depends $(_target) : $(_reloc) $(_build) ;
   Depends $(_object) : $(_extension) ;
-  Depends $(_extension) : $(_source) ;
+  Depends $(_extension) : $(_source) $(_java_target) ;
 
   LINKER on $(_target) = $(LINKER) ;
   util.add-target-variable $(_target) : TARGET_LIBDIRS : ;
@@ -232,7 +239,10 @@ rule make-swig-java
   util.clone-target-variable $(_source) : $(_object) : TARGET_INCLUDES TARGET_DEFINES ;
   util.add-target-variable $(_object) : TARGET_INCLUDES : $(system.BINDIR) $(system.SRCDIR) ;
 
-  util.set-target-variable $(_extension) : PACKAGE : $(3) ;
+  util.set-target-variable $(_extension) : PACKAGE : $(_package) ;
+  util.set-target-variable $(_extension) : MODULE : $(1) ;
+  util.set-target-variable $(_extension) : JAVA_LOCATION : $(_java_location) ;
+
   action.swig-java $(_extension) : $(_source) ;
   action.compile-cc $(_object) : $(_extension) ;
   action.shared-module $(_target) : $(_reloc) $(_build) ;
