@@ -162,7 +162,7 @@ actions action.print-library-path
 
 actions action.invoke
 {
-  %w[ $(system.ENV_EXPORT_LIST) ].each { |item|
+  %w[ $(system.ENV_EXPORT_LIST) RUBY=$(RUBY) ].each { |item|
     key, value = item.split('=')
     ENV[key] = value
   }
