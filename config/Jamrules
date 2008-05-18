@@ -206,6 +206,9 @@ rule make-shared-module
 
 rule make-swig-java
 {
+  system.ensure-java-home ;
+  system.ensure-java-includes ;
+
   local _package = $(3) ;
   if ! $(_package) {
     system.error make-swig-java : Package for "$(1)" is not spefified ;
@@ -237,7 +240,7 @@ rule make-swig-java
   util.add-target-variable $(_target) : TARGET_LIBDIRS : ;
   util.add-target-variable $(_target) : TARGET_LIBS : ;
   util.clone-target-variable $(_source) : $(_object) : TARGET_INCLUDES TARGET_DEFINES ;
-  util.add-target-variable $(_object) : TARGET_INCLUDES : $(system.BINDIR) $(system.SRCDIR) ;
+  util.add-target-variable $(_object) : TARGET_INCLUDES : $(project.JAVA_INCLUDES) $(system.BINDIR) $(system.SRCDIR) ;
 
   util.set-target-variable $(_extension) : PACKAGE : $(_package) ;
   util.set-target-variable $(_extension) : MODULE : $(1) ;

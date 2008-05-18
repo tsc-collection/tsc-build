@@ -1112,4 +1112,18 @@ rule system.export-to-env
   }
 }
 
+rule system.ensure-java-home
+{
+  if ! $(project.JAVA_HOME) {
+    system.error make-swig-java : project.JAVA_HOME not defined ;
+  }
+}
+
+rule system.ensure-java-includes
+{
+  if ! $(project.JAVA_INCLUDES) {
+    system.error make-swig-java : project.JAVA_INCLUDES not defined ;
+  }
+}
+
 core.load-config Jam.action ;
