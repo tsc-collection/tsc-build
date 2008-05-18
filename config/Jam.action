@@ -49,6 +49,22 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 # 
 
+actions together action.compile-java
+{
+  path_list = [ '$(COMPILE_PATH_LIST)', ]
+  ENV['PATH'] = [ path_list, ENV['PATH'] ].flatten.compact.join(File::PATH_SEPARATOR) unless path_list.empty?
+  ENV['JAVA_HOME'] = '$(project.JAVA_HOME)'
+
+  exec *[ '$(JAVAC)', '-d', '$(BINDIR)', '-classpath', '$(BINDIR)', '$(>)' ]
+}
+
+actions together action.jar
+{
+  cd '$(<:D)' do
+    exec *[ '$(JAR)', '-cf', '$(<:D=)', *Dir['./**/*.class'] ]
+  end
+}
+
 actions together action.compile-cc
 {
   path_list = [ '$(COMPILE_PATH_LIST)', ]
