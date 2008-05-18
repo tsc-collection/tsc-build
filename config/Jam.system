@@ -1056,7 +1056,7 @@ rule system.invoke
 {
   Depends $(1) : $(2) ;
 
-  LD_LIBRARY_PATH-$(2) on $(1) = [ system.convert-path-from-cwd $(LIBDIRS) : $(2) : TARGET_LIBDIRS ] ;
+  LD_LIBRARY_PATH-$(2) on $(1) = [ system.convert-path-from-cwd $(LIBDIRS) : $(2) : TARGET_LIBDIRS system.BINDIR ] ;
   COMMAND-$(2) on $(1) = $(core.CWD)$(jam.SEPARATOR)$(2) ;
 
   ARGS-$(2) on $(1) = $(3) ;
