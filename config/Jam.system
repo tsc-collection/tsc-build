@@ -388,6 +388,7 @@ rule system.make-shared-library
   LIBS on $(_target_so_major) =  $(LIBS) ;
   TARGET_FLAGS on $(_target_so_major) = $(4) ;
   LINKER_FLAGS on $(_target_so_major) = $(LINKER_FLAGS) ;
+  DLL_FLAGS on $(_target_so_major) = $(DLL_FLAGS) ;
   LINKER on $(_target_so_major) = $(LINKER) ;
 
   action.shared-library $(_target_so_major) ;
