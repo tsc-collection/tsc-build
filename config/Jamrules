@@ -84,6 +84,19 @@ rule setup-script
   system.setup-program-targets-in-cwd $(_target) ;
 }
 
+rule setup-ruby-script
+{
+  local _target = $(system.SRCDIR)$(jam.SEPARATOR)$(1) ;
+
+  system.associate $(_target) : $(system.BINDIR)$(jam.SEPARATOR)$(2:E=$(1)) ;
+
+  action.invoke-ruby run@$(system.DOT_TARGET) : $(_target) : $(3) : $(4) ;
+  action.invoke-ruby test@$(system.DOT_TARGET) : $(_target) : test $(3) : $(4) ;
+  action.invoke-ruby specs@$(system.DOT_TARGET) : $(_target) : specs $(3) : $(4) ;
+
+  system.setup-program-targets-in-cwd $(_target) ;
+}
+
 rule make-cpp-test
 {
   local _target = [ system.make-program $(1) : $(2) : $(3) ] ;
@@ -241,6 +254,13 @@ rule make-swig-java
   Depends $(_extension) : $(_source) $(_java_source) ;
 
   LINKER on $(_target) = $(LINKER) ;
+  LIBDIRS on $(_target) = $(LIBDIRS) ;
+  SYSLIBS on $(_target) =  $(SYSLIBS) ;
+  LIBS on $(_target) =  $(LIBS) ;
+  TARGET_FLAGS on $(_target) = $(4) ;
+  LINKER_FLAGS on $(_target) = $(LINKER_FLAGS) ;
+  DLL_FLAGS on $(_target) = $(DLL_FLAGS) ;
+
   util.add-target-variable $(_target) : TARGET_LIBDIRS : ;
   util.add-target-variable $(_target) : TARGET_LIBS : ;
   util.clone-target-variable $(_source) : $(_object) : TARGET_INCLUDES TARGET_DEFINES ;
@@ -254,6 +274,7 @@ rule make-swig-java
   action.swig-java $(_extension) : $(_source) ;
   action.compile-cc $(_object) : $(_extension) ;
   action.shared-module $(_target) : $(_reloc) $(_build) ;
+  action.polish-dll $(_target) ;
   action.compile-java $(_java_class) : $(_java_source) ;
   action.jar $(_java_jar) ;
 }

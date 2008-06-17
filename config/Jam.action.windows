@@ -54,6 +54,10 @@
 
 actions action.polish-dll
 {
+  path_list = [ '$(COMPILE_PATH_LIST)', ]
+  ENV['PATH'] = [ path_list, ENV['PATH'] ].flatten.compact.join(File::PATH_SEPARATOR) unless path_list.empty?
+
+  exec *[ 'mt', '-nologo', '-manifest', '$(<).manifest', '-outputresource:$(<);2' ] if File.exist? '$(<).manifest'
 }
 
 actions action.polish-program
