@@ -188,14 +188,18 @@ rule system.setup-environment
     all clean
     top top-clean
     java java-clean
-    try package release handoff
+    try try-libs
+    install install-libs
+    package release handoff
     $(system.CWD_SUBDIR_TARGETS) 
     $(system.CWD_NOT_SUBDIR_TARGETS) 
   ;
   Always 
     run $(system.TARGET_CATEGORIES)
     java java-clean 
-    try try-libs package release handoff 
+    try try-libs 
+    install install-libs 
+    package release handoff 
     clean top-clean clean-$(system.TARGET_CATEGORIES) 
   ;
   local _cwd_targets = $(system.CWD_SUBDIR_TARGETS) $(system.CWD_NOT_SUBDIR_TARGETS) ;
@@ -207,6 +211,8 @@ rule system.setup-environment
     Depends $(_target) : $(_target)@$(system.MAIN_TARGET) ;
   }
   Depends try : all ;
+  Depends install : try ;
+  Depends install-libs : try-libs ;
 
   if $(jam.NO_PACKAGE_DEPEND) != true {
     Depends package : top ;
