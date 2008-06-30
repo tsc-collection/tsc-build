@@ -470,7 +470,7 @@ rule system.make-build-target
     return ;
   }
   local _object = [ util.make-path $(system.BINTOP) build.$(jam.OBJ_EXTENTION) ] ;
-  local _source = [ util.make-path $(system.BINTOP) build.$(PRODUCT_BUILD).c ] ;
+  local _source = [ util.make-path $(system.BINTOP) build.$(PRODUCT_TAG:E=default).$(PRODUCT_BUILD).c ] ;
 
   Depends $(_object) : $(_source) ;
 
