@@ -49,7 +49,7 @@ module TSC
       end
 
       def tag
-        config['tag']
+        Array([ config['tag'], config['tags'] ]).flatten.compact.join('-')
       end
 
       def name
