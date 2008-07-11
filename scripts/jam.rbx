@@ -50,7 +50,7 @@
   SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 =end 
 
-$:.concat ENV['PATH'].to_s.split(File::PATH_SEPARATOR)
+$:.concat ENV.to_hash['PATH'].to_s.split(File::PATH_SEPARATOR)
 
 require 'tsc/application.rb'
 require 'tsc/path.rb'
@@ -171,7 +171,6 @@ class Application < TSC::Application
     original = File.join(directory, 'original', file)
 
     _content << '#!' + figure_ruby_path
-    _content << '$VERBOSE = nil'
     _content << TSC::PATH.current.front(File.dirname(figure_ruby_path)).to_ruby_eval
     _content << 'RUBY_PATH = ' + figure_ruby_path.inspect
     _content << 'JAM_ORIGINAL = ' +  original.inspect
