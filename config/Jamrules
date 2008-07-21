@@ -226,7 +226,7 @@ rule make-swig-java
   if ! $(_package) {
     system.error make-swig-java : Package for "$(1)" is not spefified ;
   }
-  local _target = [ util.make-path $(system.BINDIR) lib$(1).$(jam.DSO_EXTENTION) ] ;
+  local _target = [ util.make-path $(system.BINDIR) lib$(_package).$(1).$(jam.DSO_EXTENTION) ] ;
   local _source = [ util.make-path $(system.SRCDIR) $(2) ] ;
   local _java_location  = [ util.make-path $(system.BINDIR) [ util.split $(_package) : . ] ] ;
   local _java_source  = [ util.make-path $(_java_location) $(1).java ] ;
