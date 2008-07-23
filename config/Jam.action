@@ -55,7 +55,7 @@ actions together action.compile-java
   ENV['PATH'] = [ path_list, ENV['PATH'] ].flatten.compact.join(File::PATH_SEPARATOR) unless path_list.empty?
   ENV['JAVA_HOME'] = '$(project.JAVA_HOME)'
 
-  exec *[ '$(JAVAC)', '-d', '$(BINDIR)', '-classpath', '$(BINDIR)', *Dir[ File.join('$(>:D)', '*.java') ] ]
+  exec *[ '$(JAVAC)', '-d', '$(BINDIR)', '-classpath', '$(BINDIR)', *Dir[ File.join('$(>:D)', '*.java').tr('\\', '/') ] ]
 }
 
 actions together action.jar
