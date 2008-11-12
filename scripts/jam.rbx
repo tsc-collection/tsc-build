@@ -50,7 +50,7 @@
   SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 =end 
 
-$:.concat ENV.to_hash['PATH'].to_s.split(File::PATH_SEPARATOR)
+$:.concat ENV['PATH'].to_s.split(File::PATH_SEPARATOR)
 
 require 'tsc/application.rb'
 require 'tsc/path.rb'
