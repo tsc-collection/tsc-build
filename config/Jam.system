@@ -210,12 +210,12 @@ rule system.setup-environment
   for _target in $(_cwd_targets) {
     Depends $(_target) : $(_target)@$(system.MAIN_TARGET) ;
   }
-  Depends try : all ;
   Depends install : try ;
   Depends install-libs : try-libs ;
 
   if $(jam.NO_PACKAGE_DEPEND) != true {
     Depends package : top ;
+    Depends try : all ;
   }
   Depends release : test@top package ;
   Depends handoff : release ;
