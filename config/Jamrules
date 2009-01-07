@@ -632,7 +632,7 @@ rule use-stemkit
     : $(project.STEMKIT_LIBDIR)
     : $(2)
     :
-    : $(project.STEMKIT_INCLUDE)
+    : $(project.STEMKIT_INCLUDE)/hooks $(project.STEMKIT_INCLUDE)
     : 
     : 
   ;
