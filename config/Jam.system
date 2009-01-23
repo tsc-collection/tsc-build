@@ -190,7 +190,7 @@ rule system.setup-environment
     java java-clean
     try try-libs
     install install-libs
-    package release handoff
+    package release handoff oneoff
     $(system.CWD_SUBDIR_TARGETS) 
     $(system.CWD_NOT_SUBDIR_TARGETS) 
   ;
@@ -199,7 +199,7 @@ rule system.setup-environment
     java java-clean 
     try try-libs 
     install install-libs 
-    package release handoff 
+    package release handoff oneoff
     clean top-clean clean-$(system.TARGET_CATEGORIES) 
   ;
   local _cwd_targets = $(system.CWD_SUBDIR_TARGETS) $(system.CWD_NOT_SUBDIR_TARGETS) ;
@@ -215,6 +215,7 @@ rule system.setup-environment
 
   if $(jam.NO_PACKAGE_DEPEND) != true {
     Depends package : top ;
+    Depends oneoff : top ;
     Depends try : all ;
   }
   Depends release : test@top package ;
@@ -229,12 +230,21 @@ rule system.setup-environment
   ;
   action.install try ;
   system.make-package package ;
+  system.make-oneoff oneoff ;
   action.handoff handoff ;
 }
 
 rule system.make-package
 {
   action.package $(1) ;
+}
+
+rule system.make-oneoff
+{
+  local _default = config build.yaml ;
+  util.set-target-variable $(1) : TARGET_CONFIG : [ util.make-path $(system.SRCTOP) $(jam.ONEOFF_CONFIG:E=$(_default)) ] ;
+
+  action.oneoff $(1) ;
 }
 
 rule setup-direct-clean-target
