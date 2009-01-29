@@ -173,7 +173,7 @@ actions action.link
 
 actions action.print-library-path
 {
-  puts ' $(LD_LIBRARY_PATH) '.strip
+  $stderr.puts ' $(LD_LIBRARY_PATH) '.strip
 }
 
 actions action.invoke
