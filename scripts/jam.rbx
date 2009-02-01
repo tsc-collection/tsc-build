@@ -83,7 +83,7 @@ class Application < TSC::Application
 
   def config_location
     @config_location ||= begin
-      File.join File.dirname(expanded_script_location), 'config'
+      File.join File.dirname(expanded_script_location), 'config', 'jam'
     end
   end
 
