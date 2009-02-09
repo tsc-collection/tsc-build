@@ -143,11 +143,25 @@ rule util.foreach
   }
 }
 
+rule util.normalize-suffix
+{
+  local _suffix = $(1:S) ;
+  if $(_suffix) = . {
+    return $(1:S=) ;
+  }
+  return $(1) ;
+}
+
 rule util.foreach-kind
 {
   local _item ;
   for _item in $(1) {
-    [ util.join $(2) $(_item:S) ] $(_item) : $(3) : $(4) : $(5) : $(6) : $(7) : $(8) : $(9) ;
+    local _suffix = $(_item:S) ;
+    if $(_suffix) = . {
+      _suffix = ;
+      _item = $(_item:S=) ;
+    }
+    [ util.join $(2) $(_suffix) ] $(_item) : $(3) : $(4) : $(5) : $(6) : $(7) : $(8) : $(9) ;
   }
 }
 

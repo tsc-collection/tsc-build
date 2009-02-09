@@ -351,7 +351,9 @@ rule system.make-empty-static-library
 
 rule system.make-shared-library
 {
-  local _lib_target = [ system.project-lib-target $(1) ] ;
+  local _item = [ util.normalize-suffix $(1) ] ;
+
+  local _lib_target = [ system.project-lib-target $(_item) ] ;
   local _target = $(system.BINDIR)$(jam.SEPARATOR)$(_lib_target) ;
 
   local _target_so = $(_target:S=.$(jam.DSO_EXTENTION)) ;
@@ -365,8 +367,8 @@ rule system.make-shared-library
 
   local _reloc = [ system.make-reloc-object $(_target) : $(2) ] ;
 
-  system.associate-binary-targets $(_target_so_major:D=) : $(1) ;
-  system.associate-binary-targets $(_target:D=) : $(1) ;
+  system.associate-binary-targets $(_target_so_major:D=) : $(_item) ;
+  system.associate-binary-targets $(_target:D=) : $(_item) ;
 
   system.ensure-directory-for $(_target) ;
   system.assign-category lib : $(_target) $(_target_so) $(_target_so_major) ;
@@ -394,7 +396,7 @@ rule system.make-shared-library
   local _build = [ system.make-build-target ] ;
   Depends $(_target_so_major) : $(_reloc) $(_build) ;
 
-  util.clone-target-variable $(1) : $(_target_so_major) : MERGE ;
+  util.clone-target-variable $(_item) : $(_target_so_major) : MERGE ;
   TARGET_IMPLIB on $(_target_so_major) = $(_target) ;
   EXTRA_OBJECTS on $(_target_so_major) = $(_build) ;
   TARGET_OBJECTS on $(_target_so_major) = $(_reloc) ;
@@ -415,18 +417,20 @@ rule system.make-shared-library
 
 rule system.make-static-library
 {
-  local _lib_target = [ system.project-lib-target $(1) ] ;
+  local _item = [ util.normalize-suffix $(1) ] ;
+
+  local _lib_target = [ system.project-lib-target $(_item) ] ;
   local _target = $(system.BINDIR)$(jam.SEPARATOR)$(_lib_target) ;
 
   system.make-reloc-object $(_target) : $(2) ;
 
-  system.associate-binary-targets $(_target:D=) : $(1) ;
+  system.associate-binary-targets $(_target:D=) : $(_item) ;
   system.ensure-directory-for $(_target) ;
   system.assign-category lib : $(_target) ;
 
   Depends $(_target) : $(2) ;
 
-  util.clone-target-variable $(1) : $(_target) : MERGE ;
+  util.clone-target-variable $(_item) : $(_target) : MERGE ;
   action.static-library $(_target) : $(2) ;
   action.ranlib $(_target) ;
 
