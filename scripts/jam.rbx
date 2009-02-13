@@ -169,10 +169,11 @@ class Application < TSC::Application
   in_generator_context do |_content|
     directory, file = File.split(target)
     original = File.join(directory, 'original', file)
+    ruby = File.join(directory, 'ruby')
 
     _content << '#!' + figure_ruby_path
-    _content << TSC::PATH.current.front(File.dirname(figure_ruby_path)).to_ruby_eval
-    _content << 'RUBY_PATH = ' + figure_ruby_path.inspect
+    _content << TSC::PATH.current.front(directory).to_ruby_eval
+    _content << 'RUBY_PATH = ' + (File.executable?(ruby) ? ruby : figure_ruby_path).inspect
     _content << 'JAM_ORIGINAL = ' +  original.inspect
     _content << IO.readlines(__FILE__).slice(1..-1)
   end
