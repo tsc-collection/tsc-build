@@ -55,11 +55,10 @@ $:.concat ENV['PATH'].to_s.split(File::PATH_SEPARATOR)
 require 'tsc/application.rb'
 require 'tsc/path.rb'
 
-require 'rubygems'
-
 class Application < TSC::Application
   def start
     handle_errors {
+      require 'rubygems'
       require 'tsc/jam/config.rb'
 
       if defined? JAM_ORIGINAL
@@ -81,9 +80,13 @@ class Application < TSC::Application
     @expanded_script_location ||= File.expand_path(script_location)
   end
 
+  def root
+    defined?(ROOT) ? ROOT : File.dirname(expanded_script_location)
+  end
+
   def config_location
     @config_location ||= begin
-      File.join File.dirname(expanded_script_location), 'config', 'jam'
+      File.join root, 'config', 'jam'
     end
   end
 
@@ -168,14 +171,16 @@ class Application < TSC::Application
 
   in_generator_context do |_content|
     file = File.basename(target)
-    directory = File.join(self.class.installation_top, 'bin')
-    original = File.join(directory, 'originals', file)
-    ruby = File.join(directory, 'ruby')
+    root = Pathname.new(self.class.installation_top)
+    bindir = root.join('bin')
+    ruby = bindir.join('ruby')
 
     _content << '#!/usr/bin/env ' + figure_ruby_path
-    _content << TSC::PATH.current.front(directory).to_ruby_eval
-    _content << 'RUBY_PATH = ' + (File.executable?(ruby) ? ruby : figure_ruby_path).inspect
-    _content << 'JAM_ORIGINAL = ' +  original.inspect
+    _content << TSC::PATH.current.front(bindir).to_ruby_eval
+    _content << 'ROOT = ' +  root.to_s.inspect
+    _content << 'RUBY_PATH = ' + (ruby.exist? ? ruby.to_s : figure_ruby_path).inspect
+    _content << 'JAM_ORIGINAL = ' +  bindir.join('originals', file).to_s.inspect
+
     _content << IO.readlines(__FILE__).slice(1..-1)
   end
 end
