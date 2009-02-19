@@ -167,11 +167,12 @@ class Application < TSC::Application
   end
 
   in_generator_context do |_content|
-    directory, file = File.split(target)
-    original = File.join(directory, 'original', file)
+    file = File.basename(target)
+    directory = File.join(self.class.installation_top, 'bin')
+    original = File.join(directory, 'originals', file)
     ruby = File.join(directory, 'ruby')
 
-    _content << '#!' + figure_ruby_path
+    _content << '#!/usr/bin/env ' + figure_ruby_path
     _content << TSC::PATH.current.front(directory).to_ruby_eval
     _content << 'RUBY_PATH = ' + (File.executable?(ruby) ? ruby : figure_ruby_path).inspect
     _content << 'JAM_ORIGINAL = ' +  original.inspect
