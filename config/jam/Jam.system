@@ -1,4 +1,4 @@
-# vim:ft=jam
+# vim:ft=jam:sw=2:
 #
 #            Tone Software Corporation BSD License ("License")
 # 
@@ -363,7 +363,8 @@ rule system.make-shared-library
   if $(project.DO_NOT_USE_LIBRARY_MAJOR) = true {
     _target_so_major = $(_target_so) ;
   }
-  else system.make-in-directory-symlink $(_target_so) : $(_target_so_major) ;
+  local _soname_target_so = $(_target_so) ;
+  local _soname_target_so_major = $(_target_so_major) ;
 
   local _reloc = [ system.make-reloc-object $(_target) : $(2) ] ;
 
@@ -383,15 +384,31 @@ rule system.make-shared-library
 
   if $(3) {
     _lib_target = [ system.project-lib-target $(3) ] ;
-    local _target_soname = $(system.BINDIR)$(jam.SEPARATOR)$(_lib_target:S=.$(jam.DSO_EXTENTION))$(_target_so_major:S) ;
-    
-    Depends $(_target) : $(_target_soname) ;
-    system.make-in-directory-symlink  $(_target_soname) : $(_target_so_major) ;
-    system.assign-category lib : $(_target_soname) ;
 
-    util.set-target-variable $(_target_so_major) : TARGET_SONAME : $(_target_soname:D=) ;
+    _soname_target_so = $(system.BINDIR)$(jam.SEPARATOR)$(_lib_target:S=.$(jam.DSO_EXTENTION)) ;
+    _soname_target_so_major = $(_soname_target_so)$(_target_so_major:S) ;
+    
+    Depends $(_target) : $(_soname_target_so) ;
+
+    if $(project.DO_NOT_USE_LIBRARY_MAJOR) = true {
+      _soname_target_so_major = $(_soname_target_so) ;
+    }
+    else Depends $(_soname_target_so) : $(_soname_target_so_major) ;
+
+    system.assign-category lib : $(_soname_target_so) $(_soname_target_so_major) ;
   }
-  else util.set-target-variable $(_target_so_major) : TARGET_SONAME : $(_target_so_major:D=) ;
+
+  util.set-target-variable $(_target_so_major) : TARGET_SONAME : $(_soname_target_so_major:D=) ;
+
+  if $(_target_so) != $(_soname_target_so) {
+    system.make-in-directory-symlink $(_target_so) : $(_soname_target_so) ;
+  }
+  if $(_soname_target_so) != $(_soname_target_so_major) {
+    system.make-in-directory-symlink  $(_soname_target_so) : $(_soname_target_so_major) ;
+  }
+  if $(_soname_target_so_major) != $(_target_so_major) {
+    system.make-in-directory-symlink  $(_soname_target_so_major) : $(_target_so_major) ;
+  }
 
   local _build = [ system.make-build-target ] ;
   Depends $(_target_so_major) : $(_reloc) $(_build) ;
