@@ -388,16 +388,11 @@ rule system.make-shared-library
     _soname_target_so = $(system.BINDIR)$(jam.SEPARATOR)$(_lib_target:S=.$(jam.DSO_EXTENTION)) ;
     _soname_target_so_major = $(_soname_target_so)$(_target_so_major:S) ;
     
-    Depends $(_target) : $(_soname_target_so) ;
-
     if $(project.DO_NOT_USE_LIBRARY_MAJOR) = true {
       _soname_target_so_major = $(_soname_target_so) ;
     }
-    else Depends $(_soname_target_so) : $(_soname_target_so_major) ;
-
     system.assign-category lib : $(_soname_target_so) $(_soname_target_so_major) ;
   }
-
   util.set-target-variable $(_target_so_major) : TARGET_SONAME : $(_soname_target_so_major:D=) ;
 
   if $(_target_so) != $(_soname_target_so) {
@@ -438,6 +433,17 @@ rule system.make-static-library
 
   local _lib_target = [ system.project-lib-target $(_item) ] ;
   local _target = $(system.BINDIR)$(jam.SEPARATOR)$(_lib_target) ;
+  local _soname_target = $(_target) ;
+
+  if $(3) {
+    _lib_target = [ system.project-lib-target $(3) ] ;
+    _target = $(system.BINDIR)$(jam.SEPARATOR)$(_lib_target) ;
+
+    if $(_target) != $(_soname_target) {
+      system.assign-category lib : $(_soname_target) ;
+      system.make-in-directory-symlink $(_soname_target) : $(_target) ;
+    }
+  }
 
   system.make-reloc-object $(_target) : $(2) ;
 

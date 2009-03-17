@@ -365,7 +365,7 @@ rule make-library
   if $(project.MAKE_DLL) = true {
     system.make-shared-library $(1) : $(_objects) : $(3) ;
   }
-  else system.make-static-library $(1) : $(_objects) ;
+  else system.make-static-library $(1) : $(_objects) : $(3) ;
 }
 
 rule make-shared-library
