@@ -1,4 +1,4 @@
-# vim:ft=jam
+# vim: ft=jam: sw=2:
 #
 #            Tone Software Corporation BSD License ("License")
 # 
@@ -618,11 +618,13 @@ rule use-curses
 
 rule use-pthreads
 {
-  use-product $(1) $(2) $(3) $(4) $(5) $(6) $(7) $(8) $(9)
-    :
-    :
-    : pthread
-  ;
+  if $(jam.NO_PTHREAD_LIB) != "true" {
+    use-product $(1) $(2) $(3) $(4) $(5) $(6) $(7) $(8) $(9)
+      :
+      :
+      : pthread
+    ;
+  }
 }
 
 rule use-ruby
