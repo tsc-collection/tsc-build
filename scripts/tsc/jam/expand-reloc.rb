@@ -14,7 +14,7 @@ def expand_reloc(top, items)
     case _item
       when %r{[.]reloc$}
         expand_reloc top, File.readlines(_item).map { |_line|
-          top + _line.strip
+          top.strip + _line.strip
         }
       else
         _item

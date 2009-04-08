@@ -79,7 +79,8 @@ rule system.setup-jamshell-inline
 
 rule system.setup-jamshell-file
 {
-  JAMSHELL = $(RUBY) -W0 -r fileutils -e 'include FileUtils; load ARGV.first' % ;
+  # JAMSHELL = $(RUBY) -W0 -r fileutils -e 'include FileUtils; load ARGV.first' % ;
+  JAMSHELL = $(RUBY) -W0 -r fileutils -e '$:.concat ENV[%q{PATH}].split(File::PATH_SEPARATOR); include FileUtils; load ARGV.first' % ;
 }
 
 rule system.setup-artifact-offsets
