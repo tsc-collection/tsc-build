@@ -109,11 +109,13 @@ actions together action.reloc
 #
 actions together action.shared-library
 {
+  require 'tsc/jam/expand-reloc.rb'
+
   path_list = [ '$(COMPILE_PATH_LIST)', ]
   ENV['PATH'] = [ path_list, ENV['PATH'] ].flatten.compact.join(File::PATH_SEPARATOR) unless path_list.empty?
 
   rm_f Dir[ '$(<:S=).[0-9]*'.gsub('\\', '/') ]
-  system *[ '$(LINKER)', '$(DLL_FLAGS)', '$(DLL_LINKER_FLAGS)', '$(LINKER_FLAGS)', '$(TARGET_FLAGS)', '$(DLL_SONAME_FLAG)$(TARGET_SONAME)', '$(LINKER_IMPLIB_NAME_FLAG)$(TARGET_IMPLIB)', '$(LINKER_LIBDIR_FLAG)$(LIBDIRS)', '$(LINKER_LIBDIR_FLAG)$(TARGET_LIBDIRS)', '$(LINKER_LIB_FLAG)$(LIBS)$(LINKER_LIB_SUFFIX)', '$(LINKER_LIB_FLAG)$(SYSLIBS)$(LINKER_LIB_SUFFIX)', '$(LINKER_LIB_FLAG)$(TARGET_LIBS)$(LINKER_LIB_SUFFIX)', '$(LINKER_LIB_FLAG)$(TARGET_SYSLIBS)$(LINKER_LIB_SUFFIX)', '$(LINKER_TARGET_NAME_FLAG_STANDALONE)', '$(LINKER_TARGET_NAME_FLAG_ATTACHED)$(<)', '$(EXTRA_OBJECTS)', *%w[ $(TARGET_OBJECTS) ].map { |item| %w[ $(MERGE) ].empty? ? item : IO.readlines(item).map { |object| ' $(core.TOPDIR) '.strip + object.chomp } }.flatten ] or raise 'Command failed'
+  system *[ '$(LINKER)', '$(DLL_FLAGS)', '$(DLL_LINKER_FLAGS)', '$(LINKER_FLAGS)', '$(TARGET_FLAGS)', '$(DLL_SONAME_FLAG)$(TARGET_SONAME)', '$(LINKER_IMPLIB_NAME_FLAG)$(TARGET_IMPLIB)', '$(LINKER_LIBDIR_FLAG)$(LIBDIRS)', '$(LINKER_LIBDIR_FLAG)$(TARGET_LIBDIRS)', '$(LINKER_LIB_FLAG)$(LIBS)$(LINKER_LIB_SUFFIX)', '$(LINKER_LIB_FLAG)$(SYSLIBS)$(LINKER_LIB_SUFFIX)', '$(LINKER_LIB_FLAG)$(TARGET_LIBS)$(LINKER_LIB_SUFFIX)', '$(LINKER_LIB_FLAG)$(TARGET_SYSLIBS)$(LINKER_LIB_SUFFIX)', '$(LINKER_TARGET_NAME_FLAG_STANDALONE)', '$(LINKER_TARGET_NAME_FLAG_ATTACHED)$(<)', '$(EXTRA_OBJECTS)', *expand_reloc('$(core.TOPDIR)', %w[ $(TARGET_OBJECTS) ]) ] or raise 'Command failed'
   status = $?
   rm_f "so_locations"
   raise "Command failed" unless status.success?
@@ -143,11 +145,13 @@ actions action.import-library
 #
 actions together action.static-library
 {
+  require 'tsc/jam/expand-reloc.rb'
+
   path_list = [ '$(COMPILE_PATH_LIST)', ]
   ENV['PATH'] = [ path_list, ENV['PATH'] ].flatten.compact.join(File::PATH_SEPARATOR) unless path_list.empty?
 
   rm_f [ '$(<)', ]
-  exec *[ '$(AR)', '$(AR_TARGET_NAME_FLAG)$(<)', *%w[ $(>) ].map { |item| %w[ $(MERGE) ].empty? ? item : IO.readlines(item).map { |object| ' $(core.TOPDIR) '.strip + object.chomp } }.flatten ]
+  exec *[ '$(AR)', '$(AR_TARGET_NAME_FLAG)$(<)', *expand_reloc('$(core.TOPDIR)', %w[ $(>) ]) ]
 }
 
 actions action.ranlib

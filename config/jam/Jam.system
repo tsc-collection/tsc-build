@@ -408,7 +408,6 @@ rule system.make-shared-library
   local _build = [ system.make-build-target ] ;
   Depends $(_target_so_major) : $(_reloc) $(_build) ;
 
-  util.clone-target-variable $(_item) : $(_target_so_major) : MERGE ;
   TARGET_IMPLIB on $(_target_so_major) = $(_target) ;
   EXTRA_OBJECTS on $(_target_so_major) = $(_build) ;
   TARGET_OBJECTS on $(_target_so_major) = $(_reloc) ;
@@ -453,7 +452,6 @@ rule system.make-static-library
 
   Depends $(_target) : $(2) ;
 
-  util.clone-target-variable $(_item) : $(_target) : MERGE ;
   action.static-library $(_target) : $(2) ;
   action.ranlib $(_target) ;
 
@@ -471,7 +469,7 @@ rule system.make-in-directory-symlink
 
 rule system.reloc-object-name
 {
-  return $(1).reloc.$(jam.OBJ_EXTENTION) ;
+  return $(1).reloc ;
 }
 
 rule system.reloc-objects-for-libs
