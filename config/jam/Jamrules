@@ -449,10 +449,12 @@ rule use-project-libraries
 
 rule add-project-libraries
 {
+  system.add-project-libraries lib : $(1) : $(2) ;
 }
 
 rule add-top-libraries
 {
+  system.add-project-libraries : $(1) : $(2) ;
 }
 
 rule use-top-libraries

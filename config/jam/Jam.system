@@ -347,6 +347,7 @@ rule system.make-empty-static-library
   action.empty-c-source $(_source) ;
   action.compile-c $(_object) : $(_source) ;
 
+  TARGET_OBJECTS on $(_library) = $(_object) ;
   action.static-library $(_library) : $(_object) ;
 }
 
@@ -364,6 +365,8 @@ rule system.make-shared-library
   if $(project.DO_NOT_USE_LIBRARY_MAJOR) = true {
     _target_so_major = $(_target_so) ;
   }
+  LIBRARY_TARGET on $(_target) = $(_target_so_major) ;
+
   local _soname_target_so = $(_target_so) ;
   local _soname_target_so_major = $(_target_so_major) ;
 
@@ -444,6 +447,7 @@ rule system.make-static-library
       system.make-in-directory-symlink $(_soname_target) : $(_target) ;
     }
   }
+  LIBRARY_TARGET on $(_soname_target) = $(_target) ;
 
   system.make-reloc-object $(_target) : $(2) ;
 
@@ -453,11 +457,23 @@ rule system.make-static-library
 
   Depends $(_target) : $(2) ;
 
-  action.static-library $(_target) : $(2) ;
+  TARGET_OBJECTS on $(_target) = $(2) ;
+  action.static-library $(_target) ;
   action.ranlib $(_target) ;
 
   CLEANUP_LIST on $(_target) =  $(_target:S=.$(jam.DSO_EXTENTION)) $(_target:S=.$(jam.DSO_EXTENTION).*) ;
   action.cleanup-for $(_target) ;
+}
+
+rule system.add-project-libraries
+{
+   local _library = [ util.make-path $(system.BINDIR) [ system.project-lib-target $(2) ] ] ;
+   local _target = [ util.get-target-variable $(_library) : LIBRARY_TARGET ] ;
+
+   local _objects = [ system.reloc-objects-for-libs $(1) : $(3) ] ;
+   Depends $(_target) : $(_objects) ;
+
+   TARGET_OBJECTS on $(_target) += $(_objects) ;
 }
 
 rule system.make-in-directory-symlink
