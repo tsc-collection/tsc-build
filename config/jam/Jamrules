@@ -50,7 +50,11 @@
 # 
 
 rule use-project-library { use-project-libraries $(1) : $(2) ; }
+rule add-project-library { add-project-libraries $(1) : $(2) ; }
+
 rule use-top-library { use-top-libraries $(1) : $(2) ; }
+rule add-top-library { add-top-libraries $(1) : $(2) ; }
+
 rule use-project-jni-module { use-project-jni-modules $(1) : $(2) ; }
 rule use-local-library { use-local-libraries $(1) : $(2) ; }
 rule use-local-include { use-local-includes $(1) : $(2) ; }
@@ -441,6 +445,14 @@ rule generate-cc
 rule use-project-libraries
 {
   util.foreach-kind $(1) : system.use-project-libraries : include : lib : $(2) : $(3) : $(4) : $(5) : $(6) : $(7) : $(8) ;
+}
+
+rule add-project-libraries
+{
+}
+
+rule add-top-libraries
+{
 }
 
 rule use-top-libraries
