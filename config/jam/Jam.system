@@ -470,7 +470,7 @@ rule system.add-project-libraries
 
   local _objects = [ system.reloc-objects-for-libs $(1) : $(3) ] ;
 
-  system.update-target-objects $(_target) : $(_ojbects) ;
+  system.update-target-objects $(_target) : $(_objects) ;
   system.update-reloc-object $(_library) : $(_objects) ;
 }
 
