@@ -253,7 +253,7 @@ rule make-swig-java
 
   Depends $(_target) : $(_reloc) $(_build) $(_java_jar) ;
   Depends $(_java_jar) : $(_java_class) ;
-  Depends $(_java_class) : $(_java_source) ;
+  Depends $(_java_class) : $(_java_source) $(_extension) ;
   Depends $(_object) : $(_extension) ;
   Depends $(_extension) : $(_source) $(_java_source) ;
 
@@ -277,10 +277,11 @@ rule make-swig-java
 
   action.swig-java $(_extension) : $(_source) ;
   action.compile-cc $(_object) : $(_extension) ;
-  action.shared-module $(_target) : $(_reloc) $(_build) ;
-  action.polish-dll $(_target) ;
   action.compile-java $(_java_class) : $(_java_source) ;
   action.jar $(_java_jar) ;
+
+  action.shared-module $(_target) : $(_reloc) $(_build) ;
+  action.polish-dll $(_target) ;
 }
 
 rule make-swig-ruby
