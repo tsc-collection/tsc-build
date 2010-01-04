@@ -793,10 +793,13 @@ rule system.process-header
 {
   local _includes = $(1:D) $(INCLUDES) [ util.get-target-variable $(1) : TARGET_INCLUDES ] ;
   local _headers _item ;
+
   for _item in $(_includes)$(jam.SEPARATOR)$(2) {
     on $(_item) if $(HEADER_PROCESSED) != $(_item) {
       if ! [ util.is-absolute-path $(_item) ] {
-        util.clone-target-variable $(1) : $(_item) : HDRRULE HDRSCAN TARGET_INCLUDES ;
+        on $(1) HDRRULE on $(_item) = $(HDRRULE) ;
+        on $(1) HDRSCAN on $(_item) = $(HDRSCAN) ;
+        on $(1) TARGET_INCLUDES on $(_item) = $(TARGET_INCLUDES) ;
       }
       HEADER_PROCESSED on $(_item) = $(_item) ;
     }
