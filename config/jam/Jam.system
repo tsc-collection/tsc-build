@@ -792,19 +792,15 @@ rule system.mark-for-c-include-scan
 rule system.process-header 
 {
   local _includes = $(1:D) $(INCLUDES) [ util.get-target-variable $(1) : TARGET_INCLUDES ] ;
-  local _headers ;
-  local _item ;
+  local _headers _item ;
   for _item in $(_includes)$(jam.SEPARATOR)$(2) {
-    if ! [ util.is-absolute-path $(_item) ] {
-      _item = [ util.split $(_item) : "/\\" ] ;
-      _item = $(_item:J=$(jam.SEPARATOR)) ;
-
-      on $(_item) if ! $(HEADER_PROCESSED) {
+    on $(_item) if $(HEADER_PROCESSED) != $(_item) {
+      if ! [ util.is-absolute-path $(_item) ] {
         util.clone-target-variable $(1) : $(_item) : HDRRULE HDRSCAN TARGET_INCLUDES ;
-        HEADER_PROCESSED on $(_item) = true ;
       }
-      _headers += $(_item) ;
+      HEADER_PROCESSED on $(_item) = $(_item) ;
     }
+    _headers += $(_item) ;
   }
   NoCare $(_headers) ;
   Includes $(1) : $(_headers) ;
