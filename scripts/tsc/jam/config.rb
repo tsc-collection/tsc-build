@@ -96,6 +96,7 @@ module TSC
             _config.hash.each_pair do |_key, _value|
               _memo[_key.to_s.downcase] = _value
             end
+            _memo
           }
         end
       end
