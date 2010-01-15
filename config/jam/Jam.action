@@ -229,6 +229,7 @@ actions action.symlink
   rm_rf %w[ $(<) ]
 
   begin
+    touch '$(<:D)/$(>)'
     ln_sf '$(>)', '$(<)' 
   rescue NotImplementedError
     cp '$(<:D)/$(>)', '$(<)'
