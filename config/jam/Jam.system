@@ -358,7 +358,12 @@ rule system.make-shared-library
   local _target = $(system.BINDIR)$(jam.SEPARATOR)$(_lib_target) ;
 
   local _target_so = $(_target:S=.$(jam.DSO_EXTENTION)) ;
-  local _target_so_major = $(_target_so).$(project.LIB_MAJOR:E=0) ;
+  local _target_so_suffix = $(project.LIB_MAJOR:E=0) ;
+
+  if $(project.USE_PRODUCT_RELEASE_IN_DLL) = true {
+    _target_so_suffix = $(PRODUCT_RELEASE).$(_target_so_suffix) ;
+  }
+  local _target_so_major = $(_target_so).$(_target_so_suffix) ;
   local _target_export = $(_target:S=.exp) ;
 
   if $(project.DO_NOT_USE_LIBRARY_MAJOR) = true {
