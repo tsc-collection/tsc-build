@@ -430,7 +430,7 @@ rule system.make-shared-library
   LINKER on $(_target_so_major) = $(LINKER) ;
 
   action.shared-library $(_target_so_major) ;
-  action.polish-dll $(_target) ;
+  action.polish-dll $(_target) : $(_target_so_major) ;
 
   return $(_target_so_major) ;
 }
