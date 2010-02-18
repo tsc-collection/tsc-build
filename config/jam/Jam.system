@@ -1,4 +1,4 @@
-# vim:ft=jam:sw=2:
+# vim: ft=jam: sw=2: tw=0:
 #
 #            Tone Software Corporation BSD License ("License")
 # 
@@ -394,7 +394,7 @@ rule system.make-shared-library
     _lib_target = [ system.project-lib-target $(3) ] ;
 
     _soname_target_so = $(system.BINDIR)$(jam.SEPARATOR)$(_lib_target:S=.$(jam.DSO_EXTENTION)) ;
-    _soname_target_so_major = $(_soname_target_so)$(_target_so_major:S) ;
+    _soname_target_so_major = $(_soname_target_so).$(_target_so_suffix) ;
     
     if $(project.DO_NOT_USE_LIBRARY_MAJOR) = true {
       _soname_target_so_major = $(_soname_target_so) ;
@@ -470,7 +470,8 @@ rule system.make-static-library
 
 rule system.add-project-libraries
 {
-  local _library = [ util.make-path $(system.BINDIR) [ system.project-lib-target $(2) ] ] ;
+  local _item = [ util.normalize-suffix $(2) ] ;
+  local _library = [ util.make-path $(system.BINDIR) [ system.project-lib-target $(_item) ] ] ;
   local _target = [ util.get-target-variable $(_library) : LIBRARY_TARGET ] ;
 
   local _objects = [ system.reloc-objects-for-libs $(1) : $(3) ] ;

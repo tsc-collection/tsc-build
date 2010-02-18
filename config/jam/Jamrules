@@ -367,15 +367,24 @@ rule make-ruby-extension
 rule make-library
 {
   local _objects = [ system.make-objects $(2) ] ;
-  if $(project.MAKE_DLL) = true {
-    system.make-shared-library $(1) : $(_objects) : $(3) ;
+  local _type = $(project.MAKE_LIBRARY_DEFAULT) ;
+
+  if ! $(_type) {
+    if $(project.MAKE_DLL) = true {
+      _type = shared ;
+    }
+    else _type = static ;
   }
-  else system.make-static-library $(1) : $(_objects) : $(3) ;
+  return [ system.make-$(_type)-library $(1) : $(_objects) : $(3) : $(4) ] ;
 }
 
 rule make-shared-library
 {
-  return [ system.make-shared-library $(1) : [ system.make-objects $(2) ] : $(3) : $(4) ] ;
+  local _type = shared ;
+  if $(project.PROHIBIT_SHARED) = true {
+    _type = static ;
+  }
+  return [ system.make-$(_type)-library $(1) : [ system.make-objects $(2) ] : $(3) : $(4) ] ;
 }
 
 rule make-static-library
