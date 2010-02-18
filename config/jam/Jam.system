@@ -371,6 +371,7 @@ rule system.make-shared-library
   }
   LIBRARY_TARGET on $(_target) = $(_target_so_major) ;
 
+  local _soname_target = $(_target) ;
   local _soname_target_so = $(_target_so) ;
   local _soname_target_so_major = $(_target_so_major) ;
 
@@ -393,16 +394,20 @@ rule system.make-shared-library
   if $(3) {
     _lib_target = [ system.project-lib-target $(3) ] ;
 
-    _soname_target_so = $(system.BINDIR)$(jam.SEPARATOR)$(_lib_target:S=.$(jam.DSO_EXTENTION)) ;
+    _soname_target = $(system.BINDIR)$(jam.SEPARATOR)$(_lib_target) ;
+    _soname_target_so = $(_soname_target:S=.$(jam.DSO_EXTENTION)) ;
     _soname_target_so_major = $(_soname_target_so).$(_target_so_suffix) ;
     
     if $(project.DO_NOT_USE_LIBRARY_MAJOR) = true {
       _soname_target_so_major = $(_soname_target_so) ;
     }
-    system.assign-category lib : $(_soname_target_so) $(_soname_target_so_major) ;
+    system.assign-category lib : $(_soname_target) $(_soname_target_so) $(_soname_target_so_major) ;
   }
   util.set-target-variable $(_target_so_major) : TARGET_SONAME : $(_soname_target_so_major:D=) ;
 
+  if $(_target) != $(_soname_target) {
+    system.make-in-directory-symlink $(_soname_target) : $(_target) ;
+  }
   if $(_target_so) != $(_soname_target_so) {
     system.make-in-directory-symlink $(_target_so) : $(_soname_target_so) ;
   }
@@ -430,7 +435,7 @@ rule system.make-shared-library
   LINKER on $(_target_so_major) = $(LINKER) ;
 
   action.shared-library $(_target_so_major) ;
-  action.polish-dll $(_target) : $(_target_so_major) ;
+  action.polish-dll $(_target) : $(_soname_target_so_major) ;
 
   return $(_target_so_major) ;
 }
