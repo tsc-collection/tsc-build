@@ -179,4 +179,14 @@ rule mswin.make-system-dll
   mswin.make-dll $(1) : $(2) : $(3) : _WINDLL ;
 }
 
+rule platform.polish-dll
+{
+  action.windows.dll-manifest $(1) ;
+}
+
+rule platform.polish-program
+{
+  action.windows.program-manifest $(1) ;
+}
+
 core.load-config Jam.action.windows ;

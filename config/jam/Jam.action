@@ -126,16 +126,6 @@ actions action.shared-library-exports
   touch ' $(<) '.split
 }
 
-actions action.polish-dll
-{
-  touch ' $(<) '.split
-}
-
-actions action.polish-program
-{
-  touch ' $(<) '.split
-}
-
 actions action.import-library
 {
   touch ' $(<) '.split

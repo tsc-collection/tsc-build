@@ -52,7 +52,7 @@
 # These actions override the default ones to properly build DLLs on Windows 
 # under CYGWIN.
 
-actions action.polish-dll
+actions action.windows.dll-manifest
 {
   path_list = [ '$(COMPILE_PATH_LIST)', ]
   ENV['PATH'] = [ path_list, ENV['PATH'] ].flatten.compact.join(File::PATH_SEPARATOR) unless path_list.empty?
@@ -60,7 +60,7 @@ actions action.polish-dll
   exec *[ 'mt', '-nologo', '-manifest', '$(<).manifest', '-outputresource:$(<);2' ] if File.exist? '$(<).manifest'
 }
 
-actions action.polish-program
+actions action.windows.program-manifest
 {
   path_list = [ '$(COMPILE_PATH_LIST)', ]
   ENV['PATH'] = [ path_list, ENV['PATH'] ].flatten.compact.join(File::PATH_SEPARATOR) unless path_list.empty?
