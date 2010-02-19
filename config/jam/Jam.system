@@ -371,12 +371,6 @@ rule system.make-shared-library
   }
   LIBRARY_TARGET on $(_target) = $(_target_so_major) ;
 
-  local _soname_target = $(_target) ;
-  local _soname_target_so = $(_target_so) ;
-  local _soname_target_so_major = $(_target_so_major) ;
-
-  local _reloc = [ system.make-reloc-object $(_target) : $(2) ] ;
-
   system.associate-binary-targets $(_target_so_major:D=) : $(_item) ;
   system.associate-binary-targets $(_target:D=) : $(_item) ;
 
@@ -384,12 +378,9 @@ rule system.make-shared-library
   system.assign-category lib : $(_target) $(_target_so) $(_target_so_major) ;
   system.assign-category gen : $(_target_export) ;
 
-  Depends $(_target_export) : $(_target_so) ;
-  Depends $(_target) : $(_target_export) ;
-
-  LIBRARY_EXPORTS on $(_target) = $(_target_export) ;
-  action.shared-library-exports $(_target_export) : $(_target_so) ;
-  platform.make-import-library $(_target) : $(_target_so) ;
+  local _soname_target = $(_target) ;
+  local _soname_target_so = $(_target_so) ;
+  local _soname_target_so_major = $(_target_so_major) ;
 
   if $(3) {
     _lib_target = [ system.project-lib-target $(3) ] ;
@@ -401,26 +392,39 @@ rule system.make-shared-library
     if $(project.DO_NOT_USE_LIBRARY_MAJOR) = true {
       _soname_target_so_major = $(_soname_target_so) ;
     }
-    system.assign-category lib : $(_soname_target) $(_soname_target_so) $(_soname_target_so_major) ;
   }
   util.set-target-variable $(_target_so_major) : TARGET_SONAME : $(_soname_target_so_major:D=) ;
 
   if $(_target) != $(_soname_target) {
-    system.make-in-directory-symlink $(_soname_target) : $(_target) ;
+    Depends $(_target) : $(_soname_target) ;
+    Depends $(_soname_target) : $(_soname_target_so) ;
+
+    system.assign-category lib : $(_soname_target) $(_soname_target_so) $(_soname_target_so_major) ;
+
+    system.make-in-directory-symlink $(_target) : $(_soname_target) ;
+    system.make-in-directory-symlink $(_soname_target_so) : $(_target_so) ;
+    
+    if $(_soname_target_so) != $(_soname_target_so_major) {
+      Depends $(_soname_target_so) : $(_soname_target_so_major) ;
+      system.make-in-directory-symlink $(_soname_target_so_major) : $(_target_so_major) ;
+    }
   }
-  if $(_target_so) != $(_soname_target_so) {
-    system.make-in-directory-symlink $(_target_so) : $(_soname_target_so) ;
+
+  if $(_target_so) != $(_target_so_major) {
+    system.make-in-directory-symlink  $(_target_so) : $(_target_so_major) ;
   }
-  if $(_soname_target_so) != $(_soname_target_so_major) {
-    system.make-in-directory-symlink  $(_soname_target_so) : $(_soname_target_so_major) ;
-  }
-  if $(_soname_target_so_major) != $(_target_so_major) {
-    system.make-in-directory-symlink  $(_soname_target_so_major) : $(_target_so_major) ;
-  }
+
+  Depends $(_target) : $(_target_export) ;
+  Depends $(_target_export) : $(_target_so) ;
+
+  LIBRARY_EXPORTS on $(_target) = $(_target_export) ;
+  action.shared-library-exports $(_target_export) : $(_target_so_major) ;
+  platform.make-import-library $(_soname_target) : $(_soname_target_so_major) ;
 
   local _build = [ system.make-build-target ] ;
   Depends $(_target_so_major) : $(_build) ;
 
+  local _reloc = [ system.make-reloc-object $(_target) : $(2) ] ;
   system.update-target-objects $(_target_so_major) : $(_reloc) ;
 
   TARGET_IMPLIB on $(_target_so_major) = $(_target) ;
