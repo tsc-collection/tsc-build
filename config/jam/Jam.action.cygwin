@@ -62,7 +62,7 @@ actions action.shared-library-exports
   }
 }
 
-actions action.import-library
+actions action.cygwin.import-library
 {
   exec *[ 'dlltool', '--input-def', '$(LIBRARY_EXPORTS)', '--output-lib', '$(<)', '--dllname', '$(>:D=)' ]
 }

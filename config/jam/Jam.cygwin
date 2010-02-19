@@ -7,20 +7,9 @@
 # 
 # Author: Gennady Bystritsky
 
-rule platform.polish-dll
-{
-  # Doing nothing here by default. It can be overridden to achieve 
-  # platform dependent actions
-}
-
-rule platform.polish-program
-{
-  # Doing nothing here by default. It can be overridden to achieve 
-  # platform dependent actions
-}
-
 rule platform.make-import-library
 {
-  action.touch $(1) ;
+  action.cygwin.import-library $(1) : $(2) ;
 }
 
+core.load-config Jam.action.cygwin ;

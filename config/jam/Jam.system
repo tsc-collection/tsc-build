@@ -389,7 +389,7 @@ rule system.make-shared-library
 
   LIBRARY_EXPORTS on $(_target) = $(_target_export) ;
   action.shared-library-exports $(_target_export) : $(_target_so) ;
-  action.import-library $(_target) : $(_target_so) ;
+  platform.make-import-library $(_target) : $(_target_so) ;
 
   if $(3) {
     _lib_target = [ system.project-lib-target $(3) ] ;

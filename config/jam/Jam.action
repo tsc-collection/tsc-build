@@ -126,11 +126,6 @@ actions action.shared-library-exports
   touch ' $(<) '.split
 }
 
-actions action.import-library
-{
-  touch ' $(<) '.split
-}
-
 # See the above note.
 #
 actions together action.static-library
