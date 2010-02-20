@@ -7,6 +7,9 @@
 # 
 # Author: Gennady Bystritsky
 
-rule platform.polish-dll
+rule platform.make-import-library
 {
+  system.update-target-objects $(1) : $(2) ;
+  action.static-library $(1) ;
 }
+
