@@ -313,24 +313,10 @@ rule system.assign-category
 
 rule system.make-empty-static-library
 {
-  local _target = $(1) ;
-  local _object = $(1).$(jam.OBJ_EXTENTION) ;
-  local _source = $(1).c ;
+  system.assign-category lib : $(1) ;
+  system.update-target-objects $(1) : [ system.make-build-target ] ;
 
-  Depends $(_object) : $(_source) ;
-
-  system.assign-category gen : $(_source) ;
-  system.assign-category obj : $(_object) ;
-  system.assign-category lib : $(_target) ;
-
-  system.ensure-directory-for $(_target) ;
-  system.ensure-directory-for $(_source) ;
-
-  action.empty-c-source $(_source) ;
-  action.compile-c $(_object) : $(_source) ;
-
-  system.update-target-objects $(_target) : $(_object) ;
-  action.static-library $(_target) : $(_object) ;
+  action.static-library $(1) ;
 }
 
 rule system.library-target
