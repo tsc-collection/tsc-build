@@ -311,24 +311,6 @@ rule system.assign-category
   action.remove $(_clean_target) : $(2) ;
 }
 
-rule system.associate-binary-targets 
-{
-  system.associate $(system.BINDIR)$(jam.SEPARATOR)$(1) : $(system.BINDIR)$(jam.SEPARATOR)$(2) ;
-}
-
-rule system.associate
-{
-  local _target = $(1[1]) ;
-  local _source = $(2[1]) ;
-
-  NotFile $(_source) ;
-  Depends $(_target) : $(_source) ;
-
-  util.clone-target-variable $(_source) : $(_target) : 
-    TARGET_LIBDIRS TARGET_LIBDIRS_I TARGET_LIBS TARGET_SYSLIBS TARGET_STATIC_LIBS 
-  ;
-}
-
 rule system.make-empty-static-library
 {
   local _library = $(1) ;
@@ -371,8 +353,7 @@ rule system.make-shared-library
   }
   LIBRARY_TARGET on $(_target) = $(_target_so_major) ;
 
-  system.associate-binary-targets $(_target_so_major:D=) : $(_item) ;
-  system.associate-binary-targets $(_target:D=) : $(_item) ;
+  system.propagate-proxy-settings $(_target_so_major) : $(_item) ;
 
   system.ensure-directory-for $(_target) ;
   system.assign-category lib : $(_target) $(_target_so) $(_target_so_major) ;
@@ -465,7 +446,7 @@ rule system.make-static-library
 
   system.make-reloc-object $(_soname_target) : $(2) ;
 
-  system.associate-binary-targets $(_target:D=) : $(_item) ;
+  system.propagate-proxy-settings $(_target) : $(_item) ;
   system.ensure-directory-for $(_target) ;
   system.assign-category lib : $(_target) ;
 
@@ -562,11 +543,9 @@ rule system.make-program
   local _target = $(system.BINDIR)$(jam.SEPARATOR)$(1) ;
 
   if $(jam.EXE_EXTENTION) {
-    _target_with_extention = $(_target).$(jam.EXE_EXTENTION) ;
-    system.associate $(_target_with_extention) : $(_target) ;
-
-    _target = $(_target_with_extention) ;
+    _target = $(_target).$(jam.EXE_EXTENTION) ;
   }
+  system.propagate-proxy-settings $(_target) : $(1) ;
 
   local _reloc = [ system.make-reloc-object $(_target) : [ system.make-objects $(2) ] ] ;
 
@@ -881,9 +860,57 @@ rule system.scan-for-jni.cpp
   system.scan-for-jni.c $(1) ;
 }
 
+rule system.make-proxy
+{
+  local _proxy = [ util.join proxy $(1) : @ ] ;
+  NotFile $(_proxy) ;
+
+  return $(_proxy) ;
+} 
+
+rule system.target-proxy
+{
+  local _item = [ util.normalize-suffix $(1) ] ;
+  return [ system.make-proxy $(system.BINDIR)$(jam.SEPARATOR)$(_item) ] ;
+}
+
+rule system.project-lib-target-proxy
+{
+  local _item = [ util.normalize-suffix $(2) ] ;
+  return [ system.make-proxy [ util.make-path [ system.project-lib-dir $(1) : $(_item) ] $(_item) ] ] ;
+}
+
+rule system.update-proxy-settings
+{
+  VARLIST on $(1) += $(2) ;
+}
+
+rule system.propagate-proxy-settings
+{
+  local _target = $(1) ;
+  local _proxy = [ system.target-proxy $(2) ] ;
+  local _items _item _value ;
+
+  on $(_proxy) _items = $(DEPENDS) ;
+  for _item in $(_items) {
+    Depends $(_target) : $(_item) ;
+  }
+
+  on $(_proxy) _items = $(CATEGORIES) ;
+  for _item in $(_items) {
+    system.assign-category $(_item) : $(_target) ;
+  }
+
+  on $(_proxy) _items = $(VARLIST) ;
+  for _item in $(_items) {
+    on $(_proxy) _value = $($(_item)) ; 
+    $(_item) on $(_target) += $(_value) ;
+  }
+}
+
 rule system.use-project-libraries
 {
-  local _target = $(system.BINDIR)$(jam.SEPARATOR)$(1) ;
+  local _target = [ system.target-proxy $(1) ] ;
   local _offset = $(3) ;
   
   _offset ?= $(2) ;
@@ -891,6 +918,8 @@ rule system.use-project-libraries
   if $(4) {
     system.setup-project-libraries $(_target) : $(_offset) : : $(4) ;
   }
+  system.update-proxy-settings $(_target) : TARGET_OPTIONS ;
+
   local _parameter _option _suffix ;
   for _parameter in 5 6 7 8 9 {
     _option = $($(_parameter)) ;
@@ -909,20 +938,23 @@ rule system.setup-project-libraries
   for _v in LIBS SYSLIBS LIBDIRS STATIC_LIBS {
     _v_$(_v) = [ util.join TARGET $(_v) $(3) : _ ] ;
   }
-  local _item _library _libdirs _libs _syslibs ;
+  system.update-proxy-settings $(1) : $(_v_LIBS) $(_v_SYSLIBS) $(_v_LIBDIRS) $(_v_STATIC_LIBS) ;
+
+  local _item _library _proxy _libdirs _libs _syslibs ;
   for _item in $(4) {
     _library = [ system.project-lib-target-path $(2) : $(_item) ] ;
+    _proxy = [ system.project-lib-target-proxy $(2) : $(_item) ] ;
 
-    _libdirs = [ util.get-target-variable $(_library) : TARGET_LIBDIRS ] ;
-    _libs = [ util.get-target-variable $(_library) : TARGET_LIBS ] ;
-    _syslibs = [ util.get-target-variable $(_library) : TARGET_SYSLIBS ] ;
+    on $(_proxy) _libdirs = $(TARGET_LIBDIRS) ;
+    on $(_proxy) _libs = $(TARGET_LIBS) ;
+    on $(_proxy) _syslibs = $(TARGET_SYSLIBS) ;
     
-    util.add-target-variable $(1) : $(_v_LIBS) : [ system.project-lib-name $(_item) ] $(_libs) ;
-    util.add-target-variable $(1) : $(_v_SYSLIBS) : $(_syslibs) ;
-    util.add-target-variable $(1) : $(_v_STATIC_LIBS) : $(_library) ;
-    util.add-target-variable $(1) : $(_v_LIBDIRS) : $(_library:D) $(_libdirs) ;
+    $(_v_LIBS) on $(1) += [ system.project-lib-name $(_item) ] $(_libs) ;
+    $(_v_SYSLIBS) on $(1) += $(_syslibs) ;
+    $(_v_STATIC_LIBS) on $(1) += $(_library) ;
+    $(_v_LIBDIRS) on $(1) += $(_library:D) $(_libdirs) ;
 
-    Depends $(1) : $(_library) ;
+    DEPENDS on $(1) += $(_library) ;
   }
 }
 
@@ -977,17 +1009,19 @@ rule system.use-project-jni-module.xml
 
 rule system.use-local-libraries
 {
-  local _target = $(system.BINDIR)$(jam.SEPARATOR)$(1) ;
+  local _target = [ system.target-proxy $(1) ] ;
+  system.update-proxy-settings $(_target) : LIBS SYSLIBS LIBDIRS STATIC_LIBS ;
+
   local _item _lib_target _library ;
   for _item in $(2) {
     _lib_target = [ system.project-lib-target $(_item:B) ] ;
     _library = [ util.normalize-path $(system.BINDIR)$(jam.SEPARATOR)$(_item)$(jam.SEPARATOR)$(_lib_target) ] ;
 
-    util.add-target-variable $(_target) : TARGET_LIBDIRS : $(_library:D) ;
-    util.add-target-variable $(_target) : TARGET_STATIC_LIBS : $(_library) ;
-    util.add-target-variable $(_target) : TARGET_LIBS : [ system.project-lib-name $(_item:B) ]  ;
+    TARGET_LIBDIRS on $(_target) += $(_library:D) ;
+    TARGET_STATIC_LIBS on $(_target) += $(_library) ;
+    TARGET_LIBS on $(_target) += [ system.project-lib-name $(_item:B) ]  ;
 
-    Depends $(_target) : $(_library) ;
+    DEPENDS on $(_target) += $(_library) ;
   }
 }
 
@@ -1013,14 +1047,15 @@ rule system.ensure-system-includes.cpp
 
 rule system.use-product
 {
-  local _target = $(system.BINDIR)$(jam.SEPARATOR)$(1) ;
+  local _target = [ system.target-proxy $(1) ] ;
+  system.update-proxy-settings $(_target) : LIBS SYSLIBS LIBDIRS STATIC_LIBS ;
 
-  util.add-target-variable $(_target) : TARGET_LIBDIRS : $(2) ;
-  util.add-target-variable $(_target) : TARGET_LIBS : $(3) ;
-  util.add-target-variable $(_target) : TARGET_SYSLIBS : $(4) ;
+  TARGET_LIBDIRS on $(_target) += $(2) ;
+  TARGET_LIBS on $(_target) += $(3) ;
+  TARGET_SYSLIBS on $(_target) += $(4) ;
 
   if $(8) {
-    system.assign-category $(8) : $(_target) ;
+    CATEGORIES on $(_target) += $(8) ;
   }
 }
 

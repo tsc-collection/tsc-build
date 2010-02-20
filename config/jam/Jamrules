@@ -80,7 +80,7 @@ rule setup-script
 {
   local _target = $(system.SRCDIR)$(jam.SEPARATOR)$(1) ;
 
-  system.associate $(_target) : $(system.BINDIR)$(jam.SEPARATOR)$(2:E=$(1)) ;
+  system.propagate-proxy-settings $(_target) : $(2:E=$(1)) ;
 
   system.invoke run@$(system.DOT_TARGET) : $(_target) : $(3) : $(4) ;
   system.invoke test@$(system.DOT_TARGET) : $(_target) : test $(3) : $(4) ;
@@ -92,7 +92,7 @@ rule setup-ruby-script
 {
   local _target = $(system.SRCDIR)$(jam.SEPARATOR)$(1) ;
 
-  system.associate $(_target) : $(system.BINDIR)$(jam.SEPARATOR)$(2:E=$(1)) ;
+  system.propagate-proxy-settings $(_target) : $(2:E=$(1)) ;
 
   action.invoke-ruby run@$(system.DOT_TARGET) : $(_target) : $(3) : $(4) ;
   action.invoke-ruby test@$(system.DOT_TARGET) : $(_target) : test $(3) : $(4) ;
@@ -191,7 +191,7 @@ rule make-jni-module
   local _reloc = [ system.make-reloc-object $(_target) : [ system.make-objects $(2) ] ] ;
 
   system.ensure-directory-for $(_target) ;
-  system.associate-binary-targets lib$(1).$(jam.DSO_EXTENTION) : $(1) ;
+  system.propagate-proxy-settings $(_target) : $(1) ;
   system.assign-category jni : $(_target) ;
 
   util.add-target-variable $(_objects) : TARGET_INCLUDES :
@@ -210,7 +210,7 @@ rule make-shared-module
   local _reloc = [ system.make-reloc-object $(_target) : [ system.make-objects $(2) ] ] ;
 
   system.ensure-directory-for $(_target) ;
-  system.associate-binary-targets $(1).$(jam.DSO_EXTENTION) : $(1) ;
+  system.propagate-proxy-settings $(_target) : $(1) ;
   system.assign-category exe : $(_target) ;
 
   local _build = [ system.make-build-target ] ;
@@ -244,7 +244,7 @@ rule make-swig-java
 
   system.ensure-directory-for $(_target) $(_extension) $(_java_source) ;
 
-  system.associate $(_target) : [ util.make-path $(system.BINDIR) $(1) ] ;
+  system.propagate-proxy-settings $(_target) : $(1) ;
   system.mark-for-c-include-scan $(_source) ;
 
   system.assign-category exe : $(_target) ;
@@ -295,7 +295,7 @@ rule make-swig-ruby
   local _build = [ system.make-build-target ] ;
 
   system.ensure-directory-for $(_target) $(_extension) ;
-  system.associate-binary-targets $(1).$(jam.DSO_EXTENTION) : $(1) ;
+  system.propagate-proxy-settings $(_target) : $(1) ;
   system.mark-for-c-include-scan $(_source) ;
 
   system.assign-category exe : $(_target) ;
@@ -331,7 +331,7 @@ rule make-ruby-extension
   local _reloc = [ system.make-reloc-object $(_target) : $(_object) [ system.make-objects $(3) ] ] ;
 
   system.ensure-directory-for $(_target) $(_swig_interface) $(_swig_wrap) ;
-  system.associate-binary-targets $(1).$(jam.DSO_EXTENTION) : $(1) ;
+  system.propagate-proxy-settings $(_target) : $(1) ;
   system.assign-category exe : $(_target) ;
 
   util.foreach $(_class_interfaces) $(_class_implementations) $(_swig_base) : system.mark-for-c-include-scan ;
