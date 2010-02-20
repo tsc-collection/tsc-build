@@ -21,6 +21,6 @@ rule platform.polish-program
 
 rule platform.make-import-library
 {
-  action.touch $(1) ;
+  system.make-empty-static-library $(1) ;
 }
 

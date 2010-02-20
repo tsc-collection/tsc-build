@@ -337,8 +337,11 @@ rule system.library-target
 {
   local _item = [ util.normalize-suffix $(1) ] ;
   local _lib_target = [ system.project-lib-target $(_item) ] ;
+  local _target = $(system.BINDIR)$(jam.SEPARATOR)$(_lib_target) ;
 
-  return $(system.BINDIR)$(jam.SEPARATOR)$(_lib_target) ;
+  TARGET_PROXY on $(_target) = [ system.make-proxy $(system.BINDIR)$(jam.SEPARATOR)$(_item) ] ;
+
+  return $(_target) ;
 }
 
 rule system.make-shared-library
@@ -358,7 +361,7 @@ rule system.make-shared-library
   }
   LIBRARY_TARGET on $(_target) = $(_target_so_major) ;
 
-  system.propagate-proxy-settings $(_target_so_major) : $(1) ;
+  system.propagate-proxy-settings $(_target_so_major) : : $(_target) ;
 
   system.ensure-directory-for $(_target) ;
   system.assign-category lib : $(_target) $(_target_so) $(_target_so_major) ;
@@ -435,6 +438,8 @@ rule system.make-static-library
   local _target = $(1) ;
   local _soname_target = $(_target) ;
 
+  system.propagate-proxy-settings $(_target) ;
+
   if $(3) {
     _target = [ system.library-target $(3) ] ;
 
@@ -447,7 +452,6 @@ rule system.make-static-library
 
   system.make-reloc-object $(_soname_target) : $(2) ;
 
-  system.propagate-proxy-settings $(_target) : $(1) ;
   system.ensure-directory-for $(_target) ;
   system.assign-category lib : $(_target) ;
 
@@ -889,7 +893,16 @@ rule system.update-proxy-settings
 rule system.propagate-proxy-settings
 {
   local _target = $(1) ;
-  local _proxy = [ system.target-proxy $(2) ] ;
+  local _proxy ;
+
+  if $(2) {
+    _proxy = [ system.target-proxy $(2) ] ;
+  }
+  else on $(3:E=$(_target)) _proxy = $(TARGET_PROXY) ;
+
+  if ! $(_proxy) {
+    return ;
+  }
   local _items _item _value ;
 
   on $(_proxy) _items = $(DEPENDS) ;
