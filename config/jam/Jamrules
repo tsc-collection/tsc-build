@@ -281,7 +281,7 @@ rule make-swig-java
   action.jar $(_java_jar) ;
 
   action.shared-module $(_target) : $(_reloc) $(_build) ;
-  action.polish-dll $(_target) ;
+  platform.polish-dll $(_target) ;
 }
 
 rule make-swig-ruby

@@ -126,6 +126,7 @@ core.ensure-defined
 core.load-config Jam.util ;
 core.load-config Jam.platform ;
 core.load-config Jam.system ;
+core.load-config Jam.deprecated ;
 
 system.setup-top-dirs ;
 

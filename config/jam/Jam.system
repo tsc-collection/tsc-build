@@ -1010,7 +1010,7 @@ rule system.use-project-jni-module.xml
 rule system.use-local-libraries
 {
   local _target = [ system.target-proxy $(1) ] ;
-  system.update-proxy-settings $(_target) : LIBS SYSLIBS LIBDIRS STATIC_LIBS ;
+  system.update-proxy-settings $(_target) : TARGET_LIBS TARGET_SYSLIBS TARGET_LIBDIRS TARGET_STATIC_LIBS ;
 
   local _item _lib_target _library ;
   for _item in $(2) {
@@ -1048,7 +1048,7 @@ rule system.ensure-system-includes.cpp
 rule system.use-product
 {
   local _target = [ system.target-proxy $(1) ] ;
-  system.update-proxy-settings $(_target) : LIBS SYSLIBS LIBDIRS STATIC_LIBS ;
+  system.update-proxy-settings $(_target) : TARGET_LIBS TARGET_SYSLIBS TARGET_LIBDIRS TARGET_STATIC_LIBS ;
 
   TARGET_LIBDIRS on $(_target) += $(2) ;
   TARGET_LIBS on $(_target) += $(3) ;
