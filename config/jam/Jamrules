@@ -366,6 +366,7 @@ rule make-ruby-extension
 
 rule make-library
 {
+  local _target = [ system.library-target $(1) ] ;
   local _objects = [ system.make-objects $(2) ] ;
   local _type = $(project.MAKE_LIBRARY_DEFAULT) ;
 
@@ -375,39 +376,45 @@ rule make-library
     }
     else _type = static ;
   }
-  return [ system.make-$(_type)-library $(1) : $(_objects) : $(3) : $(4) ] ;
+  return [ system.make-$(_type)-library $(_target) : $(_objects) : $(3) : $(4) ] ;
 }
 
 rule make-shared-library
 {
+  local _target = [ system.library-target $(1) ] ;
+  local _objects = [ system.make-objects $(2) ] ;
   local _type = shared ;
+
   if $(project.PROHIBIT_SHARED) = true {
     _type = static ;
   }
-  return [ system.make-$(_type)-library $(1) : [ system.make-objects $(2) ] : $(3) : $(4) ] ;
+  return [ system.make-$(_type)-library $(_target) : $(_objects) : $(3) : $(4) ] ;
 }
 
 rule make-static-library
 {
-  return [ system.make-static-library $(1) : [ system.make-objects $(2) ] ] ;
+  local _target = [ system.library-target $(1) ] ;
+  local _objects = [ system.make-objects $(2) ] ;
+
+  return [ system.make-static-library $(_target) : $(_objects) ] ;
 }
 
 rule make-empty-static-library
 {
-  local _lib_target = [ system.project-lib-target $(1) ] ;
-  local _target = $(system.BINDIR)$(jam.SEPARATOR)$(_lib_target) ;
-
-  system.ensure-directory-for $(_target) ;
+  local _target = [ system.library-target $(1) ] ;
   system.make-empty-static-library $(_target) ;
 }
 
 rule make-merged-library
 {
+  local _target = [ system.library-target $(1) ] ;
   local _objects = [ system.reloc-objects-for-libs $(4) : $(2) ] ;
+  local _type = static ;
+
   if $(project.MAKE_DLL) = true {
-    system.make-shared-library $(1) : $(_objects) : $(3) ;
+    _type = shared ;
   }
-  else system.make-static-library $(1) : $(_objects) ;
+  system.make-$(_type)-library $(_target) : $(_objects) ;
 }
 
 rule make-ant-project

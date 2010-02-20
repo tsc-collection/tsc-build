@@ -313,7 +313,7 @@ rule system.assign-category
 
 rule system.make-empty-static-library
 {
-  local _library = $(1) ;
+  local _target = $(1) ;
   local _object = $(1).$(jam.OBJ_EXTENTION) ;
   local _source = $(1).c ;
 
@@ -321,24 +321,29 @@ rule system.make-empty-static-library
 
   system.assign-category gen : $(_source) ;
   system.assign-category obj : $(_object) ;
-  system.assign-category lib : $(_library) ;
+  system.assign-category lib : $(_target) ;
 
+  system.ensure-directory-for $(_target) ;
   system.ensure-directory-for $(_source) ;
 
   action.empty-c-source $(_source) ;
   action.compile-c $(_object) : $(_source) ;
 
-  system.update-target-objects $(_library) : $(_object) ;
-  action.static-library $(_library) : $(_object) ;
+  system.update-target-objects $(_target) : $(_object) ;
+  action.static-library $(_target) : $(_object) ;
+}
+
+rule system.library-target
+{
+  local _item = [ util.normalize-suffix $(1) ] ;
+  local _lib_target = [ system.project-lib-target $(_item) ] ;
+
+  return $(system.BINDIR)$(jam.SEPARATOR)$(_lib_target) ;
 }
 
 rule system.make-shared-library
 {
-  local _item = [ util.normalize-suffix $(1) ] ;
-
-  local _lib_target = [ system.project-lib-target $(_item) ] ;
-  local _target = $(system.BINDIR)$(jam.SEPARATOR)$(_lib_target) ;
-
+  local _target = $(1) ;
   local _target_so = $(_target:S=.$(jam.DSO_EXTENTION)) ;
   local _target_so_suffix = $(project.LIB_MAJOR:E=0) ;
 
@@ -353,7 +358,7 @@ rule system.make-shared-library
   }
   LIBRARY_TARGET on $(_target) = $(_target_so_major) ;
 
-  system.propagate-proxy-settings $(_target_so_major) : $(_item) ;
+  system.propagate-proxy-settings $(_target_so_major) : $(1) ;
 
   system.ensure-directory-for $(_target) ;
   system.assign-category lib : $(_target) $(_target_so) $(_target_so_major) ;
@@ -427,15 +432,11 @@ rule system.make-shared-library
 
 rule system.make-static-library
 {
-  local _item = [ util.normalize-suffix $(1) ] ;
-
-  local _lib_target = [ system.project-lib-target $(_item) ] ;
-  local _target = $(system.BINDIR)$(jam.SEPARATOR)$(_lib_target) ;
+  local _target = $(1) ;
   local _soname_target = $(_target) ;
 
   if $(3) {
-    _lib_target = [ system.project-lib-target $(3) ] ;
-    _target = $(system.BINDIR)$(jam.SEPARATOR)$(_lib_target) ;
+    _target = [ system.library-target $(3) ] ;
 
     if $(_target) != $(_soname_target) {
       system.assign-category lib : $(_soname_target) ;
@@ -446,7 +447,7 @@ rule system.make-static-library
 
   system.make-reloc-object $(_soname_target) : $(2) ;
 
-  system.propagate-proxy-settings $(_target) : $(_item) ;
+  system.propagate-proxy-settings $(_target) : $(1) ;
   system.ensure-directory-for $(_target) ;
   system.assign-category lib : $(_target) ;
 
