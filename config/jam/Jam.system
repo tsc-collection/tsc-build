@@ -377,7 +377,7 @@ rule system.make-shared-library
     system.assign-category lib : $(_soname_target) $(_soname_target_so) $(_soname_target_so_major) ;
 
     system.make-in-directory-symlink $(_target) : $(_soname_target) ;
-    system.make-in-directory-symlink $(_soname_target_so) : $(_target_so) ;
+    system.make-in-directory-symlink $(_target_so) : $(_soname_target_so) ;
     
     if $(_soname_target_so) != $(_soname_target_so_major) {
       Depends $(_soname_target_so) : $(_soname_target_so_major) ;
@@ -386,7 +386,7 @@ rule system.make-shared-library
   }
 
   if $(_target_so) != $(_target_so_major) {
-    system.make-in-directory-symlink  $(_target_so) : $(_target_so_major) ;
+    system.make-in-directory-symlink  $(_soname_target_so) : $(_target_so_major) ;
   }
 
   Depends $(_target) : $(_target_export) ;
@@ -399,7 +399,7 @@ rule system.make-shared-library
   local _build = [ system.make-build-target ] ;
   Depends $(_target_so_major) : $(_build) ;
 
-  local _reloc = [ system.make-reloc-object $(_target) : $(2) ] ;
+  local _reloc = [ system.make-reloc-object $(_soname_target) : $(2) ] ;
   system.update-target-objects $(_target_so_major) : $(_reloc) ;
 
   TARGET_IMPLIB on $(_target_so_major) = $(_target) ;
