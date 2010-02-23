@@ -1,4 +1,5 @@
 #!/usr/bin/env ruby
+# vi: sw=2:
 =begin
  
              Tone Software Corporation BSD License ("License")
@@ -139,24 +140,32 @@ class Application < TSC::Application
     jam_options = []
     jam_project_options = []
 
-    if File.file? core_config_file
-      jam_options = [
-        '-f' + core_config_file,
-        '-sRUBY=' + (defined?(RUBY_PATH) ? RUBY_PATH : 'ruby'),
-        '-sRUBY_PLATFORM=' + RUBY_PLATFORM,
-        '-score.PROJECT_OFFSET=' + project_offset,
-        '-score.CWD_FROM_TOP=' + cwd_from_top.join(' '),
-        '-score.CONFIG=' + config_location, 
-        '-score.JAM=' + File.join(expanded_script_location, script_name),
-        '-score.CWD=' + Dir.getwd,
-        '-score.TOP=' + top.join(' ')
-      ]
-      if project_config_file
-        load project_config_file, false
-        arity = JamConfig.allocate.method(:initialize).arity
-        config = (arity == 1 ? JamConfig.new(top) : JamConfig.new)
-        jam_project_options = config.options
+    platform = TSC::Platform.current
+
+    begin
+      if File.file? core_config_file
+        jam_options = [
+          '-f' + core_config_file,
+          '-sRUBY=' + (defined?(RUBY_PATH) ? RUBY_PATH : 'ruby'),
+          '-sRUBY_PLATFORM=' + RUBY_PLATFORM,
+          '-splatform.NAME=' + platform.name,
+          '-splatform.LIBPATH_NAME=' + platform.driver.library_path_name,
+          '-score.PROJECT_OFFSET=' + project_offset,
+          '-score.CWD_FROM_TOP=' + cwd_from_top.join(' '),
+          '-score.CONFIG=' + config_location, 
+          '-score.JAM=' + File.join(expanded_script_location, script_name),
+          '-score.CWD=' + Dir.getwd,
+          '-score.TOP=' + top.join(' ')
+        ]
+        if project_config_file
+          load project_config_file, false
+          arity = JamConfig.allocate.method(:initialize).arity
+          config = (arity == 1 ? JamConfig.new(top) : JamConfig.new)
+          jam_project_options = config.options
+        end
       end
+    rescue => error
+      puts TSC::Error.textualize(error, :level => :notice, :backtrace => verbose?)
     end
 
     unless ENV.has_key? 'JAM_NOTQUICK'

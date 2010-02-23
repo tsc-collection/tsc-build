@@ -171,11 +171,7 @@ actions action.invoke
     key, value = item.split('=')
     ENV[key] = value
   }
-  ENV['DYLD_LIBRARY_PATH'] = '$(LD_LIBRARY_PATH-$(>))'
-  ENV['LD_LIBRARY_PATH'] = '$(LD_LIBRARY_PATH-$(>))'
-  ENV['SHLIB_PATH'] = '$(LD_LIBRARY_PATH-$(>))'
-  ENV['LIBPATH'] = '$(LD_LIBRARY_PATH-$(>))'
-  ENV['PATH'] = ENV['PATH'] + ':' + '$(LD_LIBRARY_PATH-$(>))'
+  TSC::Path['$(platform.LIBPATH_NAME)'].load.before('$(LD_LIBRARY_PATH-$(>))').install
   ENV['JAM_SRCDIR'] = '$(SRCDIR)'
 
   mkdir_p '$(BINDIR)'
