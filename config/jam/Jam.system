@@ -371,7 +371,6 @@ rule system.make-shared-library
   util.set-target-variable $(_target_so_major) : TARGET_SONAME : $(_soname_target_so_major:D=) ;
 
   if $(_target) != $(_soname_target) {
-    Depends $(_target) : $(_soname_target) ;
     Depends $(_soname_target) : $(_soname_target_so) ;
 
     system.assign-category lib : $(_soname_target) $(_soname_target_so) $(_soname_target_so_major) ;
@@ -380,13 +379,12 @@ rule system.make-shared-library
     system.make-in-directory-symlink $(_target_so) : $(_soname_target_so) ;
     
     if $(_soname_target_so) != $(_soname_target_so_major) {
-      Depends $(_soname_target_so) : $(_soname_target_so_major) ;
+      system.make-in-directory-symlink  $(_soname_target_so) : $(_soname_target_so_major) ;
       system.make-in-directory-symlink $(_soname_target_so_major) : $(_target_so_major) ;
     }
   }
-
-  if $(_target_so) != $(_target_so_major) {
-    system.make-in-directory-symlink  $(_soname_target_so) : $(_target_so_major) ;
+  else if $(_target_so) != $(_target_so_major) {
+    system.make-in-directory-symlink  $(_target_so) : $(_target_so_major) ;
   }
 
   Depends $(_target) : $(_target_export) ;

@@ -384,6 +384,10 @@ rule make-shared-library
   local _target = [ system.library-target $(1) ] ;
   local _objects = [ system.make-objects $(2) ] ;
   local _type = shared ;
+  local _helper_target = [ util.normalize-suffix $(1) ] ;
+
+  NotFile $(_helper_target) ;
+  Depends $(_helper_target) : $(_target) ;
 
   if $(project.PROHIBIT_SHARED) = true {
     _type = static ;
