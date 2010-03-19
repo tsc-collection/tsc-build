@@ -584,10 +584,10 @@ rule use-java-comm
 rule use-unit-test
 {
   use-product $(1) $(2) $(3) $(4) $(5) $(6) $(7) $(8) $(9)
-    : $(UNITTEST_DIRS)$(jam.SEPARATOR)lib $(UNITTEST_DIRS)$(jam.SEPARATOR)lib64
+    : $(UNITTEST_LIBDIR:E=$(UNITTEST_DIRS)$(jam.SEPARATOR)$(BUILD_ABILIB:E=lib))
     : $(UNITTEST_LIBS)
     :
-    : $(UNITTEST_DIRS)$(jam.SEPARATOR)include
+    : $(UNITTEST_INCLUDE:E=$(UNITTEST_DIRS)$(jam.SEPARATOR)include)
     : $(UNITTEST_DEFINES)
     : $(UNITTEST_JARS)
     : test
