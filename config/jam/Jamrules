@@ -366,8 +366,6 @@ rule make-ruby-extension
 
 rule make-library
 {
-  local _target = [ system.library-target $(1) ] ;
-  local _objects = [ system.make-objects $(2) ] ;
   local _type = $(project.MAKE_LIBRARY_DEFAULT) ;
 
   if ! $(_type) {
@@ -376,7 +374,7 @@ rule make-library
     }
     else _type = static ;
   }
-  return [ system.make-$(_type)-library $(_target) : $(_objects) : $(3) : $(4) ] ;
+  return [ make-$(_type)-library $(1) : $(2) : $(3) : $(4) : $(5) : $(6) : $(7) : $(8) : $(9) ] ;
 }
 
 rule make-shared-library
