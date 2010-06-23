@@ -50,10 +50,16 @@
 # 
 
 rule use-project-library { use-project-libraries $(1) : $(2) ; }
-rule add-project-library { add-project-libraries $(1) : $(2) ; }
+rule add-project-library { add-project-libraries $(1) : $(2) : $(3) ; }
 
 rule use-top-library { use-top-libraries $(1) : $(2) ; }
-rule add-top-library { add-top-libraries $(1) : $(2) ; }
+rule add-top-library { add-top-libraries $(1) : $(2) : $(3) ; }
+
+rule add-project-library-without { add-project-libraries $(1) : $(2) : $(3) ; }
+rule add-project-libraries-without { add-project-libraries $(1) : $(2) : $(3) ; }
+
+rule add-top-library-without { add-top-libraries $(1) : $(2) : $(3) ; }
+rule add-top-libraries-without { add-top-libraries $(1) : $(2) : $(3) ; }
 
 rule use-project-jni-module { use-project-jni-modules $(1) : $(2) ; }
 rule use-local-library { use-local-libraries $(1) : $(2) ; }
@@ -468,12 +474,12 @@ rule use-project-libraries
 
 rule add-project-libraries
 {
-  system.add-project-libraries lib : $(1) : $(2) ;
+  system.add-project-libraries lib : $(1) : $(2) : $(3) ;
 }
 
 rule add-top-libraries
 {
-  system.add-project-libraries : $(1) : $(2) ;
+  system.add-project-libraries : $(1) : $(2) : $(3) ;
 }
 
 rule use-top-libraries

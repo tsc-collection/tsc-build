@@ -97,7 +97,14 @@ actions together action.generate-build-file
 
 actions together action.reloc
 {
-  open('$(<)', 'w').puts %w[ $(CONTENT) ]
+  open('$(<)', 'w') do |_io|
+    _io.puts %w[ $(CONTENT) ]
+    _io.puts(
+      %w[ $(EXCLUDE) ].map do |_entry|
+        _entry + " -"
+      end
+    )
+  end
 }
 
 # For the next 2 actions: on Windows, $(core.TOPDIR) ends with \. Ruby
@@ -146,18 +153,22 @@ actions action.ranlib
 
 actions together action.shared-module
 {
+  require 'tsc/jam/expand-reloc.rb'
+
   path_list = [ '$(COMPILE_PATH_LIST)', ]
   ENV['PATH'] = [ path_list, ENV['PATH'] ].flatten.compact.join(File::PATH_SEPARATOR) unless path_list.empty?
 
-  exec *[ '$(LINKER)', '$(DLL_FLAGS)', '$(DLL_LINKER_FLAGS)', '$(LINKER_FLAGS)', '$(TARGET_FLAGS)', '$(LINKER_TARGET_NAME_FLAG_STANDALONE)', '$(LINKER_TARGET_NAME_FLAG_ATTACHED)$(<)', '$(>)', '$(EXTRA_OBJECTS)', '$(LINKER_LIBDIR_FLAG)$(LIBDIRS)', '$(LINKER_LIBDIR_FLAG)$(TARGET_LIBDIRS)', '$(LINKER_LIB_FLAG)$(TARGET_LIBS)$(LINKER_LIB_SUFFIX)', '$(LINKER_LIB_FLAG)$(LIBS)$(LINKER_LIB_SUFFIX)', '$(LINKER_LIB_FLAG)$(TARGET_SYSLIBS)$(LINKER_LIB_SUFFIX)', '$(LINKER_LIB_FLAG)$(SYSLIBS)$(LINKER_LIB_SUFFIX)', ]
+  exec *[ '$(LINKER)', '$(DLL_FLAGS)', '$(DLL_LINKER_FLAGS)', '$(LINKER_FLAGS)', '$(TARGET_FLAGS)', '$(LINKER_TARGET_NAME_FLAG_STANDALONE)', '$(LINKER_TARGET_NAME_FLAG_ATTACHED)$(<)', expand_reloc(' $(core.TOPDIR) ', %w[ $(>) ]), '$(EXTRA_OBJECTS)', '$(LINKER_LIBDIR_FLAG)$(LIBDIRS)', '$(LINKER_LIBDIR_FLAG)$(TARGET_LIBDIRS)', '$(LINKER_LIB_FLAG)$(TARGET_LIBS)$(LINKER_LIB_SUFFIX)', '$(LINKER_LIB_FLAG)$(LIBS)$(LINKER_LIB_SUFFIX)', '$(LINKER_LIB_FLAG)$(TARGET_SYSLIBS)$(LINKER_LIB_SUFFIX)', '$(LINKER_LIB_FLAG)$(SYSLIBS)$(LINKER_LIB_SUFFIX)', ].flatten
 }
 
 actions action.link
 {
+  require 'tsc/jam/expand-reloc.rb'
+
   path_list = [ '$(COMPILE_PATH_LIST)', ]
   ENV['PATH'] = [ path_list, ENV['PATH'] ].flatten.compact.join(File::PATH_SEPARATOR) unless path_list.empty?
 
-  exec *[ '$(LINKER)', '$(EXE_LINKER_FLAGS)', '$(LINKER_FLAGS)', '$(TARGET_FLAGS)', '$(LINKER_TARGET_NAME_FLAG_STANDALONE)', '$(LINKER_TARGET_NAME_FLAG_ATTACHED)$(<)', '$(TARGET_OBJECTS)', '$(EXTRA_OBJECTS)', '$(LINKER_LIBDIR_FLAG)$(LIBDIRS)', '$(LINKER_LIBDIR_FLAG)$(TARGET_LIBDIRS_$(>))', '$(LINKER_LIBDIR_FLAG)$(TARGET_LIBDIRS)', '$(LINKER_LIB_FLAG)$(TARGET_LIBS_$(>))$(LINKER_LIB_SUFFIX)', '$(LINKER_LIB_FLAG)$(TARGET_LIBS)$(LINKER_LIB_SUFFIX)', '$(HACK_DOUBLE_LIBS)$(LINKER_LIB_FLAG)$(TARGET_LIBS)$(LINKER_LIB_SUFFIX)', '$(LINKER_LIB_FLAG)$(LIBS)$(LINKER_LIB_SUFFIX)', '$(LINKER_LIB_FLAG)$(TARGET_SYSLIBS)$(LINKER_LIB_SUFFIX)', '$(LINKER_LIB_FLAG)$(SYSLIBS)$(LINKER_LIB_SUFFIX)', '$(STATIC_LIBS)',  ]
+  exec *[ '$(LINKER)', '$(EXE_LINKER_FLAGS)', '$(LINKER_FLAGS)', '$(TARGET_FLAGS)', '$(LINKER_TARGET_NAME_FLAG_STANDALONE)', '$(LINKER_TARGET_NAME_FLAG_ATTACHED)$(<)',  expand_reloc(' $(core.TOPDIR) ', %w[ $(TARGET_OBJECTS) ]), '$(EXTRA_OBJECTS)', '$(LINKER_LIBDIR_FLAG)$(LIBDIRS)', '$(LINKER_LIBDIR_FLAG)$(TARGET_LIBDIRS_$(>))', '$(LINKER_LIBDIR_FLAG)$(TARGET_LIBDIRS)', '$(LINKER_LIB_FLAG)$(TARGET_LIBS_$(>))$(LINKER_LIB_SUFFIX)', '$(LINKER_LIB_FLAG)$(TARGET_LIBS)$(LINKER_LIB_SUFFIX)', '$(HACK_DOUBLE_LIBS)$(LINKER_LIB_FLAG)$(TARGET_LIBS)$(LINKER_LIB_SUFFIX)', '$(LINKER_LIB_FLAG)$(LIBS)$(LINKER_LIB_SUFFIX)', '$(LINKER_LIB_FLAG)$(TARGET_SYSLIBS)$(LINKER_LIB_SUFFIX)', '$(LINKER_LIB_FLAG)$(SYSLIBS)$(LINKER_LIB_SUFFIX)', '$(STATIC_LIBS)',  ].flatten
 }
 
 actions action.print-library-path

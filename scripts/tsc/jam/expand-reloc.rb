@@ -9,15 +9,30 @@
   Author: Gennady Bystritsky
 =end
 
-def expand_reloc(top, items)
-  items.map { |_item|
+def collect_reloc_for_expand(with, without, top, items)
+  items.each do |_item|
     case _item
       when %r{[.]reloc$}
-        expand_reloc top, File.readlines(_item).map { |_line|
-          top.strip + _line.strip
+        collect_reloc_for_expand with, without, top, File.readlines(_item).map { |_line|
+          top + _line.strip
         }
+
+      when %r{ -$}
+        without << _item.slice(0...-2)
+
       else
-        _item
+        with << _item
     end
-  }.flatten
+  end
+end
+
+def expand_reloc(top, items)
+  with = []
+  without = []
+
+  collect_reloc_for_expand(with, without, top.strip, items)
+
+  with.reject { |_item|
+    without.include? _item.sub(%r{[.][^.]*$}, '')
+  }
 end
