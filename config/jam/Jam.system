@@ -433,12 +433,12 @@ rule system.make-static-library
   }
   LIBRARY_TARGET on $(_soname_target) = $(_target) ;
 
-  system.make-reloc-object $(_soname_target) : $(2) ;
+  local _reloc = [ system.make-reloc-object $(_soname_target) : $(2) ] ;
+  system.update-target-objects $(_target) : $(_reloc) ;
 
   system.ensure-directory-for $(_target) ;
   system.assign-category lib : $(_target) ;
 
-  system.update-target-objects $(_target) : $(2) ;
   action.static-library $(_target) ;
   action.ranlib $(_target) ;
 
