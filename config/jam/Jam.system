@@ -313,6 +313,7 @@ rule system.assign-category
 rule system.make-empty-static-library
 {
   system.assign-category lib : $(1) ;
+  system.ensure-directory-for $(_target) ;
   system.update-target-objects $(1) : [ system.make-build-target ] ;
 
   action.static-library $(1) ;
@@ -779,9 +780,12 @@ rule system.mark-for-c-include-scan
 rule system.process-header 
 {
   local _includes = $(1:D) $(INCLUDES) [ util.get-target-variable $(1) : TARGET_INCLUDES ] ;
-  local _headers _item ;
+  local _normalized _headers _item ;
 
-  for _item in $(_includes)$(jam.SEPARATOR)$(2) {
+  for _item in $(2) {
+    _normalized += [ util.make-path [ util.split-path $(_item) ] ] ;
+  }
+  for _item in $(_includes)$(jam.SEPARATOR)$(_normalized) {
     on $(_item) if $(HEADER_PROCESSED) != $(_item) {
       if ! [ util.is-absolute-path $(_item) ] {
         on $(1) HDRRULE on $(_item) = $(HDRRULE) ;
