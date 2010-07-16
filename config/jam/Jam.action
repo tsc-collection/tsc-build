@@ -98,9 +98,9 @@ actions together action.generate-build-file
 actions together action.reloc
 {
   open('$(<)', 'w') do |_io|
-    _io.puts %w[ $(CONTENT) ]
+    _io.puts %w[ $(CONTENT) ].uniq
     _io.puts(
-      %w[ $(EXCLUDE) ].map do |_entry|
+      %w[ $(EXCLUDE) ].uniq.map do |_entry|
         _entry + " -"
       end
     )
