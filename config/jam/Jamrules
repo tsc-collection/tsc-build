@@ -52,6 +52,9 @@
 rule use-project-library { use-project-libraries $(1) : $(2) ; }
 rule add-project-library { add-project-libraries $(1) : $(2) : $(3) ; }
 
+rule use-c++-project-library { use-c++-project-libraries $(1) : $(2) ; }
+rule add-c++-project-library { add-c++-project-libraries $(1) : $(2) : $(3) ; }
+
 rule use-top-library { use-top-libraries $(1) : $(2) ; }
 rule add-top-library { add-top-libraries $(1) : $(2) : $(3) ; }
 
@@ -475,6 +478,16 @@ rule use-project-libraries
 rule add-project-libraries
 {
   system.add-project-libraries lib : $(1) : $(2) : $(3) ;
+}
+
+rule use-c++-project-libraries
+{
+  util.foreach-kind $(1) : system.use-project-libraries : c++ include : c++ lib : $(2) : $(3) : $(4) : $(5) : $(6) : $(7) : $(8) ;
+}
+
+rule add-c++-project-libraries
+{
+  system.add-project-libraries c++ lib : $(1) : $(2) : $(3) ;
 }
 
 rule add-top-libraries
