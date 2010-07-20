@@ -475,14 +475,14 @@ rule use-project-libraries
   util.foreach-kind $(1) : system.use-project-libraries : include : lib : $(2) : $(3) : $(4) : $(5) : $(6) : $(7) : $(8) ;
 }
 
-rule add-project-libraries
-{
-  system.add-project-libraries lib : $(1) : $(2) : $(3) ;
-}
-
 rule use-c++-project-libraries
 {
   util.foreach-kind $(1) : system.use-project-libraries : c++ include : c++ lib : $(2) : $(3) : $(4) : $(5) : $(6) : $(7) : $(8) ;
+}
+
+rule add-project-libraries
+{
+  system.add-project-libraries lib : $(1) : $(2) : $(3) ;
 }
 
 rule add-c++-project-libraries
