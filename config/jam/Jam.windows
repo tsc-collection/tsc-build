@@ -1,3 +1,4 @@
+# vim: ft=jam: sw=2:
 
 jam.SEPARATOR = \\ ;
 jam.PATH_SEPARATOR = \; ;
@@ -164,9 +165,11 @@ rule mswin.make-dll
     Depends $(_dll) : $(_definition) ;
     util.add-target-variable $(_dll) : TARGET_FLAGS : /DEF:$(_definition) ;
   }
-  local _objects = [ util.get-target-variable $(_dll) : TARGET_OBJECTS ] ;
-  util.cleanup-target-variable $(_objects) : DEFINES TARGET_DEFINES : _CONSOLE ;
-  util.add-target-variable $(_objects) : TARGET_DEFINES : _WINDOWS $(4) $(1:U)_EXPORTS ;
+  for _item in [ util.get-target-variable $(_dll) : TARGET_OBJECTS ] {
+    local _objects = $(_item) [ util.get-target-variable $(_item) : CONTENT ] ;
+    util.cleanup-target-variable $(_objects) : DEFINES TARGET_DEFINES : _CONSOLE ;
+    util.add-target-variable $(_objects) : TARGET_DEFINES : _WINDOWS $(4) $(1:U)_EXPORTS ;
+  }
 }
 
 rule mswin.make-user-dll

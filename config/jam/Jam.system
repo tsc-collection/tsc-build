@@ -511,8 +511,8 @@ rule system.update-reloc-object
   local _reloc = [ system.reloc-object-name $(1) ] ;
 
   Depends $(_reloc) : $(2) ;
-  CONTENT on $(_reloc) += [ util.trim-path $(core.TOP) : $(2) ] ;
-  EXCLUDE on $(_reloc) += [ util.trim-path $(core.TOP) : $(3) ] ;
+  CONTENT on $(_reloc) += $(2) ;
+  EXCLUDE on $(_reloc) += $(3) ;
 
   return $(_reloc) ;
 }

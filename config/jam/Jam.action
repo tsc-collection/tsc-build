@@ -97,11 +97,14 @@ actions together action.generate-build-file
 
 actions together action.reloc
 {
+  offset = " $(core.TOPDIR) ".strip.size
   open('$(<)', 'w') do |_io|
-    _io.puts %w[ $(CONTENT) ].uniq
+    _io.puts %w[ $(CONTENT) ].uniq.map { |_entry|
+      _entry.slice(offset .. -1)
+    }
     _io.puts(
       %w[ $(EXCLUDE) ].uniq.map do |_entry|
-        _entry + " -"
+        _entry.slice(offset .. -1) + " -"
       end
     )
   end
