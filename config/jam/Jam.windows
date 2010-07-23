@@ -192,4 +192,9 @@ rule platform.polish-program
   action.windows.program-manifest $(1) ;
 }
 
+rule platform.make-import-library
+{
+  action.touch $(<) ;
+}
+
 core.load-config Jam.action.windows ;
