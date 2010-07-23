@@ -33,6 +33,7 @@ def expand_reloc(top, items)
   collect_reloc_for_expand(with, without, top.strip, items)
 
   with.reject { |_item|
-    without.include? _item.sub(%r{[.][^.]*$}, '')
+    name, extension = _item.split(%r{[.]([^.]*)$})
+    %w{ lib a }.include?(extension) || without.include?(name)
   }
 end
