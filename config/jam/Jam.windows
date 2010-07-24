@@ -140,9 +140,7 @@ rule mswin.make-console-program
   local _program = [ make-program $(1) : $(2) : $(3) ] ;
   util.set-target-variable $(_program) : EXE_LINKER_FLAGS : /SUBSYSTEM:CONSOLE ;
 
-  local _objects = [ util.get-target-variable $(_program) : TARGET_OBJECTS ] ;
-  util.cleanup-target-variable $(_objects) : DEFINES TARGET_DEFINES : _WINDOWS ;
-  util.add-target-variable $(_objects) : TARGET_DEFINES : _CONSOLE ;
+  mswin.propagate-console-defines $(_program) ;
 }
 
 rule mswin.make-gui-program
@@ -150,9 +148,7 @@ rule mswin.make-gui-program
   local _program = [ make-program $(1) : $(2) : $(3) ] ;
   util.set-target-variable $(_program) : EXE_LINKER_FLAGS : /SUBSYSTEM:WINDOWS ;
 
-  local _objects = [ util.get-target-variable $(_program) : TARGET_OBJECTS ] ;
-  util.cleanup-target-variable $(_objects) : DEFINES TARGET_DEFINES : _CONSOLE ;
-  util.add-target-variable $(_objects) : TARGET_DEFINES : _WINDOWS ;
+  mswin.propagate-windows-defines $(_program) ;
 }
 
 rule mswin.make-dll 
@@ -165,10 +161,26 @@ rule mswin.make-dll
     Depends $(_dll) : $(_definition) ;
     util.add-target-variable $(_dll) : TARGET_FLAGS : /DEF:$(_definition) ;
   }
-  for _item in [ util.get-target-variable $(_dll) : TARGET_OBJECTS ] {
+  mswin.propagate-windows-defines $(_dll) : $(4) $(1:U)_EXPORTS ;
+}
+
+rule mswin.propagate-console-defines
+{
+  mswin.propagate-defines $(1) : _CONSOLE $(2) : _WINDOWS ;
+}
+
+rule mswin.propagate-windows-defines
+{
+  mswin.propagate-defines $(1) : _WINDOWS $(2) : _CONSOLE ;
+}
+
+rule mswin.propagate-defines
+{
+  local _item ;
+  for _item in [ util.get-target-variable $(1) : TARGET_OBJECTS ] {
     local _objects = $(_item) [ util.get-target-variable $(_item) : CONTENT ] ;
-    util.cleanup-target-variable $(_objects) : DEFINES TARGET_DEFINES : _CONSOLE ;
-    util.add-target-variable $(_objects) : TARGET_DEFINES : _WINDOWS $(4) $(1:U)_EXPORTS ;
+    util.cleanup-target-variable $(_objects) : DEFINES TARGET_DEFINES : $(3) ;
+    util.add-target-variable $(_objects) : TARGET_DEFINES : $(2) ;
   }
 }
 
