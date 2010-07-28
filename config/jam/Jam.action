@@ -104,7 +104,7 @@ actions together action.reloc
     }
     _io.puts(
       %w[ $(EXCLUDE) ].uniq.map do |_entry|
-        _entry.slice(offset .. -1) + " -"
+        _entry.slice(offset .. -1).split(%r{[/\\]}).join("\$(jam.SEPARATOR)") + " -"
       end
     )
   end
