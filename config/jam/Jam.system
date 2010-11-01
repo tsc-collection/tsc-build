@@ -873,8 +873,8 @@ rule system.target-proxy
 
 rule system.project-lib-target-proxy
 {
-  local _target = [ system.project-lib-target-path $(1) : $(2) ] ;
-  return [ system.make-proxy $(_target:S=) ] ;
+  local _target = [ util.make-path [ system.project-lib-dir $(1) : $(2) ] $(2) ] ;
+  return [ system.make-proxy $(_target) ] ;
 }
 
 rule system.update-proxy-settings
