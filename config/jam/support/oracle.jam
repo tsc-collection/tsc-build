@@ -1,0 +1,138 @@
+# vim: ft=jam: sw=2: tw=100
+# Copyright (c) 2010, Gennady Bystritsky <bystr@mac.com>
+# 
+# Distributed under the MIT Licence.
+# This is free software. See 'LICENSE' for details.
+# You must read and accept the license prior to use.
+# 
+# Author: Gennady Bystritsky
+
+rule oracle.system.init
+{
+  oracle.component.INCLUDES += include ;
+  oracle.component.INCLUDES += [ util.make-path precomp public ] ;
+  oracle.component.INCLUDES += [ util.make-path network public ] ;
+  oracle.component.INCLUDES += [ util.make-path rdbms demo ] ;
+  oracle.component.INCLUDES += [ util.make-path plsql public ] ;
+  oracle.component.INCLUDES += [ util.make-path rdbms public ] ;
+
+  oracle.component.JARS += [ util.make-path jdbc lib classes12.zip ] ;
+
+  oracle.DEFINES =
+    SQLCA_STORAGE_CLASS=extern
+    ORACA_STORAGE_CLASS=extern
+  ;
+  oracle.LIBS = clntsh ;
+}
+
+rule oracle.setup-root
+{
+  oracle.ROOT = $(1) ;
+}
+
+rule oracle.setup-abi
+{
+  oracle.ABI = $(1) ;
+}
+
+rule oracle.setup-platform
+{
+  oracle.PLATFORM = $(1) ;
+}
+
+rule oracle.setup-abi-lib
+{
+  oracle.ABI_$(1) = $(2) ;
+}
+
+rule oracle.setup-tags
+{
+  oracle.TAGS = $(1) ;
+
+  local _tag _define ;
+  for _tag in $(1) {
+    for _define in $(2) {
+      oracle.TAG_$(_tag)_DEFINES += $(_define)=$(_tag) ;
+    }
+  }
+}
+
+rule oracle.system.ensure-tag
+{
+  if ! ( $(1) && $(1) in $(oracle.TAGS) ) {
+    exit oracle.system.ensure-tag: $(1) not defined ;
+  }
+}
+
+rule oracle.setup-default-tag
+{
+  oracle.system.ensure-tag $(1) ;
+  oracle.DEFAULT_TAG = $(1) ;
+}
+
+rule oracle.setup-tag-version
+{
+  oracle.system.ensure-tag $(1) ;
+  oracle.TAG_$(1)_VERSION = $(2) ;
+}
+
+rule oracle.setup-defines
+{
+  oracle.DEFINES = $(1) $(2) $(3) $(4) $(5) $(6) $(7) $(8) $(9) ;
+}
+
+rule oracle.use 
+{
+  oracle.use-with $(oracle.DEFAULT_TAG) : $(1) : $(2) : $(3) : $(4) : $(5) : $(6) : $(7) : $(8) ;
+}
+
+rule oracle.system.use-product
+{
+  system.use-product $(1) : $(2) : $(3) : : $(4) : $(5) : $(6) : $(7) : $(8) : $(9) ;
+}
+
+rule oracle.system.use-product.c
+{
+  system.use-product.c $(1) : $(2) : $(3) : : $(4) : $(5) $(oracle.DEFINES) : $(6) : $(7) : $(8) : $(9) ;
+}
+
+rule oracle.system.use-product.cc
+{
+  oracle.system.use-product.c $(1) : $(2) : $(3) : $(4) : $(5) : $(6) : $(7) : $(8) : $(9) ;
+}
+
+rule oracle.system.use-product.cpp
+{
+  oracle.system.use-product.c $(1) : $(2) : $(3) : $(4) : $(5) : $(6) : $(7) : $(8) : $(9) ;
+}
+
+rule oracle.rebuild-tag-config
+{
+  local _tag ;
+  for _tag in $(oracle.TAGS) {
+    local _home = $(oracle.ROOT) $(oracle.PLATFORM) $(oracle.TAG_$(_tag)_VERSION) $(oracle.ABI) ;
+
+    oracle.TAG_$(_tag)_HOME = [ util.make-path $(_home) ] ;
+    oracle.TAG_$(_tag)_LIBDIRS = [ util.make-path $(_home) $(oracle.LIB_$(oracle.ABI:E=32):E=lib) ] ;
+    oracle.TAG_$(_tag)_INCLUDES = [ util.make-path $(_home) : $(oracle.component.INCLUDES) ] ;
+    oracle.TAG_$(_tag)_JARS = [ util.make-path $(_home) : $(oracle.component.JARS) ] ;
+  }
+}
+
+rule oracle.use-with 
+{
+  oracle.system.ensure-tag $(1) ;
+  util.foreach-kind $(2) $(3) $(4) $(5) $(6) $(7) $(8) $(9)
+    : oracle.system.use-product
+    : $(oracle.TAG_$(1)_LIBDIRS)
+    : $(oracle.TAG_$(1)_LIBS:E=$(oracle.LIBS))
+    : $(oracle.TAG_$(1)_INCLUDES)
+    : $(oracle.TAG_$(1)_DEFINES)
+    : $(oracle.TAG_$(1)_JARS)
+  ;
+}
+
+if $(oracle.system.INIT) != true {
+  oracle.system.INIT = true ;
+  oracle.system.init ;
+}
