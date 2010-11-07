@@ -358,6 +358,7 @@ actions action.package
     -V$(PRODUCT_RELEASE) 
     -B$(PRODUCT_BUILD) 
     -T$(PRODUCT_TAG) 
+    -A$(PRODUCT_ABI)
     -E$(jam.DSO_EXTENTION) 
   ]
 }
@@ -380,6 +381,7 @@ actions action.oneoff
     -V$(PRODUCT_RELEASE) 
     -B$(PRODUCT_BUILD) 
     -T$(PRODUCT_TAG) 
+    -A$(PRODUCT_ABI)
     -E$(jam.DSO_EXTENTION) 
   ]
 }
@@ -402,6 +404,7 @@ actions together action.install
     -V$(PRODUCT_RELEASE) 
     -B$(PRODUCT_BUILD) 
     -T$(PRODUCT_TAG) 
+    -A$(PRODUCT_ABI)
     -E$(jam.DSO_EXTENTION) 
   ]
 }
