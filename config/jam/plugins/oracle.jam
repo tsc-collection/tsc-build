@@ -7,24 +7,6 @@
 # 
 # Author: Gennady Bystritsky
 
-rule oracle.system.init
-{
-  oracle.component.INCLUDES += include ;
-  oracle.component.INCLUDES += [ util.make-path precomp public ] ;
-  oracle.component.INCLUDES += [ util.make-path network public ] ;
-  oracle.component.INCLUDES += [ util.make-path rdbms demo ] ;
-  oracle.component.INCLUDES += [ util.make-path plsql public ] ;
-  oracle.component.INCLUDES += [ util.make-path rdbms public ] ;
-
-  oracle.component.JARS += [ util.make-path jdbc lib classes12.zip ] ;
-
-  oracle.DEFINES =
-    SQLCA_STORAGE_CLASS=extern
-    ORACA_STORAGE_CLASS=extern
-  ;
-  oracle.LIBS = clntsh ;
-}
-
 rule oracle.setup-root
 {
   oracle.ROOT = $(1) ;
@@ -57,13 +39,6 @@ rule oracle.setup-tags
   }
 }
 
-rule oracle.system.ensure-tag
-{
-  if ! ( $(1) && $(1) in $(oracle.TAGS) ) {
-    exit oracle.system.ensure-tag: $(1) not defined ;
-  }
-}
-
 rule oracle.setup-default-tag
 {
   oracle.system.ensure-tag $(1) ;
@@ -84,26 +59,6 @@ rule oracle.setup-defines
 rule oracle.use 
 {
   oracle.use-with $(oracle.DEFAULT_TAG) : $(1) : $(2) : $(3) : $(4) : $(5) : $(6) : $(7) : $(8) ;
-}
-
-rule oracle.system.use-product
-{
-  system.use-product $(1) : $(2) : $(3) : : $(4) : $(5) : $(6) : $(7) : $(8) : $(9) ;
-}
-
-rule oracle.system.use-product.c
-{
-  system.use-product.c $(1) : $(2) : $(3) : : $(4) : $(5) $(oracle.DEFINES) : $(6) : $(7) : $(8) : $(9) ;
-}
-
-rule oracle.system.use-product.cc
-{
-  oracle.system.use-product.c $(1) : $(2) : $(3) : $(4) : $(5) : $(6) : $(7) : $(8) : $(9) ;
-}
-
-rule oracle.system.use-product.cpp
-{
-  oracle.system.use-product.c $(1) : $(2) : $(3) : $(4) : $(5) : $(6) : $(7) : $(8) : $(9) ;
 }
 
 rule oracle.rebuild-tag-config
@@ -132,7 +87,5 @@ rule oracle.use-with
   ;
 }
 
-if $(oracle.system.INIT) != true {
-  oracle.system.INIT = true ;
-  oracle.system.init ;
-}
+core.load-plugin oracle/system ;
+

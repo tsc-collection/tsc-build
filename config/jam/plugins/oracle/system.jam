@@ -1,0 +1,58 @@
+# vim: ft=jam: sw=2: tw=100
+# Copyright (c) 2010, Gennady Bystritsky <bystr@mac.com>
+# 
+# Distributed under the MIT Licence.
+# This is free software. See 'LICENSE' for details.
+# You must read and accept the license prior to use.
+# 
+# Author: Gennady Bystritsky
+
+rule oracle.system.init
+{
+  oracle.component.INCLUDES += include ;
+  oracle.component.INCLUDES += [ util.make-path precomp public ] ;
+  oracle.component.INCLUDES += [ util.make-path network public ] ;
+  oracle.component.INCLUDES += [ util.make-path rdbms demo ] ;
+  oracle.component.INCLUDES += [ util.make-path plsql public ] ;
+  oracle.component.INCLUDES += [ util.make-path rdbms public ] ;
+
+  oracle.component.JARS += [ util.make-path jdbc lib classes12.zip ] ;
+
+  oracle.DEFINES =
+    SQLCA_STORAGE_CLASS=extern
+    ORACA_STORAGE_CLASS=extern
+  ;
+  oracle.LIBS = clntsh ;
+}
+
+rule oracle.system.ensure-tag
+{
+  if ! ( $(1) && $(1) in $(oracle.TAGS) ) {
+    exit oracle.system.ensure-tag: $(1) not defined ;
+  }
+}
+
+rule oracle.system.use-product
+{
+  system.use-product $(1) : $(2) : $(3) : : $(4) : $(5) : $(6) : $(7) : $(8) : $(9) ;
+}
+
+rule oracle.system.use-product.c
+{
+  system.use-product.c $(1) : $(2) : $(3) : : $(4) : $(5) $(oracle.DEFINES) : $(6) : $(7) : $(8) : $(9) ;
+}
+
+rule oracle.system.use-product.cc
+{
+  oracle.system.use-product.c $(1) : $(2) : $(3) : $(4) : $(5) : $(6) : $(7) : $(8) : $(9) ;
+}
+
+rule oracle.system.use-product.cpp
+{
+  oracle.system.use-product.c $(1) : $(2) : $(3) : $(4) : $(5) : $(6) : $(7) : $(8) : $(9) ;
+}
+
+if $(oracle.system.INIT) != true {
+  oracle.system.INIT = true ;
+  oracle.system.init ;
+}
