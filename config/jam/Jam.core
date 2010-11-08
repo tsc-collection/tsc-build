@@ -106,10 +106,9 @@ rule core.load-project-config
   core.load $(system.SRCTOP) config $(1) : $(2) ;
 }
 
-rule core.load-support
+rule core.load-plugin
 {
-  core.load-config support $(1).jam ;
-  core.load-project-config support $(1).jam : NoCare ;
+  core.load-config plugins $(1).jam ;
 }
 
 core.unset-if-empty 
