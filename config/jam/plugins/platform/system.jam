@@ -1,0 +1,44 @@
+# vim: ft=jam: sw=2: tw=100
+# Copyright (c) 2010, Gennady Bystritsky <bystr@mac.com>
+# 
+# Distributed under the MIT Licence.
+# This is free software. See 'LICENSE' for details.
+# You must read and accept the license prior to use.
+# 
+# Author: Gennady Bystritsky
+
+rule platform.system.init
+{
+  platform.system.KNOWN = 
+    linux-x86
+    linux-ia64
+    solaris-sparc
+    # solaris-x86
+    hpux-pa
+    hpux-ia64
+    # aix-ppc
+    # windows-x86
+  ;
+}
+
+rule platform.system.handle-build-abi
+{
+  platform.ABI ?= $(1[1]:E=64) ;
+
+  if ! ( $(platform.ABI) in $(1) ) {
+    exit Unsupported ABI $(platform.ABI) for $(platform.NAME). Must be $(1), or empty ;
+  }
+  switch $(platform.ABI) {
+    case 64 : platform.ABILIB = lib64 ;
+    case * : platform.ABILIB = lib ;
+  }
+  if $(1[2-]) {
+    platform-$(platform.FAMILY)-m$(platform.ABI) ;
+  }
+  platform-$(platform.FAMILY) ;
+}
+
+if $(platform.system.INIT) != true {
+  platform.system.INIT = true ;
+  platform.system.init ;
+}

@@ -7,3 +7,79 @@
 # 
 # Author: Gennady Bystritsky
 
+rule platform.support-all-known
+{
+  platform.system.SUPPORTED += $(platform.system.KNOWN) ;
+}
+
+rule platform.support 
+{
+  if ! ( $(1) in $(platform.system.KNOWN) ) {
+    core.warning Platform $(1) not known, may present problems ;
+  }
+  platform.system.SUPPORTED += $(1) ;
+}
+
+rule platform.setup-abi-lib
+{
+  platform.ABILIB = $(1) ;
+}
+
+rule platform.setup-current-family
+{
+  platform.FAMILY = $(1) ;
+}
+
+rule platform.setup-current-name
+{
+  platform.NAME = $(1) ;
+}
+
+rule platform.setup-current-arch
+{
+  platform.ARCH = $(1) ;
+}
+
+rule platform.select
+{
+  platform.ABI = $(1) ;
+
+  core.ensure-defined platform.NAME ;
+  core.ensure-defined platform.FAMILY ;
+  core.ensure-defined platform.ARCH ;
+
+  if ! ( $(platform.FAMILY) in $(platform.system.SUPPORTED) ) {
+    exit Unsupported platform family $(platform.FAMILY) for $(platform.NAME) ;
+  }
+
+  while true {
+    switch $(platform.FAMILY) {
+      case "linux-x86" : if $(platform.ARCH) = "x86" {
+        platform.system.handle-build-abi 32 ;
+        break ;
+      }
+      case "linux-ia64" : if true {
+        platform.system.handle-build-abi 64 ;
+        break ;
+      }
+    }
+    platform.system.handle-build-abi 64 32 ;
+    break ;
+  }
+}
+
+rule platform.offset-name 
+{
+  if $(3:E=$(2:E=$(1:E=false))) = true {
+    system.setup-artifact-offsets : : $(platform.NAME) ;
+  }
+}
+
+rule platform.offset-abi
+{
+  if $(3:E=$(2:E=$(1:E=false))) = true {
+    system.setup-artifact-offsets : : $(platform.ABI) ;
+  }
+}
+
+core.load-plugin platform/system ;
