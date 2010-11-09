@@ -25,14 +25,14 @@ rule oracle.setup-abi
   oracle.ABI = $(1) ;
 }
 
-rule oracle.setup-platform
-{
-  oracle.PLATFORM = $(1) ;
-}
-
 rule oracle.setup-abi-lib
 {
   oracle.ABI_$(1) = $(2) ;
+}
+
+rule oracle.setup-platform
+{
+  oracle.PLATFORM = $(1) ;
 }
 
 rule oracle.setup-tags
@@ -64,11 +64,6 @@ rule oracle.setup-defines
   oracle.DEFINES = $(1) $(2) $(3) $(4) $(5) $(6) $(7) $(8) $(9) ;
 }
 
-rule oracle.use 
-{
-  oracle.use-with $(oracle.DEFAULT_TAG) : $(1) : $(2) : $(3) : $(4) : $(5) : $(6) : $(7) : $(8) ;
-}
-
 rule oracle.rebuild-config
 {
   local _tag ;
@@ -80,6 +75,11 @@ rule oracle.rebuild-config
     oracle.TAG_$(_tag)_INCLUDES = [ util.make-path $(_home) : $(oracle.component.INCLUDES) ] ;
     oracle.TAG_$(_tag)_JARS = [ util.make-path $(_home) : $(oracle.component.JARS) ] ;
   }
+}
+
+rule oracle.use 
+{
+  oracle.use-with $(oracle.DEFAULT_TAG) : $(1) : $(2) : $(3) : $(4) : $(5) : $(6) : $(7) : $(8) ;
 }
 
 rule oracle.use-with 
