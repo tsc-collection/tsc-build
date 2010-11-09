@@ -32,24 +32,43 @@ rule oracle.system.ensure-tag
   }
 }
 
+# $(oracle.TAG_$(1)_LIBDIRS)
+# $(oracle.TAG_$(1)_LIBS:E=$(oracle.LIBS))
+# $(oracle.TAG_$(1)_INCLUDES)
+# $(oracle.TAG_$(1)_DEFINES)
+# $(oracle.TAG_$(1)_JARS)
+
 rule oracle.system.use-product
 {
-  system.use-product $(1) : $(2) : $(3) : : $(4) : $(5) : $(6) : $(7) : $(8) : $(9) ;
+  local _target = [ 
+    system.use-product $(1) 
+      : $(oracle.TAG_$(2)_LIBDIRS)
+      : $(oracle.TAG_$(2)_LIBS:E=$(oracle.LIBS))
+  ] ;
+
+  TARGET_FLAGS on $(_target) += $(oracle.system.LINK_OPTION_PATH)$(oracle.TAG_$(2)_LIBDIRS) ;
+  TARGET_FLAGS on $(_target) += $(oracle.system.LINK_OPTION_EXPORT)$(oracle.TAG_$(2)_LIBDIRS)/$(oracle.TAG_$(2)_LIBS:E=$(oracle.LIBS)).exp ;
 }
 
 rule oracle.system.use-product.c
 {
-  system.use-product.c $(1) : $(2) : $(3) : : $(4) : $(5) $(oracle.DEFINES) : $(6) : $(7) : $(8) : $(9) ;
+  system.use-product.c $(1) 
+    : 
+    : 
+    : 
+    : $(oracle.TAG_$(2)_INCLUDES)
+    : $(oracle.TAG_$(2)_DEFINES) $(oracle.DEFINES) 
+  ;
 }
 
 rule oracle.system.use-product.cc
 {
-  oracle.system.use-product.c $(1) : $(2) : $(3) : $(4) : $(5) : $(6) : $(7) : $(8) : $(9) ;
+  oracle.system.use-product.c $(1) : $(2) ;
 }
 
 rule oracle.system.use-product.cpp
 {
-  oracle.system.use-product.c $(1) : $(2) : $(3) : $(4) : $(5) : $(6) : $(7) : $(8) : $(9) ;
+  oracle.system.use-product.c $(1) : $(2) ;
 }
 
 if $(oracle.system.INIT) != true {

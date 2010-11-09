@@ -1054,7 +1054,7 @@ rule system.ensure-system-includes.cpp
 rule system.use-product
 {
   local _target = [ system.target-proxy $(1) ] ;
-  system.update-proxy-settings $(_target) : TARGET_LIBS TARGET_SYSLIBS TARGET_LIBDIRS TARGET_STATIC_LIBS ;
+  system.update-proxy-settings $(_target) : TARGET_LIBS TARGET_SYSLIBS TARGET_LIBDIRS TARGET_STATIC_LIBS TARGET_FLAGS ;
 
   TARGET_LIBDIRS on $(_target) += $(2) ;
   TARGET_LIBS on $(_target) += $(3) ;
@@ -1063,6 +1063,7 @@ rule system.use-product
   if $(8) {
     CATEGORIES on $(_target) += $(8) ;
   }
+  return $(_target) ;
 }
 
 rule system.use-product.cc

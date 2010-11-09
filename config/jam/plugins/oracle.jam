@@ -64,6 +64,16 @@ rule oracle.setup-defines
   oracle.DEFINES = $(1) $(2) $(3) $(4) $(5) $(6) $(7) $(8) $(9) ;
 }
 
+rule oracle.setup-link-path
+{
+  oracle.system.LINK_OPTION_PATH = $(1) ;
+}
+
+rule oracle.setup-link-export
+{
+  oracle.system.LINK_OPTION_EXPORT = $(1) ;
+}
+
 rule oracle.rebuild-config
 {
   local _tag ;
@@ -87,11 +97,7 @@ rule oracle.use-with
   oracle.system.ensure-tag $(1) ;
   util.foreach-kind $(2) $(3) $(4) $(5) $(6) $(7) $(8) $(9)
     : oracle.system.use-product
-    : $(oracle.TAG_$(1)_LIBDIRS)
-    : $(oracle.TAG_$(1)_LIBS:E=$(oracle.LIBS))
-    : $(oracle.TAG_$(1)_INCLUDES)
-    : $(oracle.TAG_$(1)_DEFINES)
-    : $(oracle.TAG_$(1)_JARS)
+    : $(1) 
   ;
 }
 
