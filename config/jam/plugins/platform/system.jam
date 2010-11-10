@@ -13,11 +13,11 @@ rule platform.system.init
     linux-x86
     linux-ia64
     solaris-sparc
-    # solaris-x86
+    solaris-x86
     hpux-pa
     hpux-ia64
-    # aix-ppc
-    # windows-x86
+    aix-ppc
+    windows-x86
   ;
 }
 
