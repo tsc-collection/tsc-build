@@ -95,8 +95,25 @@ rule core.call
   return [ $(1) $(2) : $(3) : $(4) : $(5) : $(6) : $(7) : $(8) : $(9) ] ;
 }
 
+rule core.arrange-exit
+{
+  if $(1) = true {
+    exit ERROR: $(2) ;
+  }
+  core.warning $(2) ;
+  core.system.EXIT = true ;
+}
+
+rule core.exit
+{
+  core.arrange-exit true : $(1) ;
+}
+
 rule core.load
 {
+  if $(core.system.EXIT) = true {
+    return ;
+  }
   core.LAST_LOADED_FILE = $(1:J=$(jam.SEPARATOR)) ;
   core.trace core : Loading $(core.LAST_LOADED_FILE) ;
 

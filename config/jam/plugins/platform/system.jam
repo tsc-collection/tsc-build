@@ -19,22 +19,40 @@ rule platform.system.init
     aix-ppc
     windows-x86
   ;
+  platform.SPECIFIED_ABI = ;
+  platform.ABI = ;
+}
+
+rule platform.is-abi-mismatch-fatal
+{
+  return $(platform.config.ABI_MISMATCH_FATAL:E=$(1:E=true)) ;
+}
+
+rule platform.is-abi-none-fatal
+{
+  return $(platform.config.ABI_NONE_FATAL:E=$(1:E=false)) ;
 }
 
 rule platform.system.handle-build-abi
 {
-  platform.ABI ?= $(1[1]:E=64) ;
+  platform.SPECIFIED_ABI = $(2) ;
+  platform.ABI = $(platform.SPECIFIED_ABI:E=$(1[1]:E=64)) ;
 
   if ! ( $(platform.ABI) in $(1) ) {
-    exit Unsupported ABI $(platform.ABI) for $(platform.NAME). Must be $(1), or empty ;
+    core.arrange-exit [ platform.is-abi-mismatch-fatal $(4) ] : Unsupported ABI $(platform.ABI) for $(platform.NAME). Must be $(1), or empty ;
+    return ;
   }
   switch $(platform.ABI) {
     case 64 : platform.ABILIB = lib64 ;
     case * : platform.ABILIB = lib ;
   }
   if $(1[2-]) {
+    if ( ! $(platform.SPECIFIED_ABI) ) && ( [ platform.is-abi-none-fatal $(3) ] = true ) {
+      core.exit No ABI specified ;
+    }
     core.call platform-$(platform.FAMILY)-m$(platform.ABI) ;
   }
+  else platform.ABILIB = lib ;
   core.call platform-$(platform.FAMILY) ;
 }
 

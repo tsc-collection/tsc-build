@@ -77,7 +77,7 @@ module TSC
       end
 
       def platform 
-        platform = TSC::Platform.current
+        @platform ||= TSC::Platform.current
       end
 
       def config

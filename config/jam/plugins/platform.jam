@@ -9,15 +9,20 @@
 
 rule platform.support-all-known
 {
-  platform.system.SUPPORTED += $(platform.system.KNOWN) ;
+  platform.system.SUPPORTED_FAMILIES += $(platform.system.KNOWN) ;
 }
 
-rule platform.support 
+rule platform.register-supported-family
 {
   if ! ( $(1) in $(platform.system.KNOWN) ) {
-    core.warning Platform $(1) not known, may present problems ;
+    core.warning Platform family $(1) not known, may present problems ;
   }
-  platform.system.SUPPORTED += $(1) ;
+  platform.system.SUPPORTED_FAMILIES += $(1) ;
+}
+
+rule platform.register-unsupported-name
+{
+  platform.system.UNSUPPORTED_NAMES += $(1) ;
 }
 
 rule platform.setup-abi-lib
@@ -42,28 +47,29 @@ rule platform.setup-current-arch
 
 rule platform.select
 {
-  platform.ABI = $(1) ;
-
   core.ensure-defined platform.NAME ;
   core.ensure-defined platform.FAMILY ;
   core.ensure-defined platform.ARCH ;
 
-  if ! ( $(platform.FAMILY) in $(platform.system.SUPPORTED) ) {
+  if ! ( $(platform.FAMILY) in $(platform.system.SUPPORTED_FAMILIES) ) {
     exit Unsupported platform family $(platform.FAMILY) for $(platform.NAME) ;
+  }
+  if $(platform.NAME) in $(platform.system.UNSUPPORTED_NAMES) {
+    exit Unsupported platform $(platform.NAME) ;
   }
 
   while true {
     switch $(platform.FAMILY) {
       case "linux-x86" : if $(platform.ARCH) = "x86" {
-        platform.system.handle-build-abi 32 ;
+        platform.system.handle-build-abi 32 : $(1) : $(2) : $(3) ;
         break ;
       }
       case "linux-ia64" : if true {
-        platform.system.handle-build-abi 64 ;
+        platform.system.handle-build-abi 64 : $(1) : $(2) : $(3) ;
         break ;
       }
     }
-    platform.system.handle-build-abi 64 32 ;
+    platform.system.handle-build-abi 64 32 : $(1) : $(2) : $(3) ;
     break ;
   }
 }
@@ -78,7 +84,7 @@ rule platform.offset-name
 rule platform.offset-abi
 {
   if $(3:E=$(2:E=$(1:E=false))) = true {
-    system.setup-artifact-offsets : : $(platform.ABI) ;
+    system.setup-artifact-offsets : : $(platform.SPECIFIED_ABI) ;
   }
 }
 
