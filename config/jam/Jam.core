@@ -89,6 +89,12 @@ rule core.trace
   }
 }
 
+rule core.call
+{
+  local core.BACKTRACE = $(1) $(core.BACKTRACE) ;
+  return [ $(1) $(2) : $(3) : $(4) : $(5) : $(6) : $(7) : $(8) : $(9) ] ;
+}
+
 rule core.load
 {
   core.LAST_LOADED_FILE = $(1:J=$(jam.SEPARATOR)) ;

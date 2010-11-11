@@ -1,4 +1,4 @@
-# vim: ft=jam: sw=2: tw=100
+# vim: ft=jam: sw=2: tw=100:
 # Copyright (c) 2010, Gennady Bystritsky <bystr@mac.com>
 # 
 # Distributed under the MIT Licence.
@@ -33,9 +33,9 @@ rule platform.system.handle-build-abi
     case * : platform.ABILIB = lib ;
   }
   if $(1[2-]) {
-    platform-$(platform.FAMILY)-m$(platform.ABI) ;
+    core.call platform-$(platform.FAMILY)-m$(platform.ABI) ;
   }
-  platform-$(platform.FAMILY) ;
+  core.call platform-$(platform.FAMILY) ;
 }
 
 if $(platform.system.INIT) != true {

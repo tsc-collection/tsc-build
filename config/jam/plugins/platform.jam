@@ -83,3 +83,4 @@ rule platform.offset-abi
 }
 
 core.load-plugin platform/system ;
+core.load-plugin platform/abstract ;

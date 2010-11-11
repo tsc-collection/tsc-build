@@ -32,12 +32,6 @@ rule oracle.system.ensure-tag
   }
 }
 
-# $(oracle.TAG_$(1)_LIBDIRS)
-# $(oracle.TAG_$(1)_LIBS:E=$(oracle.LIBS))
-# $(oracle.TAG_$(1)_INCLUDES)
-# $(oracle.TAG_$(1)_DEFINES)
-# $(oracle.TAG_$(1)_JARS)
-
 rule oracle.system.use-product
 {
   local _target = [ 

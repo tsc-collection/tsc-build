@@ -1,0 +1,108 @@
+# vim: ft=jam: sw=2: tw=100:
+# Copyright (c) 2010, Gennady Bystritsky <bystr@mac.com>
+# 
+# Distributed under the MIT Licence.
+# This is free software. See 'LICENSE' for details.
+# You must read and accept the license prior to use.
+# 
+# Author: Gennady Bystritsky
+
+rule platform-linux-x86-m32
+{
+  core.trace platform : Abstract rule invocation => $(core.BACKTRACE[1]) ;
+}
+
+rule platform-linux-x86-m64
+{
+  core.trace platform : Abstract rule invocation => $(core.BACKTRACE[1]) ;
+}
+
+rule platform-linux-x86
+{
+  core.trace platform : Abstract rule invocation => $(core.BACKTRACE[1]) ;
+}
+
+rule platform-linux-ia64
+{
+  core.trace platform : Abstract rule invocation => $(core.BACKTRACE[1]) ;
+}
+
+rule platform-solaris-sparc-m32
+{
+  core.trace platform : Abstract rule invocation => $(core.BACKTRACE[1]) ;
+}
+
+rule platform-solaris-sparc-m64
+{
+  core.trace platform : Abstract rule invocation => $(core.BACKTRACE[1]) ;
+}
+
+rule platform-solaris-sparc
+{
+  core.trace platform : Abstract rule invocation => $(core.BACKTRACE[1]) ;
+}
+
+rule platform-solaris-x86-m32
+{
+  core.trace platform : Abstract rule invocation => $(core.BACKTRACE[1]) ;
+}
+
+rule platform-solaris-x86-m64
+{
+  core.trace platform : Abstract rule invocation => $(core.BACKTRACE[1]) ;
+}
+
+rule platform-solaris-x86
+{
+  core.trace platform : Abstract rule invocation => $(core.BACKTRACE[1]) ;
+}
+
+rule platform-hpux-pa-m32
+{
+  core.trace platform : Abstract rule invocation => $(core.BACKTRACE[1]) ;
+}
+
+rule platform-hpux-pa-m64
+{
+  core.trace platform : Abstract rule invocation => $(core.BACKTRACE[1]) ;
+}
+
+rule platform-hpux-pa
+{
+  core.trace platform : Abstract rule invocation => $(core.BACKTRACE[1]) ;
+}
+
+rule platform-hpux-ia64-m32
+{
+  core.trace platform : Abstract rule invocation => $(core.BACKTRACE[1]) ;
+}
+
+rule platform-hpux-ia64-m64
+{
+  core.trace platform : Abstract rule invocation => $(core.BACKTRACE[1]) ;
+}
+
+rule platform-hpux-ia64
+{
+  core.trace platform : Abstract rule invocation => $(core.BACKTRACE[1]) ;
+}
+
+rule platform-aix-ppc-m32
+{
+  core.trace platform : Abstract rule invocation => $(core.BACKTRACE[1]) ;
+}
+
+rule platform-aix-ppc-m64
+{
+  core.trace platform : Abstract rule invocation => $(core.BACKTRACE[1]) ;
+}
+
+rule platform-aix-ppc
+{
+  core.trace platform : Abstract rule invocation => $(core.BACKTRACE[1]) ;
+}
+
+rule platform-windows-x86
+{
+  core.trace platform : Abstract rule invocation => $(core.BACKTRACE[1]) ;
+}

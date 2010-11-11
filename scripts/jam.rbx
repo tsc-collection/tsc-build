@@ -149,6 +149,8 @@ class Application < TSC::Application
           '-sRUBY=' + (defined?(RUBY_PATH) ? RUBY_PATH : 'ruby'),
           '-sRUBY_PLATFORM=' + RUBY_PLATFORM,
           '-splatform.NAME=' + platform.name,
+          '-splatform.FAMILY=' + platform.family,
+          '-splatform.ARCH=' + platform.arch,
           '-splatform.LIBPATH_NAME=' + platform.driver.library_path_name,
           '-score.PROJECT_OFFSET=' + project_offset,
           '-score.CWD_FROM_TOP=' + cwd_from_top.join(' '),

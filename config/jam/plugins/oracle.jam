@@ -76,8 +76,10 @@ rule oracle.setup-link-export
 
 rule oracle.rebuild-config
 {
+  core.ensure-defined oracle.ROOT oracle.TAGS ;
   local _tag ;
   for _tag in $(oracle.TAGS) {
+    core.ensure-defined oracle.TAG_$(_tag)_VERSION ;
     local _home = $(oracle.ROOT) $(oracle.PLATFORM) $(oracle.TAG_$(_tag)_VERSION) $(oracle.ABI) ;
 
     oracle.TAG_$(_tag)_HOME = [ util.make-path $(_home) ] ;
