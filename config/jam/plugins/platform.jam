@@ -7,6 +7,11 @@
 # 
 # Author: Gennady Bystritsky
 
+rule platform.stop-on-missing 
+{
+  platform.system.MISSING_FATAL = $(1) ;
+}
+
 rule platform.support-all-known
 {
   platform.system.SUPPORTED_FAMILIES += $(platform.system.KNOWN) ;

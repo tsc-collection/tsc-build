@@ -21,6 +21,7 @@ rule platform.system.init
   ;
   platform.SPECIFIED_ABI = ;
   platform.ABI = ;
+  platform.system.MISSING_FATAL = true ;
 }
 
 rule platform.is-abi-mismatch-fatal
@@ -54,6 +55,14 @@ rule platform.system.handle-build-abi
   }
   else platform.ABILIB = lib ;
   core.call platform-$(platform.FAMILY) ;
+}
+
+rule platform.system.process-missing
+{
+  if $(platform.system.MISSING_FATAL) = true {
+    core.exit Platform configuration block $(core.BACKTRACE[1]) not found ;
+  }
+  core.trace platform : Abstract rule invocation => $(core.BACKTRACE[1]) ;
 }
 
 if $(platform.system.INIT) != true {

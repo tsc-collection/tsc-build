@@ -7,10 +7,16 @@
 # 
 # Author: Gennady Bystritsky
 
-rule gcc.setup-default-platform-config
+rule gcc.system.init
 {
-  core.load-plugin gcc/default-platform-config ;
 }
 
-core.load-plugin gcc/system ;
-core.load-plugin gcc/platform-config ;
+rule gcc.system.delegate-platform-config 
+{
+  core.call gcc.$(core.BACKTRACE[1]) ;
+}
+
+if $(system.system.INIT) != true {
+  gcc.system.INIT = true ;
+  gcc.system.init ;
+}

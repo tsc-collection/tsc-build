@@ -9,100 +9,101 @@
 
 rule platform-linux-x86-m32
 {
-  platform.system.process-missing ;
+  gcc.system.delegate-platform-config ;
 }
 
 rule platform-linux-x86-m64
 {
-  platform.system.process-missing ;
+  gcc.system.delegate-platform-config ;
 }
 
 rule platform-linux-x86
 {
-  platform.system.process-missing ;
+  gcc.system.delegate-platform-config ;
 }
 
 rule platform-linux-ia64
 {
-  platform.system.process-missing ;
+  gcc.system.delegate-platform-config ;
 }
 
 rule platform-solaris-sparc-m32
 {
-  platform.system.process-missing ;
+  gcc.system.delegate-platform-config ;
 }
 
 rule platform-solaris-sparc-m64
 {
-  platform.system.process-missing ;
+  gcc.system.delegate-platform-config ;
 }
 
 rule platform-solaris-sparc
 {
-  platform.system.process-missing ;
+  gcc.system.delegate-platform-config ;
 }
 
 rule platform-solaris-x86-m32
 {
-  platform.system.process-missing ;
+  gcc.system.delegate-platform-config ;
 }
 
 rule platform-solaris-x86-m64
 {
-  platform.system.process-missing ;
+  gcc.system.delegate-platform-config ;
 }
 
 rule platform-solaris-x86
 {
-  platform.system.process-missing ;
+  gcc.system.delegate-platform-config ;
 }
 
 rule platform-hpux-pa-m32
 {
-  platform.system.process-missing ;
+  gcc.system.delegate-platform-config ;
 }
 
 rule platform-hpux-pa-m64
 {
-  platform.system.process-missing ;
+  gcc.system.delegate-platform-config ;
 }
 
 rule platform-hpux-pa
 {
-  platform.system.process-missing ;
+  gcc.system.delegate-platform-config ;
 }
 
 rule platform-hpux-ia64-m32
 {
-  platform.system.process-missing ;
+  gcc.system.delegate-platform-config ;
 }
 
 rule platform-hpux-ia64-m64
 {
-  platform.system.process-missing ;
+  gcc.system.delegate-platform-config ;
 }
 
 rule platform-hpux-ia64
 {
-  platform.system.process-missing ;
+  gcc.system.delegate-platform-config ;
 }
 
 rule platform-aix-ppc-m32
 {
-  platform.system.process-missing ;
+  gcc.system.delegate-platform-config ;
 }
 
 rule platform-aix-ppc-m64
 {
-  platform.system.process-missing ;
+  gcc.system.delegate-platform-config ;
 }
 
 rule platform-aix-ppc
 {
-  platform.system.process-missing ;
+  gcc.system.delegate-platform-config ;
 }
 
 rule platform-windows-x86
 {
-  platform.system.process-missing ;
+  gcc.system.delegate-platform-config ;
 }
+

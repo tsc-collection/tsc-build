@@ -101,3 +101,8 @@ rule gcc.platform-aix-ppc
 {
   core.trace gcc : Rule $(core.BACKTRACE[1]) ;
 }
+
+rule gcc.platform-windows-x86
+{
+  exit plugin: gcc: Windows not supported ;
+}

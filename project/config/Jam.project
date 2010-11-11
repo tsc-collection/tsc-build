@@ -6,6 +6,9 @@ core.load-plugin platform ;
 core.load-plugin oracle ;
 core.load-plugin gcc ;
 
+platform.stop-on-missing true ;
+gcc.setup-default-platform-config ;
+
 oracle.setup-root /tmp ;
 oracle.setup-tags t1 t2 : O1 O2 ;
 
