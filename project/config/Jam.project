@@ -1,9 +1,10 @@
 # vim: ft=jam: sw=2:
 
-TRACE += platform oracle ;
+TRACE += platform oracle gcc ;
 
 core.load-plugin platform ;
 core.load-plugin oracle ;
+core.load-plugin gcc ;
 
 oracle.setup-root /tmp ;
 oracle.setup-tags t1 t2 : O1 O2 ;

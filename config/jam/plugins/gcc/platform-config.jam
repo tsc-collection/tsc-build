@@ -1,0 +1,103 @@
+# vim: ft=jam: sw=2: tw=100:
+# Copyright (c) 2010, Gennady Bystritsky <bystr@mac.com>
+# 
+# Distributed under the MIT Licence.
+# This is free software. See 'LICENSE' for details.
+# You must read and accept the license prior to use.
+# 
+# Author: Gennady Bystritsky
+
+rule gcc.platform-linux-x86-m32
+{
+  core.trace gcc : Rule $(core.BACKTRACE[1]) ;
+}
+
+rule gcc.platform-linux-x86-m64
+{
+  core.trace gcc : Rule $(core.BACKTRACE[1]) ;
+}
+
+rule gcc.platform-linux-x86
+{
+  core.trace gcc : Rule $(core.BACKTRACE[1]) ;
+}
+
+rule gcc.platform-linux-ia64
+{
+  core.trace gcc : Rule $(core.BACKTRACE[1]) ;
+}
+
+rule gcc.platform-solaris-sparc-m32
+{
+  core.trace gcc : Rule $(core.BACKTRACE[1]) ;
+}
+
+rule gcc.platform-solaris-sparc-m64
+{
+  core.trace gcc : Rule $(core.BACKTRACE[1]) ;
+}
+
+rule gcc.platform-solaris-sparc
+{
+  core.trace gcc : Rule $(core.BACKTRACE[1]) ;
+}
+
+rule gcc.platform-solaris-x86-m32
+{
+  core.trace gcc : Rule $(core.BACKTRACE[1]) ;
+}
+
+rule gcc.platform-solaris-x86-m64
+{
+  core.trace gcc : Rule $(core.BACKTRACE[1]) ;
+}
+
+rule gcc.platform-solaris-x86
+{
+  core.trace gcc : Rule $(core.BACKTRACE[1]) ;
+}
+
+rule gcc.platform-hpux-pa-m32
+{
+  core.trace gcc : Rule $(core.BACKTRACE[1]) ;
+}
+
+rule gcc.platform-hpux-pa-m64
+{
+  core.trace gcc : Rule $(core.BACKTRACE[1]) ;
+}
+
+rule gcc.platform-hpux-pa
+{
+  core.trace gcc : Rule $(core.BACKTRACE[1]) ;
+}
+
+rule gcc.platform-hpux-ia64-m32
+{
+  core.trace gcc : Rule $(core.BACKTRACE[1]) ;
+}
+
+rule gcc.platform-hpux-ia64-m64
+{
+  core.trace gcc : Rule $(core.BACKTRACE[1]) ;
+}
+
+rule gcc.platform-hpux-ia64
+{
+  core.trace gcc : Rule $(core.BACKTRACE[1]) ;
+}
+
+rule gcc.platform-aix-ppc-m32
+{
+  core.trace gcc : Rule $(core.BACKTRACE[1]) ;
+}
+
+rule gcc.platform-aix-ppc-m64
+{
+  core.trace gcc : Rule $(core.BACKTRACE[1]) ;
+}
+
+rule gcc.platform-aix-ppc
+{
+  core.trace gcc : Rule $(core.BACKTRACE[1]) ;
+}
