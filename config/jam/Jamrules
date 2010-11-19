@@ -375,14 +375,7 @@ rule make-ruby-extension
 
 rule make-library
 {
-  local _type = $(project.MAKE_LIBRARY_DEFAULT) ;
-
-  if ! $(_type) {
-    if $(project.MAKE_DLL) = true {
-      _type = shared ;
-    }
-    else _type = static ;
-  }
+  local _type = [ system.figure-library-type ] ;
   return [ make-$(_type)-library $(1) : $(2) : $(3) : $(4) : $(5) : $(6) : $(7) : $(8) : $(9) ] ;
 }
 
@@ -414,6 +407,14 @@ rule make-empty-static-library
 {
   local _target = [ system.library-target $(1) ] ;
   system.make-empty-static-library $(_target) ;
+}
+
+rule make-empty-library
+{
+  if ( [ system.figure-library-type ] = "static" ) || ( $(project.PROHIBIT_SHARED) = true ) {
+    make-empty-static-library $(1) ;
+  }
+  else make-shared-library $(1) : : $(2) : $(3) ;
 }
 
 rule make-merged-library

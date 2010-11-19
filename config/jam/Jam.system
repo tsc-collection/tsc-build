@@ -330,6 +330,19 @@ rule system.library-target
   return $(_target) ;
 }
 
+rule system.figure-library-type
+{
+  local _type = $(project.MAKE_LIBRARY_DEFAULT) ;
+
+  if ! $(_type) {
+    if $(project.MAKE_DLL) = true {
+      _type = shared ;
+    }
+    else _type = static ;
+  }
+  return $(_type) ;
+}
+
 rule system.make-shared-library
 {
   local _target = $(1) ;

@@ -89,7 +89,7 @@ rule platform.offset-name
 rule platform.offset-abi
 {
   if $(3:E=$(2:E=$(1:E=false))) = true {
-    system.setup-artifact-offsets : : $(platform.SPECIFIED_ABI) ;
+    system.setup-artifact-offsets : : $(platform.ABI) ;
   }
 }
 
