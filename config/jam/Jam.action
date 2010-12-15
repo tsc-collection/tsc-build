@@ -454,11 +454,11 @@ actions action.uudecode
   rm_f '$(<)'
   File.open('$(<)', 'wb') { |output|
     File.open('$(>)') { |input|
+      content = false
       input.each do |line|
-        next if line =~ %r{^#}
-        next if line =~ %r{^begin}
-
-        output.write line.chomp.unpack('u').first
+        content = false if content == true && line =~ %r{^end$}
+        output.write line.chomp.unpack('u').first if content
+        content = true if content == false && line =~ %r{^begin}
       end
     }
   }
