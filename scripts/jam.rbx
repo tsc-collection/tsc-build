@@ -150,6 +150,7 @@ class Application < TSC::Application
           '-sRUBY_PLATFORM=' + RUBY_PLATFORM,
           '-splatform.NAME=' + platform.name,
           '-splatform.FAMILY=' + platform.family,
+          '-splatform.OS=' + platform.os,
           '-splatform.ARCH=' + platform.arch,
           '-splatform.LIBPATH_NAME=' + platform.driver.library_path_name,
           '-score.PROJECT_OFFSET=' + project_offset,

@@ -55,6 +55,7 @@ rule platform.select
   core.ensure-defined platform.NAME ;
   core.ensure-defined platform.FAMILY ;
   core.ensure-defined platform.ARCH ;
+  core.ensure-defined platform.OS ;
 
   if ! ( $(platform.FAMILY) in $(platform.system.SUPPORTED_FAMILIES) ) {
     exit Unsupported platform family $(platform.FAMILY) for $(platform.NAME) ;
@@ -91,6 +92,15 @@ rule platform.offset-abi
   if $(3:E=$(2:E=$(1:E=false))) = true {
     system.setup-artifact-offsets : : $(platform.ABI) ;
   }
+}
+
+rule platform.figure-support-folder
+{
+  local os-support = $(1:E=$(platform.OS)) ;
+  if [ GLOB $(system.SRCDIR) : $(os-support) ] {
+    return $(os-support) ;
+  }
+  return $(2:E=generic) ;
 }
 
 core.load-plugin platform/system ;
