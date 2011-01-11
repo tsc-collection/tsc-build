@@ -17,7 +17,7 @@ rule platform.system.init
     hpux-pa
     hpux-ia64
     aix-ppc
-    windows-x86
+    mswin-x86
   ;
   platform.SPECIFIED_ABI = ;
   platform.ABI = ;

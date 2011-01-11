@@ -74,6 +74,10 @@ rule platform.select
         platform.system.handle-build-abi 64 : $(1) : $(2) : $(3) ;
         break ;
       }
+      case "mswin-x86" : if true {
+        platform.system.handle-build-abi 32-mks 32-win : $(1) : $(2) : $(3) ;
+        break ;
+      }
     }
     platform.system.handle-build-abi 64 32 : $(1) : $(2) : $(3) ;
     break ;

@@ -102,7 +102,17 @@ rule platform-aix-ppc
   platform.system.process-missing ;
 }
 
-rule platform-windows-x86
+rule platform-mswin-x86-m32-mks
+{
+  platform.system.process-missing ;
+}
+
+rule platform-mswin-x86-m32-win
+{
+  platform.system.process-missing ;
+}
+
+rule platform-mswin-x86
 {
   platform.system.process-missing ;
 }
