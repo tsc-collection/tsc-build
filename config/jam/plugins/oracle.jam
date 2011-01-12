@@ -27,7 +27,13 @@ rule oracle.setup-abi
 
 rule oracle.setup-abi-lib
 {
-  oracle.ABI_$(1) = $(2) ;
+  oracle.LIB_$(1) = $(2) ;
+}
+
+rule oracle.setup-windows
+{
+  oracle.LIBS = oci ;
+  oracle.LIB_OFFSET = $(2:E=msvc) ;
 }
 
 rule oracle.setup-platform
@@ -83,7 +89,7 @@ rule oracle.rebuild-config
     local _home = $(oracle.ROOT) $(oracle.PLATFORM) $(oracle.TAG_$(_tag)_VERSION) $(oracle.ABI) ;
 
     oracle.TAG_$(_tag)_HOME = [ util.make-path $(_home) ] ;
-    oracle.TAG_$(_tag)_LIBDIRS = [ util.make-path $(_home) $(oracle.LIB_$(oracle.ABI:E=32):E=lib) ] ;
+    oracle.TAG_$(_tag)_LIBDIRS = [ util.make-path $(_home) $(oracle.LIB_$(oracle.ABI:E=32):E=lib) $(oracle.LIB_OFFSET) ] ;
     oracle.TAG_$(_tag)_INCLUDES = [ util.make-path $(_home) : $(oracle.component.INCLUDES) ] ;
     oracle.TAG_$(_tag)_JARS = [ util.make-path $(_home) : $(oracle.component.JARS) ] ;
   }
