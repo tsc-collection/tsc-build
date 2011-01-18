@@ -53,10 +53,33 @@ rule oracle.setup-tags
   }
 }
 
-rule oracle.setup-default-tag
+rule oracle.setup-compatible-tags
 {
   oracle.system.ensure-tag $(1) ;
-  oracle.DEFAULT_TAG = $(1) ;
+  oracle.TAGS_AS_$(1) = $(2) ;
+}
+
+rule oracle.setup-default-tag
+{
+  local _request = $(1) ;
+  local _name = $(2) ;
+
+  if ! $(oracle.TAGS) {
+    exit oracle.setup-default-tag: No Oracle tags defined ;
+  }
+  local _tag ;
+  for _tag in $(oracle.TAGS) {
+    if $(_request) in $(oracle.TAGS_AS_$(_tag)) $(_tag) {
+      oracle.DEFAULT_TAG = $(_tag) ;
+      return ;
+    }
+  }
+  local _supported ;
+  for _tag in $(oracle.TAGS) {
+    local _entry = $(_tag) $(oracle.TAGS_AS_$(_tag)) ;
+    _supported += $(_entry:J=/) ;
+  }
+  exit oracle.setup-default-tag: $(_name:E=Tag) is $(_request), must be $(_supported:J=", ") ;
 }
 
 rule oracle.setup-tag-version
