@@ -116,3 +116,19 @@ rule platform-mswin-x86
 {
   platform.system.process-missing ;
 }
+
+rule platform-darwin-x86-m32
+{
+  platform.system.process-missing ;
+}
+
+rule platform-darwin-x86-m64
+{
+  platform.system.process-missing ;
+}
+
+rule platform-darwin-x86
+{
+  platform.system.process-missing ;
+}
+
