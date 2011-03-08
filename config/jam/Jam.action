@@ -65,6 +65,16 @@ actions together action.jar
   end
 }
 
+actions action.generate-with-erb
+{
+  require 'erb'
+  content = IO.readlines('$(2)').join
+  header = "#line 1 #{File.expand_path('$(2)').inspect}"
+  open('$(1)', 'w').puts header, Dir.chdir(File.dirname('$(2)')) {
+    ERB.new(content, 0, '%<>').result
+  }
+}
+
 actions together action.compile-cc
 {
   path_list = [ '$(COMPILE_PATH_LIST)', ]
@@ -192,7 +202,7 @@ actions action.invoke
     TSC::Path['PATH:$(platform.LIBPATH_NAME)'].load.before('$(LD_LIBRARY_PATH-$(>))').install
   end
 
-  ENV['JAM_SRCDIR'] = '$(SRCDIR)'
+  ENV['JAM_SRCDIR'] = '$(system.SRCDIR)'
 
   mkdir_p '$(BINDIR)'
   cd '$(BINDIR)' do

@@ -636,11 +636,10 @@ rule system.make-single-object
   if ! $(_kind) {
     exit Cannot determine compilation mode for $(_source) (no extention) ;
   }
-  local _target = [ system.target-for$(_kind) $(1) ] ;
-  system.ensure-directory-for $(_target) ;
+  local _target = [ system.process-object$(_kind) [ system.target-for$(_kind) $(1) ] : $(_source) ] ;
 
+  system.ensure-directory-for $(_target) ;
   Depends $(_target) : $(_source) ;
-  system.process-object$(_kind) $(_target) : $(_source) ;
 
   util.clone-target-variable $(_target) : $(_source) : TARGET_INCLUDES ;
   util.add-target-variable $(_target) : TARGET_INCLUDES : $(system.SRCDIR) ;
@@ -729,6 +728,21 @@ rule system.ensure-directory-for
   }
 }
 
+rule system.split-compound-target
+{
+  # This rule transforms names like "/d1/d2/sample.cc.erb" into 3 item
+  # array (in ruby notation): [ "sample", ".erb", ".cc" ]
+  #
+  local _original = $(1:D=:S=) ;
+  return $(_original:S=) $(1:S) $(_original:S) ;
+}
+
+rule system.target-for.erb
+{
+  local _target = [ util.make-path $(system.GENDIR) [ util.join [ system.split-compound-target $(1) ] ] ] ;
+  return $(_target) ;
+}
+
 rule system.target-for.c
 {
   return [ util.make-path $(system.BINDIR) $(1:D=:S=.$(jam.OBJ_EXTENTION)) ] ;
@@ -749,12 +763,28 @@ rule system.target-for.cpp
   return [ system.target-for.cc $(1) ] ;
 }
 
+rule system.process-object.erb
+{
+  local _components = [ system.split-compound-target $(2) ] ;
+  local _target = [ system.target-for$(_components[3]) $(_components[1])$(_components[2]) ] ;
+
+  Depends $(1) : $(2) ;
+  Depends $(_target) : $(1) ;
+
+  system.ensure-directory-for $(1) ;
+  action.generate-with-erb $(1) : $(2) ;
+
+  return [ system.process-object$(_components[3]) $(_target) : $(1) ] ;
+}
+
 rule system.process-object.c
 {
   util.set-target-variable $(1) : CC_FLAGS : "$(CC_FLAGS)" ;
 
   system.mark-for-c-include-scan $(2) ;
   action.compile-c $(1) : $(2) ;
+
+  return $(1) ;
 }
 
 rule system.process-object.cc
@@ -763,11 +793,13 @@ rule system.process-object.cc
 
   system.mark-for-c-include-scan $(2) ;
   action.compile-cc $(1) : $(2) ;
+
+  return $(1) ;
 }
 
 rule system.process-object.cpp
 {
-  system.process-object.cc $(1) : $(2) : $(3) ;
+  return [ system.process-object.cc $(1) : $(2) : $(3) ] ;
 }
 
 rule system.target-for.rc
@@ -779,6 +811,8 @@ rule system.process-object.rc
 {
   system.mark-for-c-include-scan $(2) ;
   action.compile-resource $(1) : $(2) ;
+
+  return $(1) ;
 }
 
 rule system.mark-for-c-include-scan
