@@ -628,15 +628,21 @@ rule system.setup-program-targets-in-cwd
   }
 }
 
+rule system.target-for
+{
+  local _kind = $(1:S) ;
+  if ! $(_kind) {
+    local _source = [ util.make-path $(system.SRCDIR) $(1) ] ;
+    exit Cannot determine compilation mode for $(_source) (no extention) ;
+  }
+  return [ system.target-for$(_kind) $(1) ] ;
+}
+
 rule system.make-single-object
 {
   local _kind = $(1:S) ;
   local _source = [ util.make-path $(system.SRCDIR) $(1) ] ;
-
-  if ! $(_kind) {
-    exit Cannot determine compilation mode for $(_source) (no extention) ;
-  }
-  local _target = [ system.process-object$(_kind) [ system.target-for$(_kind) $(1) ] : $(_source) ] ;
+  local _target = [ system.process-object$(_kind) [ system.target-for $(1) ] : $(_source) ] ;
 
   system.ensure-directory-for $(_target) ;
   Depends $(_target) : $(_source) ;

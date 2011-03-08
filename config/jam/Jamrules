@@ -471,6 +471,16 @@ rule generate-cc
   util.foreach $(1) : system.generate-cc : $(2) ;
 }
 
+rule use-local-content
+{
+  Depends [ system.target-for $(1) ] : [ util.make-path $(system.SRCDIR) : $(2) ] ;
+}
+
+rule use-top-content
+{
+  Depends [ system.target-for $(1) ] : [ util.make-path $(system.SRCTOP) : $(2) ] ;
+}
+
 rule use-project-libraries
 {
   util.foreach-kind $(1) : system.use-project-libraries : include : lib : $(2) : $(3) : $(4) : $(5) : $(6) : $(7) : $(8) ;
