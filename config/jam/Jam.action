@@ -68,11 +68,12 @@ actions together action.jar
 actions action.generate-with-erb
 {
   require 'erb'
-  content = IO.readlines('$(2)').join
-  header = "#line 1 #{File.expand_path('$(2)').inspect}"
-  open('$(1)', 'w').puts header, Dir.chdir(File.dirname('$(2)')) {
-    ERB.new(content, 0, '%<>').result
+  current_full_path = File.expand_path('$(2)')
+  local_binding = binding
+  content = Dir.chdir(File.dirname(current_full_path)) {
+    ERB.new(IO.readlines(current_full_path).join, 0, '%<>').result local_binding
   }
+  open('$(1)', 'w').puts "#line 1 #{current_full_path.inspect}", content
 }
 
 actions together action.compile-cc
