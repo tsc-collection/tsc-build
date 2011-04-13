@@ -53,6 +53,11 @@ rule mswin.setup-visual-studio-compile-options
 
 rule mswin.setup-visual-studio8
 {
+  mswin.setup-visual-studio8-m32 $(1) ;
+}
+
+rule mswin.setup-visual-studio8-m32
+{
   mswin.setup-visual-studio-compile-options ;
   local VCROOT = [ util.split-path "$(1)" ] ;
 
@@ -76,6 +81,33 @@ rule mswin.setup-visual-studio8
   LIBDIRS += [ util.make-path "$(VCROOT)" VC PlatformSDK lib prerelease ] ;
   LIBDIRS += [ util.make-path "$(VCROOT)" VC PlatformSDK lib ] ;
   LIBDIRS += [ util.make-path "$(VCROOT)" SDK v2.0 lib ] ;
+}
+
+rule mswin.setup-visual-studio8-m64
+{
+  mswin.setup-visual-studio-compile-options ;
+  local VCROOT = [ util.split-path "$(1)" ] ;
+
+  COMPILE_PATH_LIST += 
+    [ util.make-path "$(VCROOT)" VC BIN amd64 ]
+    [ util.make-path "$(VCROOT)" Common7 IDE ]
+    [ util.make-path "$(VCROOT)" Common7 Tools ]
+    [ util.make-path "$(VCROOT)" Common7 Tools bin ]
+    [ util.make-path "$(VCROOT)" VC PlatformSDK bin win64 amd64 ]
+    [ util.make-path "$(VCROOT)" SDK v2.0 bin ]
+  ;
+
+  INCLUDES += [ util.make-path "$(VCROOT)" VC ATLMFC INCLUDE ] ;
+  INCLUDES += [ util.make-path "$(VCROOT)" VC INCLUDE ] ;
+  INCLUDES += [ util.make-path "$(VCROOT)" VC PlatformSDK include prerelease ] ;
+  INCLUDES += [ util.make-path "$(VCROOT)" VC PlatformSDK include ] ;
+  INCLUDES += [ util.make-path "$(VCROOT)" SDK v2.0 include ] ;
+
+  LIBDIRS += [ util.make-path "$(VCROOT)" VC ATLMFC LIB amd64 ] ;
+  LIBDIRS += [ util.make-path "$(VCROOT)" VC LIB amd64 ] ;
+  LIBDIRS += [ util.make-path "$(VCROOT)" VC PlatformSDK lib prerelease ] ;
+  LIBDIRS += [ util.make-path "$(VCROOT)" VC PlatformSDK lib amd64 ] ;
+  LIBDIRS += [ util.make-path "$(VCROOT)" SDK v2.0 lib amd64 ] ;
 }
 
 rule mswin.setup-visual-studio7
@@ -118,7 +150,7 @@ rule mswin.mks-toolkit-includes
 
 rule mswin.mks-toolkit-libdirs
 {
-  return [ util.make-path [ mswin.mks-toolkit-root ] "lib" ] ;
+  return [ util.make-path [ mswin.mks-toolkit-root ] $(1:E=lib) ] ;
 }
 
 rule mswin.mks-toolkit-defines
@@ -128,10 +160,24 @@ rule mswin.mks-toolkit-defines
 
 rule mswin.setup-mks-toolkit8
 {
+  mswin.setup-mks-toolkit8-m32 $(1) ;
+}
+
+rule mswin.setup-mks-toolkit8-m32
+{
   mswin.MKS_TOOLKIT_ROOT = [ util.split-path $(1) ] ;
 
   INCLUDES += [ mswin.mks-toolkit-includes ] ;
-  LIBDIRS += [ mswin.mks-toolkit-libdirs ] ;
+  LIBDIRS += [ mswin.mks-toolkit-libdirs lib ] ;
+  DEFINES += [ mswin.mks-toolkit-defines ] ;
+}
+
+rule mswin.setup-mks-toolkit8-m64
+{
+  mswin.MKS_TOOLKIT_ROOT = [ util.split-path $(1) ] ;
+
+  INCLUDES += [ mswin.mks-toolkit-includes ] ;
+  LIBDIRS += [ mswin.mks-toolkit-libdirs lib64x ] ;
   DEFINES += [ mswin.mks-toolkit-defines ] ;
 }
 
