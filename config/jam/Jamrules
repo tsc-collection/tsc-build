@@ -613,17 +613,15 @@ rule use-java-comm
 
 rule use-unit-test
 {
-  if $(config.unit-test.disable) != true {
-    use-product $(1) $(2) $(3) $(4) $(5) $(6) $(7) $(8) $(9)
-      : $(UNITTEST_LIBDIR:E=$(UNITTEST_DIRS)$(jam.SEPARATOR)$(BUILD_ABILIB:E=lib))
-      : $(UNITTEST_LIBS)
-      :
-      : $(UNITTEST_INCLUDE:E=$(UNITTEST_DIRS)$(jam.SEPARATOR)include)
-      : $(UNITTEST_DEFINES)
-      : $(UNITTEST_JARS)
-      : test
-    ;
-  }
+  use-product $(1) $(2) $(3) $(4) $(5) $(6) $(7) $(8) $(9)
+    : $(UNITTEST_LIBDIR:E=$(UNITTEST_DIRS)$(jam.SEPARATOR)$(BUILD_ABILIB:E=lib))
+    : $(UNITTEST_LIBS)
+    :
+    : $(UNITTEST_INCLUDE:E=$(UNITTEST_DIRS)$(jam.SEPARATOR)include)
+    : $(UNITTEST_DEFINES)
+    : $(UNITTEST_JARS)
+    : test
+  ;
 }
 
 rule use-boost
