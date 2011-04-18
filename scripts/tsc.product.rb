@@ -117,8 +117,8 @@ module TSC
       pattern = subdirs.collect { |_dir| "/#{Regexp.quote(_dir)}(?=/|$)" }.join('|')
 
       if Dir.pwd !~ Regexp.new(pattern)
-	quoted_subdirs = subdirs.map { |_entry| _entry.inspect }
-	raise "Not in product scope (no #{quoted_subdirs.join(', or ')} in current path)"
+        quoted_subdirs = subdirs.map { |_entry| _entry.inspect }
+        raise "Not in product scope (no #{quoted_subdirs.join(', or ')} in current path)"
       end
 
       @topdir = $PREMATCH
@@ -131,51 +131,51 @@ module TSC
     def obtain_build_from_repository
       max_build = 0
       p4.labels.each do |_label| 
-	name, build = _label.scan(/(#{@name}.#{@release}).(\d+)/).first
-	max_build = build.to_i if build and build.to_i > max_build
+        name, build = _label.scan(/(#{@name}.#{@release}).(\d+)/).first
+        max_build = build.to_i if build and build.to_i > max_build
       end
       return max_build
     end
 
     def obtain_name_release_from_repository
       p4.dirs.map { |_line|
-	_line.scan(%r{^//([^/]*)/([^/]*)/?}).first
+        _line.scan(%r{^//([^/]*)/([^/]*)/?}).first
       }.first
     end
 
     def obtain_product_info
       ensure_src do
-	if File.exists? prodinfo
-	  config = TSC::Config.new prodinfo
-	  config.load
+        if File.exists? prodinfo
+          config = TSC::Config.new prodinfo
+          config.load
 
-	  @name = config.get :name
-	  @product = config.get :product
-	  @release = config.get :release
-	  @build = config.get :build
-	  @library_prefix = config.get :library_prefix
-	  @library_major = config.get :library_major
-	  @handoff_server = config.get :handoff_server
-	  @handoff_recepients = config.get :handoff_recepients
-	else
-	  @name, @release = obtain_name_release_from_repository
-	  @build = obtain_build_from_repository
-	end
-	unless @name and @release and @build
-	  raise "Product info not available"
-	end
-	@library_major ||= @build
-	@platform = TSC::Platform.current.name
+          @name = config.get :name
+          @product = config.get :product
+          @release = config.get :release
+          @build = config.get :build
+          @library_prefix = config.get :library_prefix
+          @library_major = config.get :library_major
+          @handoff_server = config.get :handoff_server
+          @handoff_recepients = config.get :handoff_recepients
+        else
+          @name, @release = obtain_name_release_from_repository
+          @build = obtain_build_from_repository
+        end
+        unless @name and @release and @build
+          raise "Product info not available"
+        end
+        @library_major ||= @build
+        @platform = TSC::Platform.current.name
       end
     end
   end
 end
 
-if $0 == __FILE__ or defined? Test::Unit::TestCase
+if $0 == __FILE__ 
   module TSC
     class Product
       def prodinfo
-	"kljkljlkjkljlkjlj"
+        "kljkljlkjkljlkjlj"
       end
     end
   end
