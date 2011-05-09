@@ -265,7 +265,11 @@ rule system.project-lib-name
 
 rule system.project-lib-dir
 {
-  return $(system.BINTOP) $(1) [ util.split $(2) : . ] ;
+  local _location = $(system.BINTOP) $(1) ;
+  if $(1) = "." {
+    _location = $(system.BINDIR) ;
+  }
+  return $(_location) [ util.split $(2) : . ] ;
 }
 
 rule system.project-include-dir

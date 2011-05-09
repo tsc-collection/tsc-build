@@ -64,8 +64,10 @@ rule add-project-libraries-without { add-project-libraries $(1) : $(2) : $(3) ; 
 rule add-top-library-without { add-top-libraries $(1) : $(2) : $(3) ; }
 rule add-top-libraries-without { add-top-libraries $(1) : $(2) : $(3) ; }
 
-rule use-project-jni-module { use-project-jni-modules $(1) : $(2) ; }
 rule use-local-library { use-local-libraries $(1) : $(2) ; }
+rule add-local-library { add-local-libraries $(1) : $(2) : $(3) ; }
+
+rule use-project-jni-module { use-project-jni-modules $(1) : $(2) ; }
 rule use-local-include { use-local-includes $(1) : $(2) ; }
 rule make-subdir { make-subdirs $(1) ; }
 
@@ -506,6 +508,11 @@ rule add-c++-project-libraries
 rule add-top-libraries
 {
   system.add-project-libraries : $(1) : $(2) : $(3) ;
+}
+
+rule add-local-libraries
+{
+  system.add-project-libraries . : $(1) : $(2) : $(3) ;
 }
 
 rule use-top-libraries
