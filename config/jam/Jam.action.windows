@@ -67,3 +67,8 @@ actions action.windows.program-manifest
 
   exec *[ 'mt', '-nologo', '-manifest', '$(<).manifest', '-outputresource:$(<);1' ] if File.exist? '$(<).manifest'
 }
+
+actions action.ranlib
+{
+  touch ' $(<) '.split
+}
