@@ -193,7 +193,7 @@ actions action.print-library-path
 actions action.invoke
 {
   %w[ $(system.ENV_EXPORT_LIST) RUBY=$(RUBY) ].each { |item|
-    key, value = item.split('=')
+    key, value = *item.split('=')
     ENV[key] = value
   }
   # TODO: Figure out how to update PATH on Windows, both for native and MKS.
@@ -204,6 +204,8 @@ actions action.invoke
   end
 
   ENV['JAM_SRCDIR'] = '$(system.SRCDIR)'
+
+  STDERR.puts 
 
   mkdir_p '$(BINDIR)'
   cd '$(BINDIR)' do
