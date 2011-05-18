@@ -38,7 +38,7 @@ module TSC
         array = args.flatten.map { |_item|
           Array(_item)
         }
-        array.flatten.enum_slice(2).map { |_key, _value|
+        array.flatten.each_slice(2).map { |_key, _value|
           value = _value.to_s.strip
           [ '-s', "#{_key}=#{value}" ] unless value.empty?
         }.compact.flatten
