@@ -109,3 +109,4 @@ rule platform.figure-support-folder
 
 core.load-plugin platform/system ;
 core.load-plugin platform/abstract ;
+core.load-plugin platform/feature ;
