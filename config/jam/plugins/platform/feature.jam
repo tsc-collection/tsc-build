@@ -29,3 +29,11 @@ rule platform.feature.make-subdir
     make-subdir $(2) ;
   }
 }
+
+rule platform.feature.export-to-env
+{
+  local implementation = $(platform.feature.$(1)) ;
+  if $(implementation) {
+    system.export-to-env $(2) : $(implementation) ;
+  }
+}
