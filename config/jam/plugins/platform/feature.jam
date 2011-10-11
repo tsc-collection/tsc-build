@@ -30,6 +30,11 @@ rule platform.feature.make-subdir
   }
 }
 
+rule platform.feature.offset-source
+{
+  return [ util.make-path $(platform.feature.$(1)) $(2) ] ;
+}
+
 rule platform.feature.export-to-env
 {
   local implementation = $(platform.feature.$(1)) ;
