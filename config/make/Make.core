@@ -1,8 +1,0 @@
-# vim: ft=make: sw=2:
-
-ifdef SK_MAKE_LOCAL_MAKEFILE 
-  include $(SK_MAKE_LOCAL_MAKEFILE)
-else
-  -include makefile
-endif
-
