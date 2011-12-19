@@ -1,0 +1,85 @@
+#!/usr/bin/env ruby
+=begin
+  vim: sw=2:
+  Copyright (c) 2011, Gennady Bystritsky <bystr@mac.com>
+  
+  Distributed under the MIT Licence.
+  This is free software. See 'LICENSE' for details.
+  You must read and accept the license prior to use.
+  
+  Author: Gennady Bystritsky
+=end
+
+$:.concat ENV['PATH'].to_s.split(File::PATH_SEPARATOR)
+require 'sk/scoping-launcher.rb'
+
+class Application < SK::ScopingLauncher
+  MAKE_PROJECT = 'config/Make.project'
+  MAKE_CORE = 'config/make/Make.core'
+
+  protected
+  #########
+
+  def setup
+    update_environment project_scope_settings if local_scope?
+    update_environment global_scope_settings if global_scope?
+    update_environment source_scope_settings if source_scope?
+
+    setup_local_makefile :GNUmakefile, :makefile, :Makefile
+  end
+
+  def project_scope_settings
+    { :project_makefile => project_makefile
+    }
+  end
+
+  def setup_local_makefile(*args)
+    args.each do |_makefile|
+      break update_environment(:local_makefile => _makefile) if File.exists? _makefile.to_s
+    end
+  end
+
+  def global_scope_settings
+    { :global_makefile => global_makefile
+    }
+  end
+
+  def source_scope_settings
+    { :srctop => srctop,
+      :bintop => bintop,
+      :gentop => gentop,
+      :pkgtop => pkgtop,
+    }
+  end
+  
+  def command_line_arguments(args)
+    case
+      when global_scope?
+        [ '-f', global_makefile, args ]
+
+      when local_scope?
+        [ '-f', project_makefile, args ]
+
+      else
+        args
+    end
+  end
+
+  def global_makefile
+    @global_makefile ||= global_scope_top.join(MAKE_CORE)
+  end
+
+  def project_makefile
+    @project__makefile ||= local_scope_top.join(MAKE_PROJECT)
+  end
+
+  def local_scope_selectors
+    MAKE_PROJECT
+  end
+
+  def global_scope_selectors
+    MAKE_CORE
+  end
+end
+
+Application.new.start
