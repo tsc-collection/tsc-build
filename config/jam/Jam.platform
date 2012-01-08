@@ -1,21 +1,21 @@
 # vim: ft=jam: set sw=2:
 # Copyright (c) 2010, Gennady Bystritsky <bystr@mac.com>
-# 
+#
 # Distributed under the MIT Licence.
 # This is free software. See 'LICENSE' for details.
 # You must read and accept the license prior to use.
-# 
+#
 # Author: Gennady Bystritsky
 
 rule platform.polish-dll
 {
-  # Doing nothing here by default. It can be overridden to achieve 
+  # Doing nothing here by default. It can be overridden to achieve
   # platform dependent actions
 }
 
 rule platform.polish-program
 {
-  # Doing nothing here by default. It can be overridden to achieve 
+  # Doing nothing here by default. It can be overridden to achieve
   # platform dependent actions
 }
 

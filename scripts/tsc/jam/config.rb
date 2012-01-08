@@ -1,10 +1,10 @@
 # vi: set sw=2:
 =begin
   Copyright (c) 2008, Quest Software, http://www.quest.com
-  
+
   This software is property of the mentioned copyright
-  holder and cannot be used or distrubuted  other than 
-  under a written consent agreement between individual 
+  holder and cannot be used or distrubuted  other than
+  under a written consent agreement between individual
   parties.
 =end
 
@@ -71,12 +71,12 @@ module TSC
       def library_major
         config['library-major']
       end
-      
+
       def user
         Etc.getpwuid.name rescue Etc.getlogin
       end
 
-      def platform 
+      def platform
         @platform ||= TSC::Platform.current
       end
 
@@ -86,7 +86,7 @@ module TSC
         end
       end
 
-      def buildrc_locator 
+      def buildrc_locator
         @buildrc_locator ||= TSC::ConfigLocator.new('.buildrc')
       end
 

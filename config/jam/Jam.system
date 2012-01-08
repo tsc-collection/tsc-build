@@ -1,14 +1,14 @@
 # vim: ft=jam: sw=2: tw=0:
 #
 #            Tone Software Corporation BSD License ("License")
-# 
+#
 #                        Software Build Environment
-#                        
+#
 # Please read this License carefully before downloading this software. By
 # downloading or using this software, you are agreeing to be bound by the
 # terms of this License. If you do not or cannot agree to the terms of
 # this License, please do not download or use the software.
-# 
+#
 # A set of Jam configuration files and a Jam front-end for advanced
 # software building with automatic dependency checking for the whole
 # project. Provides a hierarchical project description while performing
@@ -19,23 +19,23 @@
 # ability to build programs, test suites, static and shared libraries,
 # shared modules, code generation, and many others. Provides the bridge to
 # ANT for building Java, with abilities to build JNI libraries.
-# 
+#
 # Copyright (c) 2003, 2005, Tone Software Corporation
-# 
+#
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are
 # met:
 #   * Redistributions of source code must retain the above copyright
-#     notice, this list of conditions and the following disclaimer. 
+#     notice, this list of conditions and the following disclaimer.
 #   * Redistributions in binary form must reproduce the above copyright
 #     notice, this list of conditions and the following disclaimer in the
-#     documentation and/or other materials provided with the distribution. 
+#     documentation and/or other materials provided with the distribution.
 #   * Neither the name of the Tone Software Corporation nor the names of
 #     its contributors may be used to endorse or promote products derived
-#     from this software without specific prior written permission. 
-# 
+#     from this software without specific prior written permission.
+#
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS
 # IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
 # TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
@@ -47,7 +47,7 @@
 # LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
 # NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-# 
+#
 
 rule system.error
 {
@@ -93,7 +93,7 @@ rule system.setup-artifact-offsets
 
 rule system.setup-top-dirs
 {
-  system.SRCTOP = $(core.TOP) src $(core.PROJECT_OFFSET) ; 
+  system.SRCTOP = $(core.TOP) src $(core.PROJECT_OFFSET) ;
   system.BINTOP = $(core.TOP) bin $(system.ARTIFACT_OFFSETS) $(core.PROJECT_OFFSET) ;
   system.PKGTOP = $(core.TOP) pkg $(system.ARTIFACT_OFFSETS) $(core.PROJECT_OFFSET) ;
   system.GENTOP = $(core.TOP) gen $(system.ARTIFACT_OFFSETS) $(core.PROJECT_OFFSET) ;
@@ -184,23 +184,23 @@ rule system.setup-environment
   Depends java : ant@top ;
   Depends java-clean : clean-ant@top ;
 
-  NotFile 
+  NotFile
     all clean
     top top-clean
     java java-clean
     try try-libs
     install install-libs
     package release handoff oneoff
-    $(system.CWD_SUBDIR_TARGETS) 
-    $(system.CWD_NOT_SUBDIR_TARGETS) 
+    $(system.CWD_SUBDIR_TARGETS)
+    $(system.CWD_NOT_SUBDIR_TARGETS)
   ;
-  Always 
+  Always
     run $(system.TARGET_CATEGORIES)
-    java java-clean 
-    try try-libs 
-    install install-libs 
+    java java-clean
+    try try-libs
+    install install-libs
     package release handoff oneoff
-    clean top-clean clean-$(system.TARGET_CATEGORIES) 
+    clean top-clean clean-$(system.TARGET_CATEGORIES)
   ;
   local _cwd_targets = $(system.CWD_SUBDIR_TARGETS) $(system.CWD_NOT_SUBDIR_TARGETS) ;
   NotFile $(system.MAIN_TARGET) $(_cwd_targets)@$(system.MAIN_TARGET) ;
@@ -225,8 +225,8 @@ rule system.setup-environment
   setup-direct-clean-target gen : $(system.CWD_GENDIR) ;
   setup-direct-clean-target pkg : $(system.PKGTOPDIR) ;
 
-  util.set-target-variable try : TARGET_DIRS : 
-    $(system.CWD_SRCDIR) $(system.CWD_BINDIR) 
+  util.set-target-variable try : TARGET_DIRS :
+    $(system.CWD_SRCDIR) $(system.CWD_BINDIR)
   ;
   action.install try ;
   system.make-package package ;
@@ -380,7 +380,7 @@ rule system.make-shared-library
     _soname_target = $(system.BINDIR)$(jam.SEPARATOR)$(_lib_target) ;
     _soname_target_so = $(_soname_target:S=.$(jam.DSO_EXTENTION)) ;
     _soname_target_so_major = $(_soname_target_so).$(_target_so_suffix) ;
-    
+
     if $(project.DO_NOT_USE_LIBRARY_MAJOR) = true {
       _soname_target_so_major = $(_soname_target_so) ;
     }
@@ -394,7 +394,7 @@ rule system.make-shared-library
 
     system.make-in-directory-symlink $(_target) : $(_soname_target) ;
     system.make-in-directory-symlink $(_target_so) : $(_soname_target_so) ;
-    
+
     if $(_soname_target_so) != $(_soname_target_so_major) {
       system.make-in-directory-symlink  $(_soname_target_so) : $(_soname_target_so_major) ;
       system.make-in-directory-symlink $(_soname_target_so_major) : $(_target_so_major) ;
@@ -834,7 +834,7 @@ rule system.mark-for-c-include-scan
   }
 }
 
-rule system.process-header 
+rule system.process-header
 {
   local _includes = $(1:D) $(INCLUDES) [ util.get-target-variable $(1) : TARGET_INCLUDES ] ;
   local _normalized _headers _item ;
@@ -920,7 +920,7 @@ rule system.make-proxy
   NotFile $(_proxy) ;
 
   return $(_proxy) ;
-} 
+}
 
 rule system.target-proxy
 {
@@ -966,7 +966,7 @@ rule system.propagate-proxy-settings
 
   on $(_proxy) _items = $(VARLIST) ;
   for _item in $(_items) {
-    on $(_proxy) _value = $($(_item)) ; 
+    on $(_proxy) _value = $($(_item)) ;
     $(_item) on $(_target) += $(_value) ;
   }
 }
@@ -975,7 +975,7 @@ rule system.use-project-libraries
 {
   local _target = [ system.target-proxy $(1) ] ;
   local _offset = $(3) ;
-  
+
   _offset ?= $(2) ;
 
   if $(4) {
@@ -1011,7 +1011,7 @@ rule system.setup-project-libraries
     on $(_proxy) _libdirs = $(TARGET_LIBDIRS) ;
     on $(_proxy) _libs = $(TARGET_LIBS) ;
     on $(_proxy) _syslibs = $(TARGET_SYSLIBS) ;
-    
+
     $(_v_LIBS) on $(1) += [ system.project-lib-name $(_item) ] $(_libs) ;
     $(_v_SYSLIBS) on $(1) += $(_syslibs) ;
     $(_v_STATIC_LIBS) on $(1) += $(_library) ;
@@ -1202,9 +1202,9 @@ rule system.use-top-includes.cpp
 rule system.use-top-includes.c
 {
   local _offset = "$(2)" ;
-  util.add-target-variable [ system.target-for.c "$(1)" ] : TARGET_INCLUDES : 
-    [ util.make-path "$(system.GENTOP)" $(_offset) ] 
-    [ util.make-path "$(system.SRCTOP)" $(_offset) ] 
+  util.add-target-variable [ system.target-for.c "$(1)" ] : TARGET_INCLUDES :
+    [ util.make-path "$(system.GENTOP)" $(_offset) ]
+    [ util.make-path "$(system.SRCTOP)" $(_offset) ]
   ;
 }
 
@@ -1225,16 +1225,16 @@ rule system.use-local-includes.c
 
 # Rule system.invoke prepares program execution. It sets up the environment
 # so that the current directory for the invocation is the binary directory
-# corresponding to that of where the program's Jamfile is located. This way 
+# corresponding to that of where the program's Jamfile is located. This way
 # the program may open termporary files right in the current directory.
 # For opening source files (e.g. config files) from the guaranteed location,
 # environment variable JAM_SRCDIR willl be setup, as well as whatever is
 # passed a fourth parameter will be converted to the absolute path an passed
 # as an argument to the launched program (unit tests are invoked this way).
-# 
+#
 # To make it possible, the rule sets up LD_LIBRARY_PATH and the program
 # invocation path relative to the program's Jamfile location.
-# 
+#
 rule system.invoke
 {
   Depends $(1) : $(2) ;
@@ -1286,7 +1286,7 @@ rule system.setup-try-libs-for
   action.install try-libs@$(system.DOT_TARGET) ;
 }
 
-rule system.export-to-env 
+rule system.export-to-env
 {
   local _colon = ":" ;
   if $(1) {

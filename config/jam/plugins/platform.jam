@@ -1,13 +1,13 @@
 # vim: ft=jam: sw=2: tw=100
 # Copyright (c) 2010, Gennady Bystritsky <bystr@mac.com>
-# 
+#
 # Distributed under the MIT Licence.
 # This is free software. See 'LICENSE' for details.
 # You must read and accept the license prior to use.
-# 
+#
 # Author: Gennady Bystritsky
 
-rule platform.stop-on-missing 
+rule platform.stop-on-missing
 {
   platform.system.MISSING_FATAL = $(1) ;
 }
@@ -84,7 +84,7 @@ rule platform.select
   }
 }
 
-rule platform.offset-name 
+rule platform.offset-name
 {
   if $(3:E=$(2:E=$(1:E=false))) = true {
     system.setup-artifact-offsets : : $(platform.NAME) ;

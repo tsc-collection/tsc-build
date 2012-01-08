@@ -6,16 +6,16 @@ ABSTRACT
 tsc-build is a set of Jam configuration files that provide ability to build
 large software projects (compile, link, test, package, etc.)
 
-JAM' is an open source tool that manages age dependencies between different 
+JAM' is an open source tool that manages age dependencies between different
 files launching defined actions to bring out-of-date files back in sync. It is
 much like make(1) utility, providing way better facilities for describing
-project dependencies defining necessary actions. 
+project dependencies defining necessary actions.
 
 tsc-build uses JAM language to define rules that are used to describe a
 software project. These rules are used in Jamfile-s accross project folders,
 each of those describing things to perform in that particular folder. Jamfiles
 are liked together by means of a special rule 'make-subdir' (or
-'make-subdirs') that must mention all sub-folders to descend to. 
+'make-subdirs') that must mention all sub-folders to descend to.
 
 On every invocaton the whole tree of Jamfiles is loaded starting from the
 project root.  This provides an opportunity for jam to "see" the whole
@@ -31,7 +31,7 @@ A project must be rooted in 'src' folder, this is one of the hard-coded
 assumtions among a handful. All projects artifacts are created in folders
 parallel to 'src', with the precise matching of folder structure beneath:
 
-  bin 
+  bin
     Here go all compilation and linking artifacts, such as object files,
     executables, libraries, shared modules, etc.
 

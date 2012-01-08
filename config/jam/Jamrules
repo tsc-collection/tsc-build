@@ -1,14 +1,14 @@
 # vim: ft=jam: sw=2:
 #
 #            Tone Software Corporation BSD License ("License")
-# 
+#
 #                        Software Build Environment
-#                        
+#
 # Please read this License carefully before downloading this software. By
 # downloading or using this software, you are agreeing to be bound by the
 # terms of this License. If you do not or cannot agree to the terms of
 # this License, please do not download or use the software.
-# 
+#
 # A set of Jam configuration files and a Jam front-end for advanced
 # software building with automatic dependency checking for the whole
 # project. Provides a hierarchical project description while performing
@@ -19,23 +19,23 @@
 # ability to build programs, test suites, static and shared libraries,
 # shared modules, code generation, and many others. Provides the bridge to
 # ANT for building Java, with abilities to build JNI libraries.
-# 
+#
 # Copyright (c) 2003, 2005, Tone Software Corporation
-# 
+#
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are
 # met:
 #   * Redistributions of source code must retain the above copyright
-#     notice, this list of conditions and the following disclaimer. 
+#     notice, this list of conditions and the following disclaimer.
 #   * Redistributions in binary form must reproduce the above copyright
 #     notice, this list of conditions and the following disclaimer in the
-#     documentation and/or other materials provided with the distribution. 
+#     documentation and/or other materials provided with the distribution.
 #   * Neither the name of the Tone Software Corporation nor the names of
 #     its contributors may be used to endorse or promote products derived
-#     from this software without specific prior written permission. 
-# 
+#     from this software without specific prior written permission.
+#
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS
 # IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
 # TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
@@ -47,7 +47,7 @@
 # LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
 # NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-# 
+#
 
 rule use-project-library { use-project-libraries $(1) : $(2) ; }
 rule add-project-library { add-project-libraries $(1) : $(2) : $(3) ; }
@@ -208,8 +208,8 @@ rule make-jni-module
   system.assign-category jni : $(_target) ;
 
   util.add-target-variable $(_objects) : TARGET_INCLUDES :
-    $(project.JAVA_HOME)$(jam.SEPARATOR)include 
-    $(project.JAVA_HOME)$(jam.SEPARATOR)include$(jam.SEPARATOR)$(project.JAVA_PLATFORM) 
+    $(project.JAVA_HOME)$(jam.SEPARATOR)include
+    $(project.JAVA_HOME)$(jam.SEPARATOR)include$(jam.SEPARATOR)$(project.JAVA_PLATFORM)
   ;
   local _build = [ system.make-build-target ] ;
 
@@ -444,7 +444,7 @@ rule make-ant-project
   Depends java-test : test@$(system.DOT_TARGET) ;
 
   local _jni_libs = [ util.get-target-variable $(_config_in_bin) : JNI_LIBS ] ;
-  if $(_jni_libs) { 
+  if $(_jni_libs) {
     Depends test@$(system.DOT_TARGET) : $(_jni_libs) ;
   }
   if [ system.is-cwd-under-dot ] && $(system.MAIN_TARGET) != $(system.DOT_TARGET) {
@@ -452,8 +452,8 @@ rule make-ant-project
     Depends test@$(system.MAIN_TARGET) : test@$(system.DOT_TARGET) ;
     Depends clean-ant@$(system.MAIN_TARGET) : clean-ant@$(system.DOT_TARGET) ;
 
-    util.set-target-variable try : TARGET_DIRS : 
-      $(system.SRCDIR) $(system.BINDIR) 
+    util.set-target-variable try : TARGET_DIRS :
+      $(system.SRCDIR) $(system.BINDIR)
     ;
   }
   ANT_BUILD_FILE on java = $(1) ;
@@ -582,7 +582,7 @@ rule use-oracle
   ;
 }
 
-rule use-pgsql 
+rule use-pgsql
 {
   use-product $(1) $(2) $(3) $(4) $(5) $(6) $(7) $(8) $(9)
     : $(PGSQL_LIBDIRS)
@@ -590,7 +590,7 @@ rule use-pgsql
     :
     : $(PGSQL_INCLUDES)
     :
-    : $(PGSQL_JARS) 
+    : $(PGSQL_JARS)
   ;
 }
 
@@ -633,7 +633,7 @@ rule use-unit-test
 
 rule use-boost
 {
-  use-product $(1) 
+  use-product $(1)
     : $(CONTRIB_ROOT)$(jam.SEPARATOR)boost-$(BOOST_VERSION)$(jam.SEPARATOR)lib
     : boost_$(2)_$(BOOST_VERSION)
     :
@@ -660,7 +660,7 @@ rule use-openssl
   use-product $(1) $(2) $(3) $(4) $(5) $(6) $(7) $(8) $(9)
     : $(OPENSSL_ROOT)$(jam.SEPARATOR)lib
     : $(OPENSSL_LIBS)
-    : 
+    :
     : $(OPENSSL_ROOT)$(jam.SEPARATOR)include
   ;
 }
@@ -683,7 +683,7 @@ rule use-curses
   use-product $(1) $(2) $(3) $(4) $(5) $(6) $(7) $(8) $(9)
     :
     :
-    : $(project.CURSES_LIBS) 
+    : $(project.CURSES_LIBS)
   ;
 }
 
@@ -710,13 +710,13 @@ rule use-ruby
 
 rule use-stemkit
 {
-  use-product $(1) 
+  use-product $(1)
     : $(project.STEMKIT_LIBDIR)
     : $(2)
     :
     : $(project.STEMKIT_INCLUDE)/hooks $(project.STEMKIT_INCLUDE)
-    : 
-    : 
+    :
+    :
   ;
 }
 

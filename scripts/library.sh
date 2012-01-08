@@ -99,7 +99,7 @@ SetInputFields ()
   }
 }
 
-tolower () 
+tolower ()
 {
   eval `EntryPoint 9 tolower`
 
@@ -110,7 +110,7 @@ tolower ()
   '
 }
 
-toupper () 
+toupper ()
 {
   eval `EntryPoint 9 toupper`
 
@@ -164,14 +164,14 @@ ParseCommandParameters ()
   return 0
 }
 
-ErrMsg () 
+ErrMsg ()
 {
   eval `EntryPoint 9 ErrMsg`
 
   echo "${ScriptName}: ${*}" 1>&4 2>&1
 }
 
-ShowMsg () 
+ShowMsg ()
 {
   eval `EntryPoint 9 ShowMsg`
 
@@ -272,7 +272,7 @@ runEcho ()
   return ${?}
 }
 
-GenDirPath () 
+GenDirPath ()
 {
   eval `EntryPoint 9 GenDirPath`
 
@@ -292,7 +292,7 @@ SplitOutput ()
   done
 }
 
-ShowProgress () 
+ShowProgress ()
 {
   eval `EntryPoint 9 ShowProgress`
 
@@ -412,7 +412,7 @@ CheckProgram ()
   return 1
 }
 
-CheckVars () 
+CheckVars ()
 {
   eval `EntryPoint 9 CheckVars`
 
@@ -426,7 +426,7 @@ CheckVars ()
   return 0
 }
 
-PrintVars () 
+PrintVars ()
 {
   eval `EntryPoint 9 PrintVars`
 
@@ -435,7 +435,7 @@ PrintVars ()
   done
 }
 
-VerifyDir () 
+VerifyDir ()
 {
   eval `EntryPoint 9 VerifyDir`
 
@@ -443,7 +443,7 @@ VerifyDir ()
   return ${?}
 }
 
-VerifyFile () 
+VerifyFile ()
 {
   eval `EntryPoint 9 VerifyFile`
 
@@ -451,7 +451,7 @@ VerifyFile ()
   return ${?}
 }
 
-VerifyProg () 
+VerifyProg ()
 {
   eval `EntryPoint 9 VerifyProg`
 
@@ -459,7 +459,7 @@ VerifyProg ()
   return ${?}
 }
 
-ExtractValues () 
+ExtractValues ()
 {
   eval `EntryPoint 9 ExtractValues`
 
@@ -485,21 +485,21 @@ ExtractValues ()
   }
 }
 
-EntryPoint () 
+EntryPoint ()
 {
   echo '
     trap CleanUp ${SigList};
   '
   [ "${DebugLevel:-0}" -ge "${1:-1}" ] && {
     echo '
-      echo "[Function: '"${2:-?}"']" 1>&2; 
+      echo "[Function: '"${2:-?}"']" 1>&2;
       set -xv;
     '
   }
 }
 
 CLEANUP_LIST=
-CleanUp () 
+CleanUp ()
 {
   eval `EntryPoint 5 CleanUp`
   trap '' ${SigList}
@@ -530,7 +530,7 @@ UpdateCleanupList ()
   done
 }
 
-PrintUsage () 
+PrintUsage ()
 {
   eval `EntryPoint 9 PrintUsage`
 
@@ -554,7 +554,7 @@ PrintDescription ()
 {
   eval `EntryPoint 9 PrintDescription`
   {
-    echo "DESCIPTION:" 
+    echo "DESCIPTION:"
     echo "${DESCRIPTION}"|sed '/^[ 	]*$/d;s/^[ 	]*/  /'
   } 1>&4
 }

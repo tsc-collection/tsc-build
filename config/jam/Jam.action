@@ -1,14 +1,14 @@
 # vim:ft=jam
 #
 #            Tone Software Corporation BSD License ("License")
-# 
+#
 #                        Software Build Environment
-#                        
+#
 # Please read this License carefully before downloading this software. By
 # downloading or using this software, you are agreeing to be bound by the
 # terms of this License. If you do not or cannot agree to the terms of
 # this License, please do not download or use the software.
-# 
+#
 # A set of Jam configuration files and a Jam front-end for advanced
 # software building with automatic dependency checking for the whole
 # project. Provides a hierarchical project description while performing
@@ -19,23 +19,23 @@
 # ability to build programs, test suites, static and shared libraries,
 # shared modules, code generation, and many others. Provides the bridge to
 # ANT for building Java, with abilities to build JNI libraries.
-# 
+#
 # Copyright (c) 2003, 2005, Tone Software Corporation
-# 
+#
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are
 # met:
 #   * Redistributions of source code must retain the above copyright
-#     notice, this list of conditions and the following disclaimer. 
+#     notice, this list of conditions and the following disclaimer.
 #   * Redistributions in binary form must reproduce the above copyright
 #     notice, this list of conditions and the following disclaimer in the
-#     documentation and/or other materials provided with the distribution. 
+#     documentation and/or other materials provided with the distribution.
 #   * Neither the name of the Tone Software Corporation nor the names of
 #     its contributors may be used to endorse or promote products derived
-#     from this software without specific prior written permission. 
-# 
+#     from this software without specific prior written permission.
+#
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS
 # IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
 # TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
@@ -47,7 +47,7 @@
 # LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
 # NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-# 
+#
 
 actions together action.compile-java
 {
@@ -122,10 +122,10 @@ actions together action.reloc
 }
 
 # For the next 2 actions: on Windows, $(core.TOPDIR) ends with \. Ruby
-# interprets it as the quoting for the next character and leaves that 
+# interprets it as the quoting for the next character and leaves that
 # character in the resulting string. Hence the trick -- we cannot use
 # '$(core.TOPDIR)', as the last single quote will be quoted by the last
-# back slash in core.TOPDIR; using extra spaces around and immediatelly 
+# back slash in core.TOPDIR; using extra spaces around and immediatelly
 # removing them with String#strip.
 #
 actions together action.shared-library
@@ -205,7 +205,7 @@ actions action.invoke
 
   ENV['JAM_SRCDIR'] = '$(system.SRCDIR)'
 
-  STDERR.puts 
+  STDERR.puts
 
   mkdir_p '$(BINDIR)'
   cd '$(BINDIR)' do
@@ -246,7 +246,7 @@ actions action.symlink
 
   begin
     touch '$(<:D)/$(>)'
-    ln_sf '$(>)', '$(<)' 
+    ln_sf '$(>)', '$(<)'
   rescue NotImplementedError
     cp '$(<:D)/$(>)', '$(<)'
   end
@@ -360,19 +360,19 @@ actions action.package
     key, value = item.split('=')
     ENV[key] = value
   }
-  exec *%w[ distributor $(project.DISTRIB_PRODINFO) $(jam.PACKAGES) 
-    --source $(system.SRCTOPDIR) 
-    --binary $(system.BINTOPDIR) 
-    --output $(system.PKGTOPDIR) 
-    -m$(project.DISTRIB_MODE) 
-    -p$(project.LIB_PREFIX) 
-    -l$(project.LIB_MAJOR) 
-    -P$(PRODUCT_ID) 
-    -V$(PRODUCT_RELEASE) 
-    -B$(PRODUCT_BUILD) 
-    -T$(PRODUCT_TAG) 
+  exec *%w[ distributor $(project.DISTRIB_PRODINFO) $(jam.PACKAGES)
+    --source $(system.SRCTOPDIR)
+    --binary $(system.BINTOPDIR)
+    --output $(system.PKGTOPDIR)
+    -m$(project.DISTRIB_MODE)
+    -p$(project.LIB_PREFIX)
+    -l$(project.LIB_MAJOR)
+    -P$(PRODUCT_ID)
+    -V$(PRODUCT_RELEASE)
+    -B$(PRODUCT_BUILD)
+    -T$(PRODUCT_TAG)
     -A$(PRODUCT_ABI)
-    -E$(jam.DSO_EXTENTION) 
+    -E$(jam.DSO_EXTENTION)
   ]
 }
 
@@ -382,20 +382,20 @@ actions action.oneoff
     key, value = item.split('=')
     ENV[key] = value
   }
-  exec *%w[ distributor $(project.DISTRIB_PRODINFO) 
+  exec *%w[ distributor $(project.DISTRIB_PRODINFO)
     --oneoff $(TARGET_CONFIG)
-    --source $(system.SRCTOPDIR) 
-    --binary $(system.BINTOPDIR) 
-    --output $(system.PKGTOPDIR) 
-    -m$(project.DISTRIB_MODE) 
-    -p$(project.LIB_PREFIX) 
-    -l$(project.LIB_MAJOR) 
-    -P$(PRODUCT_ID) 
-    -V$(PRODUCT_RELEASE) 
-    -B$(PRODUCT_BUILD) 
-    -T$(PRODUCT_TAG) 
+    --source $(system.SRCTOPDIR)
+    --binary $(system.BINTOPDIR)
+    --output $(system.PKGTOPDIR)
+    -m$(project.DISTRIB_MODE)
+    -p$(project.LIB_PREFIX)
+    -l$(project.LIB_MAJOR)
+    -P$(PRODUCT_ID)
+    -V$(PRODUCT_RELEASE)
+    -B$(PRODUCT_BUILD)
+    -T$(PRODUCT_TAG)
     -A$(PRODUCT_ABI)
-    -E$(jam.DSO_EXTENTION) 
+    -E$(jam.DSO_EXTENTION)
   ]
 }
 
@@ -405,26 +405,26 @@ actions together action.install
     key, value = item.split('=')
     ENV[key] = value
   }
-  exec *%w[ $(INSTALL_LAUNCHER) distributor $(project.DISTRIB_PRODINFO) $(TARGET_DIRS) 
-    --install 
-    --source $(system.SRCTOPDIR) 
-    --binary $(system.BINTOPDIR) 
-    -r$(project.DISTRIB_ENV) 
-    -m$(project.DISTRIB_MODE) 
-    -p$(project.LIB_PREFIX) 
-    -l$(project.LIB_MAJOR) 
-    -P$(PRODUCT_ID) 
-    -V$(PRODUCT_RELEASE) 
-    -B$(PRODUCT_BUILD) 
-    -T$(PRODUCT_TAG) 
+  exec *%w[ $(INSTALL_LAUNCHER) distributor $(project.DISTRIB_PRODINFO) $(TARGET_DIRS)
+    --install
+    --source $(system.SRCTOPDIR)
+    --binary $(system.BINTOPDIR)
+    -r$(project.DISTRIB_ENV)
+    -m$(project.DISTRIB_MODE)
+    -p$(project.LIB_PREFIX)
+    -l$(project.LIB_MAJOR)
+    -P$(PRODUCT_ID)
+    -V$(PRODUCT_RELEASE)
+    -B$(PRODUCT_BUILD)
+    -T$(PRODUCT_TAG)
     -A$(PRODUCT_ABI)
-    -E$(jam.DSO_EXTENTION) 
+    -E$(jam.DSO_EXTENTION)
   ]
 }
 
 actions action.handoff
 {
-  handoff -p $(project.HANDOFF_PRODUCT) -s$(project.HANDOFF_SERVER) -m$(project.HANDOFF_RECEPIENTS) 
+  handoff -p $(project.HANDOFF_PRODUCT) -s$(project.HANDOFF_SERVER) -m$(project.HANDOFF_RECEPIENTS)
 }
 
 actions action.generate-swig-interface

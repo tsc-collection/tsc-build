@@ -16,7 +16,7 @@ jam.LIB_PREFIX = ;
 
 rule mswin.setup-visual-studio-compile-options
 {
-  COMPILER = CL /nologo ; 
+  COMPILER = CL /nologo ;
 
   CC = $(COMPILER) ;
   CXX = $(COMPILER) ;
@@ -28,7 +28,7 @@ rule mswin.setup-visual-studio-compile-options
 
   RC = RC ;
   RC_FLAGS = /l0x409 ;
-  
+
   DLL_FLAGS = /DLL ;
   CC_INCLUDE_FLAG = /I ;
   CC_DEFINE_FLAG = /D ;
@@ -61,7 +61,7 @@ rule mswin.setup-visual-studio8-m32
   mswin.setup-visual-studio-compile-options ;
   local VCROOT = [ util.split-path "$(1)" ] ;
 
-  COMPILE_PATH_LIST += 
+  COMPILE_PATH_LIST +=
     [ util.make-path "$(VCROOT)" VC BIN ]
     [ util.make-path "$(VCROOT)" Common7 IDE ]
     [ util.make-path "$(VCROOT)" Common7 Tools ]
@@ -88,7 +88,7 @@ rule mswin.setup-visual-studio8-m64
   mswin.setup-visual-studio-compile-options ;
   local VCROOT = [ util.split-path "$(1)" ] ;
 
-  COMPILE_PATH_LIST += 
+  COMPILE_PATH_LIST +=
     [ util.make-path "$(VCROOT)" VC BIN amd64 ]
     [ util.make-path "$(VCROOT)" Common7 IDE ]
     [ util.make-path "$(VCROOT)" Common7 Tools ]
@@ -115,7 +115,7 @@ rule mswin.setup-visual-studio7
   mswin.setup-visual-studio-compile-options ;
   local VCROOT = [ util.split-path "$(1)" ] ;
 
-  COMPILE_PATH_LIST += 
+  COMPILE_PATH_LIST +=
     [ util.make-path "$(VCROOT)" VC7 BIN ]
     [ util.make-path "$(VCROOT)" Common7 IDE ]
     [ util.make-path "$(VCROOT)" Common7 Tools ]
@@ -197,7 +197,7 @@ rule mswin.make-gui-program
   mswin.propagate-windows-defines $(_program) ;
 }
 
-rule mswin.make-dll 
+rule mswin.make-dll
 {
   local _dll = [ make-shared-library $(1) : $(2) ] ;
 

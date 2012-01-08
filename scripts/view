@@ -1,14 +1,14 @@
 #!/bin/ksh
 #
 #            Tone Software Corporation BSD License ("License")
-# 
+#
 #                        Software Build Environment
-#                        
+#
 # Please read this License carefully before downloading this software. By
 # downloading or using this software, you are agreeing to be bound by the
 # terms of this License. If you do not or cannot agree to the terms of
 # this License, please do not download or use the software.
-# 
+#
 # A set of Jam configuration files and a Jam front-end for advanced
 # software building with automatic dependency checking for the whole
 # project. Provides a hierarchical project description while performing
@@ -19,23 +19,23 @@
 # ability to build programs, test suites, static and shared libraries,
 # shared modules, code generation, and many others. Provides the bridge to
 # ANT for building Java, with abilities to build JNI libraries.
-# 
+#
 # Copyright (c) 2003, 2005, Tone Software Corporation
-# 
+#
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are
 # met:
 #   * Redistributions of source code must retain the above copyright
-#     notice, this list of conditions and the following disclaimer. 
+#     notice, this list of conditions and the following disclaimer.
 #   * Redistributions in binary form must reproduce the above copyright
 #     notice, this list of conditions and the following disclaimer in the
-#     documentation and/or other materials provided with the distribution. 
+#     documentation and/or other materials provided with the distribution.
 #   * Neither the name of the Tone Software Corporation nor the names of
 #     its contributors may be used to endorse or promote products derived
-#     from this software without specific prior written permission. 
-# 
+#     from this software without specific prior written permission.
+#
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS
 # IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
 # TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
@@ -47,7 +47,7 @@
 # LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
 # NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-# 
+#
 
 #@(#)Title:     View changer
 #@(#)Author:    Gennady F. Bystritsky (gfb@tonesoft.com)
@@ -72,7 +72,7 @@ ShowCleanupMessage=NO
 
 UTILITY=view
 
-main () 
+main ()
 {
   eval `EntryPoint 1 main`
 
@@ -201,7 +201,7 @@ OnOption ()
 {
   eval `EntryPoint 3 OnOption`
 
-  case "${1}" in 
+  case "${1}" in
     a)
       SHOW_ALL=yes
     ;;
@@ -216,7 +216,7 @@ OnArguments ()
 {
   eval `EntryPoint 2 OnArguments`
 
-  case "${#}" in 
+  case "${#}" in
     0)
     ;;
     1)
@@ -229,7 +229,7 @@ OnArguments ()
   return 0
 }
 
-buildScriptsPath () 
+buildScriptsPath ()
 {
     unset colon
     for directory in project/scripts scripts; do
@@ -252,7 +252,7 @@ guessProduct ()
   echo ${1}
 }
 
-collectViews () 
+collectViews ()
 {
   location=${DEV_HOME}
   : ${DEV_HOME:=${HOME}}
@@ -273,14 +273,14 @@ collectViews ()
   return 0
 }
 
-getPrefixes () 
+getPrefixes ()
 {
   echo ${DEV_HOME}/*/*/*/src/scripts/${UTILITY} | tr ' ' '\n' | {
     sed -n 's%^'"${DEV_HOME}"'/\(.*\)/\(.*\)/\(.*\)/src/.*$%\1%p' | sort -u
   }
 }
 
-getProducts () 
+getProducts ()
 {
   echo ${DEV_HOME}/*/${DESIRED_VIEW}/src/scripts/${UTILITY} | tr ' ' '\n' | {
     sed -n 's%^'"${DEV_HOME}"'/\(.*\)/\(.*\)/src/.*$%\1%p' | sort -u
@@ -400,7 +400,7 @@ SetInputFields ()
   }
 }
 
-tolower () 
+tolower ()
 {
   eval `EntryPoint 9 tolower`
 
@@ -411,7 +411,7 @@ tolower ()
   '
 }
 
-toupper () 
+toupper ()
 {
   eval `EntryPoint 9 toupper`
 
@@ -465,14 +465,14 @@ ParseCommandParameters ()
   return 0
 }
 
-ErrMsg () 
+ErrMsg ()
 {
   eval `EntryPoint 9 ErrMsg`
 
   echo "${ScriptName}: ${*}" 1>&4 2>&1
 }
 
-ShowMsg () 
+ShowMsg ()
 {
   eval `EntryPoint 9 ShowMsg`
 
@@ -573,7 +573,7 @@ runEcho ()
   return ${?}
 }
 
-GenDirPath () 
+GenDirPath ()
 {
   eval `EntryPoint 9 GenDirPath`
 
@@ -593,7 +593,7 @@ SplitOutput ()
   done
 }
 
-ShowProgress () 
+ShowProgress ()
 {
   eval `EntryPoint 9 ShowProgress`
 
@@ -704,7 +704,7 @@ CheckProgram ()
   return 1
 }
 
-CheckVars () 
+CheckVars ()
 {
   eval `EntryPoint 9 CheckVars`
 
@@ -718,7 +718,7 @@ CheckVars ()
   return 0
 }
 
-PrintVars () 
+PrintVars ()
 {
   eval `EntryPoint 9 PrintVars`
 
@@ -727,7 +727,7 @@ PrintVars ()
   done
 }
 
-VerifyDir () 
+VerifyDir ()
 {
   eval `EntryPoint 9 VerifyDir`
 
@@ -735,7 +735,7 @@ VerifyDir ()
   return ${?}
 }
 
-VerifyFile () 
+VerifyFile ()
 {
   eval `EntryPoint 9 VerifyFile`
 
@@ -743,7 +743,7 @@ VerifyFile ()
   return ${?}
 }
 
-VerifyProg () 
+VerifyProg ()
 {
   eval `EntryPoint 9 VerifyProg`
 
@@ -751,7 +751,7 @@ VerifyProg ()
   return ${?}
 }
 
-ExtractValues () 
+ExtractValues ()
 {
   eval `EntryPoint 9 ExtractValues`
 
@@ -777,21 +777,21 @@ ExtractValues ()
   }
 }
 
-EntryPoint () 
+EntryPoint ()
 {
   echo '
     trap CleanUp ${SigList};
   '
   [ "${DebugLevel:-0}" -ge "${1:-1}" ] && {
     echo '
-      echo "[Function: '"${2:-?}"']" 1>&2; 
+      echo "[Function: '"${2:-?}"']" 1>&2;
       set -xv;
     '
   }
 }
 
 CLEANUP_LIST=
-CleanUp () 
+CleanUp ()
 {
   eval `EntryPoint 5 CleanUp`
   trap '' ${SigList}
@@ -822,7 +822,7 @@ UpdateCleanupList ()
   done
 }
 
-PrintUsage () 
+PrintUsage ()
 {
   eval `EntryPoint 9 PrintUsage`
 
@@ -846,7 +846,7 @@ PrintDescription ()
 {
   eval `EntryPoint 9 PrintDescription`
   {
-    echo "DESCIPTION:" 
+    echo "DESCIPTION:"
     echo "${DESCRIPTION}"|sed '/^[ 	]*$/d;s/^[ 	]*/  /'
   } 1>&4
 }

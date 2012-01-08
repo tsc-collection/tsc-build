@@ -1,14 +1,14 @@
 #!/bin/ksh
 #
 #            Tone Software Corporation BSD License ("License")
-# 
+#
 #                        Software Build Environment
-#                        
+#
 # Please read this License carefully before downloading this software. By
 # downloading or using this software, you are agreeing to be bound by the
 # terms of this License. If you do not or cannot agree to the terms of
 # this License, please do not download or use the software.
-# 
+#
 # A set of Jam configuration files and a Jam front-end for advanced
 # software building with automatic dependency checking for the whole
 # project. Provides a hierarchical project description while performing
@@ -19,23 +19,23 @@
 # ability to build programs, test suites, static and shared libraries,
 # shared modules, code generation, and many others. Provides the bridge to
 # ANT for building Java, with abilities to build JNI libraries.
-# 
+#
 # Copyright (c) 2003, 2005, Tone Software Corporation
-# 
+#
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are
 # met:
 #   * Redistributions of source code must retain the above copyright
-#     notice, this list of conditions and the following disclaimer. 
+#     notice, this list of conditions and the following disclaimer.
 #   * Redistributions in binary form must reproduce the above copyright
 #     notice, this list of conditions and the following disclaimer in the
-#     documentation and/or other materials provided with the distribution. 
+#     documentation and/or other materials provided with the distribution.
 #   * Neither the name of the Tone Software Corporation nor the names of
 #     its contributors may be used to endorse or promote products derived
-#     from this software without specific prior written permission. 
-# 
+#     from this software without specific prior written permission.
+#
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS
 # IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
 # TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
@@ -47,7 +47,7 @@
 # LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
 # NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-# 
+#
 
 #@(#)Title:     Package preparation utility
 #@(#)Author:    Gennady F. Bystritsky (gfb@tonesoft.com)
@@ -63,11 +63,11 @@ DESCRIPTION="
   This utility implements packages with incremental patches. All patches are
   stored and may be rolled back. With many patches it may consume considerable
   amount of disk space (to save modified modules). A patch number corresponds
-  to the patch package instance number with the first patch package having 
-  empty instance number. A patch package name is built by prepending 'P' to 
-  the base package name. The total of 99 patches per package is allowed. 
+  to the patch package instance number with the first patch package having
+  empty instance number. A patch package name is built by prepending 'P' to
+  the base package name. The total of 99 patches per package is allowed.
   Note:
-  | The major part of the installation/removal script for packages 
+  | The major part of the installation/removal script for packages
   | created with this utility is kept here in the utility itself.
 "
 ARGUMENTS="
@@ -91,7 +91,7 @@ PKGPROTOTYPEFILE=Prototype
 
 unset CDPATH
 
-main () 
+main ()
 {
   eval `EntryPoint 1 main`
 
@@ -151,7 +151,7 @@ main ()
   ExtractValues "${PKGINFOFILE}" PKG NAME
   ShowMsg "[${PKG}] ${NAME}"
   {
-    createPackageFiles && buildPrototype 
+    createPackageFiles && buildPrototype
   } <"${PKGCONTENTSFILE}" >"${PKGTEMPDIR}/${PKGPROTOTYPEFILE}"
   [ -s "${PKGTEMPDIR}/${PKGPROTOTYPEFILE}" ] && {
     makePackage
@@ -200,7 +200,7 @@ OnOption ()
     j)
       JUMBO=YES
     ;;
-    *) 
+    *)
       return 1
     ;;
   esac
@@ -285,7 +285,7 @@ createPackageFiles ()
     sed -n '/^#\[PART3\]/,${
       /^#\[PART.\]/d
       p
-    }' "${ScriptDir}/${ScriptName}" 
+    }' "${ScriptDir}/${ScriptName}"
     [ -f "${PKGDIR}/${PKGACTIONFILE}" ] && {
       cat "${PKGDIR}/${PKGACTIONFILE}"
     }
@@ -330,14 +330,14 @@ buildPrototype ()
     do
       eval `SetInputFields line "#"`
       [ ${#} -ge 9 ] && {
-        class="${1}" 
-        source="${2}" 
+        class="${1}"
+        source="${2}"
         target="${3}"
-        file_owner="${4}" 
-        file_group="${5}" 
+        file_owner="${4}"
+        file_group="${5}"
         file_perms="${6}"
         dir_owner="${7}"
-        dir_group="${8}" 
+        dir_group="${8}"
         dir_perms="${9}"
         shift 9
         pkg_tops="${1}"
@@ -478,7 +478,7 @@ parseDesc ()
       next
     }
     {
-      err_message = "Wrong format in line " NR " of " FILENAME 
+      err_message = "Wrong format in line " NR " of " FILENAME
       exit
     }
     END {
@@ -515,7 +515,7 @@ parseDesc ()
           fu, fg, fp, du, dg, dp, \
           section["TOPS"] \
         > "'"${PKGCONTENTSFILE}"'"
- 
+
         for(entry in section){
           delete section[entry]
         }
@@ -539,7 +539,7 @@ parseDesc ()
         prodline = info["PRODLINE"]
       }
       info["PRODLINE"] = toupper(prodline)
-  
+
       if(info["DESC"] ~ /^[ \t]*$/){
         info["DESC"] = info["NAME"]
       }
@@ -671,7 +671,7 @@ SetInputFields ()
   }
 }
 
-tolower () 
+tolower ()
 {
   eval `EntryPoint 9 tolower`
 
@@ -682,7 +682,7 @@ tolower ()
   '
 }
 
-toupper () 
+toupper ()
 {
   eval `EntryPoint 9 toupper`
 
@@ -736,14 +736,14 @@ ParseCommandParameters ()
   return 0
 }
 
-ErrMsg () 
+ErrMsg ()
 {
   eval `EntryPoint 9 ErrMsg`
 
   echo "${ScriptName}: ${*}" 1>&4 2>&1
 }
 
-ShowMsg () 
+ShowMsg ()
 {
   eval `EntryPoint 9 ShowMsg`
 
@@ -844,7 +844,7 @@ runEcho ()
   return ${?}
 }
 
-GenDirPath () 
+GenDirPath ()
 {
   eval `EntryPoint 9 GenDirPath`
 
@@ -864,7 +864,7 @@ SplitOutput ()
   done
 }
 
-ShowProgress () 
+ShowProgress ()
 {
   eval `EntryPoint 9 ShowProgress`
 
@@ -975,7 +975,7 @@ CheckProgram ()
   return 1
 }
 
-CheckVars () 
+CheckVars ()
 {
   eval `EntryPoint 9 CheckVars`
 
@@ -989,7 +989,7 @@ CheckVars ()
   return 0
 }
 
-PrintVars () 
+PrintVars ()
 {
   eval `EntryPoint 9 PrintVars`
 
@@ -998,7 +998,7 @@ PrintVars ()
   done
 }
 
-VerifyDir () 
+VerifyDir ()
 {
   eval `EntryPoint 9 VerifyDir`
 
@@ -1006,7 +1006,7 @@ VerifyDir ()
   return ${?}
 }
 
-VerifyFile () 
+VerifyFile ()
 {
   eval `EntryPoint 9 VerifyFile`
 
@@ -1014,7 +1014,7 @@ VerifyFile ()
   return ${?}
 }
 
-VerifyProg () 
+VerifyProg ()
 {
   eval `EntryPoint 9 VerifyProg`
 
@@ -1022,7 +1022,7 @@ VerifyProg ()
   return ${?}
 }
 
-ExtractValues () 
+ExtractValues ()
 {
   eval `EntryPoint 9 ExtractValues`
 
@@ -1048,21 +1048,21 @@ ExtractValues ()
   }
 }
 
-EntryPoint () 
+EntryPoint ()
 {
   echo '
     trap CleanUp ${SigList};
   '
   [ "${DebugLevel:-0}" -ge "${1:-1}" ] && {
     echo '
-      echo "[Function: '"${2:-?}"']" 1>&2; 
+      echo "[Function: '"${2:-?}"']" 1>&2;
       set -xv;
     '
   }
 }
 
 CLEANUP_LIST=
-CleanUp () 
+CleanUp ()
 {
   eval `EntryPoint 5 CleanUp`
   trap '' ${SigList}
@@ -1093,7 +1093,7 @@ UpdateCleanupList ()
   done
 }
 
-PrintUsage () 
+PrintUsage ()
 {
   eval `EntryPoint 9 PrintUsage`
 
@@ -1117,7 +1117,7 @@ PrintDescription ()
 {
   eval `EntryPoint 9 PrintDescription`
   {
-    echo "DESCIPTION:" 
+    echo "DESCIPTION:"
     echo "${DESCRIPTION}"|sed '/^[ 	]*$/d;s/^[ 	]*/  /'
   } 1>&4
 }
@@ -1321,7 +1321,7 @@ CheckHigherVersion ()
 
     [ ${maj1} -gt ${maj2} ] && return 1
     [ ${maj2} -gt ${maj1} ] && return 2
-    
+
     [ ${min1} -gt ${min2} ] && return 1
     [ ${min2} -gt ${min1} ] && return 2
   }
@@ -1333,7 +1333,7 @@ ReportExtraInstance ()
   eval `EntryPoint 3 ReportExtraInstance`
 
   [ ${#} -eq 2 ] && {
-    p1=${1} 
+    p1=${1}
     p2=${2}
     pkg=${p1}
     CheckHigherVersion `GetPkgVersion "${p1}"` `GetPkgVersion "${p2}"`
@@ -1590,7 +1590,7 @@ PerformRequestActions ()
         MAINPKGINST=${1}
         REF_PACKAGE="${MAINPKGINST}"
         version=`GetPkgVersion "${MAINPKGINST}"`
-        CheckHigherVersion "${version}" "${PRODVER}" 
+        CheckHigherVersion "${version}" "${PRODVER}"
         [ "${?}" -ne 0 ] && {
           echo "
             Main package instance <${MAINPKGINST}> version mismatch
@@ -1639,7 +1639,7 @@ PerformRequestActions ()
 	      eval `pkgparam -v "${last_instance}" PRODLINE PRODUCT VERSION`
 	      package="${PRODLINE}${PRODUCT} ${VERSION}"
 	      echo "
-		Preview release of ${package} cannot be patched.  
+		Preview release of ${package} cannot be patched.
 		Install official release first.
 	      "|ShowBox ERROR
 	      return 1
@@ -1667,9 +1667,9 @@ PerformRequestActions ()
     esac
   fi
   first_question=true
-  if [ "${REF_PACKAGE:+set}" = set ]; then 
+  if [ "${REF_PACKAGE:+set}" = set ]; then
     #
-    # Extract all required credentials from REF_PACKAGE and save 
+    # Extract all required credentials from REF_PACKAGE and save
     # them as the package's.
     #
     PKGINSTDIR=`pkgparam "${REF_PACKAGE}" PKGINSTDIR`
@@ -1836,7 +1836,7 @@ PerformPreinstallActions ()
         }
         ShowStep "User name \"${PKGINSTUSR}\" created."
       }
-    } 
+    }
   }
   return 0
 }
@@ -1931,7 +1931,7 @@ PerformPreremoveActions ()
             #
             # Here we bypass custom preremove script because this is
             # just a clean-up after upgrade.
-            # 
+            #
             ShowStep "Performing clean-up removal"
             return 0
           }
@@ -2130,7 +2130,7 @@ generateClassInstall ()
 	else
 	  ShowMsg "... Building \"${target}\""
 	  touch "${target}"
-	fi 
+	fi
 	sh "${source}" install "${target}" <"${target}" >"${TEMPFILE}" && {
 	  [ -s "${TEMPFILE}" ] && {
 	    mv "${TEMPFILE}" "${target}"
@@ -2218,8 +2218,8 @@ generateClassRemove ()
         - FAIL: Main package required
       o Main package of different version
         - FAIL: Version mismatch
-      o Main package of the same version. Consider the case when there 
-        are two instances of the main package (when the older one is not 
+      o Main package of the same version. Consider the case when there
+        are two instances of the main package (when the older one is not
         removed yet). Take the latest one.
         o The new patch level is the same as the current one
           - Set notification of update or rely on pkgadd
@@ -2230,7 +2230,7 @@ generateClassRemove ()
           + Proceed with installation
         o The new patch level is not 1 greater than the current one
           - FAIL: Patch level mismatch
-  
+
   REMOVAL CHECK (performed in "preremove" action)
     Main package
     ------------
@@ -2238,8 +2238,8 @@ generateClassRemove ()
         and "postremove" actions)
         - Do not call a custom action
         + Proceed with removal
-      o An older version of the package present 
-        - FAIL: Remove the older instance first 
+      o An older version of the package present
+        - FAIL: Remove the older instance first
       o No newer or older versions
         o Patches present
           - FAIL: Remove patches first
@@ -2254,10 +2254,10 @@ generateClassRemove ()
         - FAIL: Only the latest patch may be removed (show name)
       o Patch level is the latest one
         + Proceed with removal
-  
+
   FORCED REMOVAL
     If "/tmp/force_pkgrm" exists and is a symbolic link to the string
-    "Remove <package instance name>", then do not check anything, proceed 
+    "Remove <package instance name>", then do not check anything, proceed
     with removal, and always return success. Remove such file in "postremove"
     and "postinstall".
 ::

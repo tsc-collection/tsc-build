@@ -1,10 +1,10 @@
 # vim: ft=jam: sw=2: tw=100
 # Copyright (c) 2010, Gennady Bystritsky <bystr@mac.com>
-# 
+#
 # Distributed under the MIT Licence.
 # This is free software. See 'LICENSE' for details.
 # You must read and accept the license prior to use.
-# 
+#
 # Author: Gennady Bystritsky
 
 rule oracle.offset
@@ -118,17 +118,17 @@ rule oracle.rebuild-config
   }
 }
 
-rule oracle.use 
+rule oracle.use
 {
   oracle.use-with $(oracle.DEFAULT_TAG) : $(1) : $(2) : $(3) : $(4) : $(5) : $(6) : $(7) : $(8) ;
 }
 
-rule oracle.use-with 
+rule oracle.use-with
 {
   oracle.system.ensure-tag $(1) ;
   util.foreach-kind $(2) $(3) $(4) $(5) $(6) $(7) $(8) $(9)
     : oracle.system.use-product
-    : $(1) 
+    : $(1)
   ;
 }
 

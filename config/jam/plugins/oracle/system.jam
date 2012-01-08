@@ -1,10 +1,10 @@
 # vim: ft=jam: sw=2: tw=100
 # Copyright (c) 2010, Gennady Bystritsky <bystr@mac.com>
-# 
+#
 # Distributed under the MIT Licence.
 # This is free software. See 'LICENSE' for details.
 # You must read and accept the license prior to use.
-# 
+#
 # Author: Gennady Bystritsky
 
 rule oracle.system.init
@@ -34,8 +34,8 @@ rule oracle.system.ensure-tag
 
 rule oracle.system.use-product
 {
-  local _target = [ 
-    system.use-product $(1) 
+  local _target = [
+    system.use-product $(1)
       : $(oracle.TAG_$(2)_LIBDIRS)
       : $(oracle.TAG_$(2)_LIBS:E=$(oracle.LIBS))
   ] ;
@@ -46,12 +46,12 @@ rule oracle.system.use-product
 
 rule oracle.system.use-product.c
 {
-  system.use-product.c $(1) 
-    : 
-    : 
-    : 
+  system.use-product.c $(1)
+    :
+    :
+    :
     : $(oracle.TAG_$(2)_INCLUDES)
-    : $(oracle.TAG_$(2)_DEFINES) $(oracle.DEFINES) 
+    : $(oracle.TAG_$(2)_DEFINES) $(oracle.DEFINES)
   ;
 }
 
