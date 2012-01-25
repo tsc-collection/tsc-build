@@ -75,12 +75,15 @@ CleanUp () {
 }
 
 main () {
-  : unset ERRLOG
+  : unset ERRLOG DELETE
   [ $# -eq 0 ] || {
-    while getopts "x:" opt; do
+    while getopts "x:d" opt; do
       case "$opt" in
         x)
           DebugLevel=$OPTARG
+        ;;
+        d)
+          DELETE=true;
         ;;
         *)
           PrintUsage; return 1
@@ -95,8 +98,19 @@ main () {
     PrintUsage; return 1
   }
   FromPattern1=$1
-  ToPattern1=$2
-  shift 2
+  shift
+
+  [ "${DELETE}" = true ] && {
+    for item in "${@}"; do
+      DeleteFrom "${item}" 
+    done
+
+    return "${?}"
+  }
+
+  ToPattern1=$1
+  shift
+
   unset FromPattern2 ToPattern2
   [ $# -eq 0 ] && {
     fromName=${FromPattern1}
@@ -148,6 +162,26 @@ w
 q
 EOM
   }
+  return ${status}
+}
+
+DeleteFrom() {
+  eval `EntryPoint 2`
+  Patient=$1
+  VerifyFile "$Patient" || {
+    ErrMsg "Cannot open file \"$Patient\"."
+    return 2
+  }
+  [ -w "${Patient}" ] || {
+    ErrMsg "Cannot write to file \"$Patient\"."
+    return 2
+  }
+  status=3
+  ed - "$Patient" << EOM && status=0
+g%$FromPattern1%d
+w
+q
+EOM
   return ${status}
 }
 
