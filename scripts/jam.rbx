@@ -62,7 +62,7 @@ class Application < TSC::Application
       require 'rubygems'
       require 'tsc/jam/config.rb'
 
-      if defined? JAM_ORIGINAL
+      if defined? JAM_ORIGINAL and File.file?(JAM_ORIGINAL)
         invoke JAM_ORIGINAL
       else
         commands = find_in_path(os.exe(script_name))
