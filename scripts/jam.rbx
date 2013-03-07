@@ -182,16 +182,14 @@ class Application < TSC::Application
   end
 
   in_generator_context do |_content|
-    file = File.basename(target)
-    root = Pathname.new(self.class.installation_top)
-    bindir = root.join('bin')
-    ruby = bindir.join('ruby')
+    directory, file = Pathname.new(target).split
+    original = directory.join('originals', file)
 
     _content << '#!/usr/bin/env ' + figure_ruby_path
-    _content << TSC::PATH.current.front(bindir).to_ruby_eval
-    _content << 'ROOT = ' +  root.to_s.inspect
-    _content << 'RUBY_PATH = ' + (ruby.exist? ? ruby.to_s : figure_ruby_path).inspect
-    _content << 'JAM_ORIGINAL = ' +  bindir.join('originals', file).to_s.inspect
+    _content << 'ROOT = ' + directory.dirname.to_s.inspect
+    _content << 'RUBY_PATH = ' + figure_ruby_path.inspect
+    _content << 'JAM_ORIGINAL = ' + original.to_s.inspect
+    _content << '$: << ' + directory.to_s.inspect
 
     _content << IO.readlines(__FILE__).slice(1..-1)
   end
