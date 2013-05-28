@@ -72,9 +72,26 @@ ShowCleanupMessage=NO
 
 P4CMD=/usr/local/bin/p4
 
+figure_p4cmd()
+{
+  eval `EntryPoint 1 figure_p4cmd`
+
+  eval `SetInputFields PATH :`
+  for item in "${@}"; do
+    p4="${item}/p4"
+    [ -x "${p4}" ] || continue
+    [ "${P4CMD:+set}" = set ] || {
+      P4CMD="${p4}"
+      break
+    }
+    unset P4CMD
+  done
+}
+
 main ()
 {
   eval `EntryPoint 1 main`
+  figure_p4cmd
 
   unset CLIENT DIR HOST PORT PASS USER FILE VERSION CMD_LINE
   ParseCommandParameters "c:d:H:p:P:u:f:sV" "${@}" || {
