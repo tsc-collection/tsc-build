@@ -88,24 +88,24 @@ main ()
   [ "${#}" -ne 0 ] && {
     case "${1}" in
       extra)
-	shift
-	showExtra "${@}"
-	return ${?}
+        shift
+        showExtra "${@}"
+        return ${?}
       ;;
       jobs)
-	[ ${#} -eq 2 ] && {
-	  case "${2}" in
-	    -e)
-	      launch_p4 jobs -e "User=${LOGNAME}&Status=open"
-	      return ${?}
-	    ;;
-	  esac
-	}
+        [ ${#} -eq 2 ] && {
+          case "${2}" in
+            -e)
+              launch_p4 jobs -e "User=${LOGNAME}&Status=open"
+              return ${?}
+            ;;
+          esac
+        }
       ;;
       format|reformat)
-	shift
-	formatSource "${@}"
-	return ${?}
+        shift
+        formatSource "${@}"
+        return ${?}
       ;;
     esac
   }
@@ -168,16 +168,16 @@ formatSource()
   [ ${#} -eq 0 ] || {
     while getopts "rn" opt 2>/dev/null; do
       case "${opt}" in
-	r)
-	  unset NOREVERSE
-	;;
-	n)
-	  JUST_SHOW=YES
-	;;
-	*)
-	  ShowMsg "USAGE: p4 reformat [-r] [<filespec>]"
-	  return 2
-	;;
+        r)
+          unset NOREVERSE
+        ;;
+        n)
+          JUST_SHOW=YES
+        ;;
+        *)
+          ShowMsg "USAGE: p4 reformat [-r] [<filespec>]"
+          return 2
+        ;;
       esac
     done
     shift `expr "${OPTIND}" - 1`
@@ -209,21 +209,21 @@ formatSource()
     while read line; do
       set entry ${line}
       [ ${#} -eq 4 -a "${3}" = "clientFile" ] && {
-	source_path=${4}
-	case "${source_path}" in
-	  *.java)
-	    JAVA_PROP="${CLIENT_ROOT}/config/p4-java-style.jin"
-	    cmd='jindent -nobak ${NOREVERSE:+-p ${JAVA_PROP}} "${source_path}"'
-	    if [ "${JUST_SHOW}" = YES ]; then
-	      eval echo "${cmd}"
-	    else
-	      eval "${cmd}" || {
-		break
-	      }
-	      echo "${source_path} formatted (${format} style)"
-	    fi
-	  ;;
-	esac
+        source_path=${4}
+        case "${source_path}" in
+          *.java)
+            JAVA_PROP="${CLIENT_ROOT}/config/p4-java-style.jin"
+            cmd='jindent -nobak ${NOREVERSE:+-p ${JAVA_PROP}} "${source_path}"'
+            if [ "${JUST_SHOW}" = YES ]; then
+              eval echo "${cmd}"
+            else
+              eval "${cmd}" || {
+                break
+              }
+              echo "${source_path} formatted (${format} style)"
+            fi
+          ;;
+        esac
       }
     done|makePathShorter
   }
@@ -272,7 +272,7 @@ showExtra ()
       /*)
       ;;
       *)
-	target="${DIR}/${target}"
+        target="${DIR}/${target}"
       ;;
     esac
   }
@@ -299,7 +299,7 @@ showExtra ()
   } | {
     while read line; do
       [ "${line:+set}" = set ] && {
-	launch_p4 -s opened "${line}"
+        launch_p4 -s opened "${line}"
       }
     done
   } | {
@@ -318,7 +318,7 @@ getClientRoot ()
   eval `EntryPoint 4 getClientRoot`
 
   STATUS= launch_p4 client -o | {
-    sed -n 's/^[ 	]*Root[ 	]*:[ 	]*//p'
+    sed -n 's/^[        ]*Root[         ]*:[    ]*//p'
   }
   return 0
 }
