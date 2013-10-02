@@ -182,16 +182,15 @@ class Application < TSC::Application
   end
 
   in_generator_context do |_content|
-    directory, file = Pathname.new(target).split
-    original = directory.join('originals', file)
     ruby = Pathname.new(figure_ruby_path)
+    bin = Pathname.new(self.class.installation_top).join('bin')
+    original = bin.join('originals', File.basename(target))
 
     _content << '#!' + ruby.to_s
-    _content << 'ROOT = ' + directory.dirname.to_s.inspect
     _content << 'RUBY_PATH = ' + ruby.to_s.inspect
     _content << 'JAM_ORIGINAL = ' + original.to_s.inspect
-    _content << '$: << ' + ruby.parent.to_s.inspect
-    _content << '$: << ' + directory.to_s.inspect
+    _content << '$: << ' + ruby.dirname.to_s.inspect
+    _content << '$: << ' + bin.to_s.inspect
 
     _content << IO.readlines(__FILE__).slice(1..-1)
   end
