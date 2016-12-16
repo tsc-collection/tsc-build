@@ -150,13 +150,13 @@ Modify() {
     return 2
   }
   status=3
-  ed - "$Patient" << EOM && status=0
+  ex - "$Patient" << EOM && status=0
 1,\$s%$FromPattern1%$ToPattern1%g
 w
 q
 EOM
   [ "${FromPattern2:+set}" = set ] && {
-  ed - "$Patient" << EOM && status=0
+  ex - "$Patient" << EOM && status=0
 1,\$s%$FromPattern2%$ToPattern2%g
 w
 q
@@ -177,7 +177,7 @@ DeleteFrom() {
     return 2
   }
   status=3
-  ed - "$Patient" << EOM && status=0
+  ex - "$Patient" << EOM && status=0
 g%$FromPattern1%d
 w
 q
